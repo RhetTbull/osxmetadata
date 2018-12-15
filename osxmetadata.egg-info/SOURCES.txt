@@ -1,0 +1,7 @@
+README.md
+osxmetadata.py
+setup.py
+osxmetadata.egg-info/PKG-INFO
+osxmetadata.egg-info/SOURCES.txt
+osxmetadata.egg-info/dependency_links.txt
+osxmetadata.egg-info/top_level.txt

@@ -305,7 +305,6 @@ class OSXMetaData:
         for w in wf:
             if len(w) > _MAX_WHEREFROM:
                 raise ValueError("Where from URL limited to %d characters" % _MAX_WHEREFROM)
-            print("wf = %s" % w)
 
         wf_plist = dumps(wf,fmt=FMT_BINARY)
         self.__attrs.set(_WHERE_FROM, wf_plist)
@@ -340,6 +339,7 @@ class OSXMetaData:
     def name(self):
         return self.__fname.resolve().as_posix()
 
+#old test code, todo: remove
 """
 args = sys.argv
 if len(args) != 2:
