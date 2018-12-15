@@ -15,6 +15,9 @@ import datetime
 #TODO: What to do about colors
 #TODO: Add ability to remove key instead of just clear contents
 
+#what to import 
+__all__  = ['OSXMetaData']
+
 # color labels
 _COLORNAMES = { 
             'None' : 0, 
@@ -339,87 +342,3 @@ class OSXMetaData:
     def name(self):
         return self.__fname.resolve().as_posix()
 
-#old test code, todo: remove
-"""
-args = sys.argv
-if len(args) != 2:
-    quit()
-
-fname = args[1]
-
-meta = OSXMetaData(fname)
-print(meta.name)
-print(meta.finder_comment)
-print(meta.tags)
-print(meta.where_from)
-print(str(meta.download_date))
-
-fc = "This is my new comment"
-meta.finder_comment = fc
-meta.finder_comment += ", foo"
-
-print(meta.finder_comment)
-
-for t in meta.tags:
-    print("tag = %s" % t)
-
-print(', '.join(meta.tags))
-
-meta.tags.add("Foo")
-meta.tags += "PURPLE"
-print("There are %d tags" % len(meta.tags))
-for t in meta.tags:
-    print("tag = %s" % t)
-
-meta.tags.clear()
-print("There are %d tags" % len(meta.tags))
-for t in meta.tags:
-    print("tag = %s" % t)
-
-meta.tags.add("Green")
-meta.tags.add("Foo")
-print("There are %d tags" % len(meta.tags))
-for t in meta.tags:
-    print("tag = %s" % t)
-
-if "Foo" in meta.tags:
-    print("Have tag Foo")
-    meta.tags.remove("Foo")
-if "Foo2" in meta.tags:
-    print("Have tag Foo2")
-    meta.tags.remove("Foo2")
-
-meta.tags.discard("Foo2")
-meta.tags.discard("Green")
-meta.tags.add("Red")
-meta.tags.add("Test")
-meta.tags.update("Gray","Foo")
-
-print("There are %d tags" % len(meta.tags))
-for t in meta.tags:
-    print("tag = %s" % t)
-
-wf = meta.where_from
-print("where from:")
-if wf is not None:
-    for w in wf:
-        print(w)
-
-meta.where_from = ['http://google.com','http://adobe.com']
-
-wf = meta.where_from
-print("where from:")
-if wf is not None:
-    for w in wf:
-        print(w)
-
-dt = meta.download_date
-print("date1 = " + str(dt))
-meta.download_date = datetime.datetime.now()
-dt = meta.download_date
-print("date2 = " + str(dt))
-meta.download_date = None
-dt = meta.download_date
-print("date3 = " + str(dt))
-
-"""

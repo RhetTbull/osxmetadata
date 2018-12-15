@@ -4,63 +4,144 @@ osxmetadata [![Build Status]()](https://github.com/RhetTbull/osxmetadata)
 What is osxmetadata?
 -----------------
 
-zzz OSDetect is a small python module which is able to get some information
-about your system and python implementation, like the Operating System
-or the hardware platform.
+osxmetadata provides a simple interface to access various metadata about Mac OS X files.  Currently supported metadata includes tags/keywords, Finder comments, and download data (downloaded where from and downloaded data).  This module was inspired by [osx-tags]( https://github.com/scooby/osx-tags) by "Ben S / scooby" and extended for my needs.  It is published under the same MIT license.
 
 Supported operating systems
 ---------------------------
 
-As of now, only GNU/Linux, Mac OS X, Windows NT and Windows NT/Cygwin are supported. At the
-moment, I'm working on support for a wider range of operating systems.
-
-Since version 1.1.0, Python 2 and Python 3 are both supported.
-
-Note that the information available on the different platforms may differ.
+Only works on Mac OS X.
 
 Installation instructions
 -------------------------
 
-Since OSDetect uses setuptools, you simply need to run
+osxmetadata uses setuptools, thus simply run:
 
 	python setup.py install
 
 Command Line Usage
 ------------------
 
-OSDetect includes a function which is executed if the module is directly called. So give it
-a try and run:
-
-	python -m OSDetect
+Currently no command line tool.  I will likely include a command line tool in a future version.
 
 Example uses of the module
 --------------------------
 
 ```python
-# Get a dict containing all gathered information
-from OSDetect import info as os_info
-print(os_info.getInfo())
+from osxmetadata import *
 
-# Get a specific value
-print(os_info.getDistribution())
-# or using the dict key (a dot means a dict containing a dict)
-print(os_info.get("Python.Version"))
+fname = 'foo.txt'
+
+meta = OSXMetaData(fname)
+print(meta.name)
+print(meta.finder_comment)
+print(meta.tags)
+print(meta.where_from)
+print(str(meta.download_date))
+
 ```
+Tags
+----
 
-On a ArchLinux system, it looks like this:
+Accessed via OSXMetaData.tags
+
+Behaves mostly like a set with following methods:
+
+* update (sets multiple tags)
+* add
+* +=
+* remove (raises error if tag not present)
+* discard (does not raise error if tag not present)
+* clear (removes all tags)
+
 
 ```python
-{
-	'Python': {
-		'Version': '3.6.0',
-		'Implementation': 'CPython'
-	},
-	'Machine': 'i686',
-	'OS': 'Linux',
-	'OSVersion': '4.10.6-1-ARCH',
-	'Distribution': 'Arch Linux'
-}
+>>> from osxmetadata import OSXMetaData
+>>> md = OSXMetaData('foo.txt')
+>>> md.tags.update('Foo','Gray','Red','Test')
+>>> print(md.tags)
+Foo, Gray, Red, Test
+#Standard Mac Finder color labels are normalized
+>>> md.tags.add('PURPLE')
+>>> print(md.tags)
+Foo, Purple, Red, Test, Gray
+>>> md.tags.add('FOOBAR')
+>>> print(md.tags)
+Foo, Purple, Red, Test, Gray, FOOBAR
+>>> md.tags += 'MyCustomTag'
+>>> print(md.tags)
+Foo, Purple, Red, Test, Gray, MyCustomTag, FOOBAR
+>>> md.tags.remove('Purple')
+>>> print(md.tags)
+Foo, Red, Test, Gray, MyCustomTag, FOOBAR
+>>> md.tags.remove('Purple')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/Users/rhet/Dropbox (Personal)/Code/osxmetadata/osxmetadata.py", line 148, in remove
+    tags.remove(self.__tag_normalize(tag))
+KeyError: 'Purple\n3'
+>>> md.tags.discard('Purple')
+>>> md.tags.discard('Red')
+>>> print(md.tags)
+Foo, Test, Gray, MyCustomTag, FOOBAR
+>>> len(md.tags)
+5
+>>> md.tags.clear()
+>>> print(md.tags)
 
-'ArchLinux'
-'3.6.0'
+>>> len(md.tags)
+0
+>>>
 ```
+
+Finder Comments
+---------------
+
+Accessed via OXMetaData.finder_comment
+
+Behaves mostly like a string.  You can assign a string or use +=. To clear, assign None or ''
+
+```python
+>>> md.finder_comment = 'My Comment'
+>>> print(md.finder_comment)
+My Comment
+>>> md.finder_comment += ', and FooBar!'
+>>> print(md.finder_comment)
+My Comment, and FooBar!
+>>> md.finder_comment = None
+>>> print(md.finder_comment)
+
+>>>
+```
+
+Download Data
+-------------
+Accessed via OSXMetaData.download_date (datetime.datetime object) and OSXMetaData.where_from (list of URLs as strings)
+
+
+```python
+>>> import datetime
+>>> dt = md.download_date
+>>> meta.download_date = datetime.datetime.now()
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+NameError: name 'meta' is not defined
+>>> import datetime
+>>> md.download_date = datetime.datetime.now()
+>>> print(str(md.download_date))
+2018-12-15 15:45:10.869535
+>>> md.where_from = ['http://wwww.mywebsite.com','https://downloads.mywebsite.com/downloads/foo']
+>>> print(md.where_from)
+['http://wwww.mywebsite.com', 'https://downloads.mywebsite.com/downloads/foo']
+>>> md.where_from=[]
+>>> print(md.where_from)
+[]
+>>>
+```
+
+Usage Notes
+-----------
+Changes are immediately written to the file.  For example, OSXMetaData.tags.add('Foo') immediately writes the tag 'Foo' to the file.
+
+Metadata is refreshed from disk every time a class property is accessed.
+
+This will only work on file systems that support Mac OS X extended attributes.
