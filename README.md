@@ -76,7 +76,7 @@ Foo, Red, Test, Gray, MyCustomTag, FOOBAR
 >>> md.tags.remove('Purple')
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-  File "/Users/rhet/Dropbox (Personal)/Code/osxmetadata/osxmetadata.py", line 148, in remove
+  File "osxmetadata/osxmetadata.py", line 148, in remove
     tags.remove(self.__tag_normalize(tag))
 KeyError: 'Purple\n3'
 >>> md.tags.discard('Purple')
