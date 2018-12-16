@@ -120,12 +120,6 @@ Accessed via OSXMetaData.download_date (datetime.datetime object) and OSXMetaDat
 
 ```python
 >>> import datetime
->>> dt = md.download_date
->>> meta.download_date = datetime.datetime.now()
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-NameError: name 'meta' is not defined
->>> import datetime
 >>> md.download_date = datetime.datetime.now()
 >>> print(str(md.download_date))
 2018-12-15 15:45:10.869535
