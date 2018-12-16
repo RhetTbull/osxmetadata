@@ -47,12 +47,17 @@ Accessed via OSXMetaData.tags
 Behaves mostly like a set with following methods:
 
 * update (sets multiple tags)
-* add
-* +=
+* add (add a single tag)
+* += (add a single tag)
 * remove (raises error if tag not present)
 * discard (does not raise error if tag not present)
 * clear (removes all tags)
 
+To replace all tags with a new set of tags, use clear() then update()
+
+Duplicate tags will be ignored.
+
+The standard OS X Finder color labels are handled via tags.  For example, setting a tag name of Gray, Green, Purple, Blue, Yellow, Red, or Orange will also set the equivalent Finder color label. This is consistent with how the Finder works.  If a file has a color label, it will be returned as a tag of the corresponding color name when reading from OSXMetaData.tags
 
 ```python
 >>> from osxmetadata import OSXMetaData
