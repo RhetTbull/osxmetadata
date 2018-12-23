@@ -1,4 +1,4 @@
-osxmetadata [![Build Status]()](https://github.com/RhetTbull/osxmetadata)
+osxmetadata [Homepage](https://github.com/RhetTbull/osxmetadata)
 ========
 
 What is osxmetadata?
