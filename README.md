@@ -144,3 +144,9 @@ Changes are immediately written to the file.  For example, OSXMetaData.tags.add(
 Metadata is refreshed from disk every time a class property is accessed.
 
 This will only work on file systems that support Mac OS X extended attributes.
+
+Dependencies
+------------
+[PyObjC](https://pythonhosted.org/pyobjc/)
+
+[xattr](https://github.com/xattr/xattr)
