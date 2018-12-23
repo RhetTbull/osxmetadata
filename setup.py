@@ -31,7 +31,7 @@ from setuptools import setup
 
 setup(
        name         = 'osxmetadata',
-       version      = '0.9',
+       version      = '0.92',
        description  = 'Read and write meta data, such as tags/keywords, on Mac OS X files',
        author       = 'Rhet Turnbull',
        author_email = 'rturnbull+git@gmail.com',
@@ -40,6 +40,7 @@ setup(
                        'GitHub': 'https://github.com/RhetTbull/osxmetadata'
                       },
        download_url = 'https://github.com/RhetTbull/osxmetadata',
+       packages = ['osxmetadata'],
        py_modules   = ['osxmetadata'],
        license      = 'License :: OSI Approved :: MIT License',
        classifiers  = [
