@@ -4,10 +4,14 @@ from plistlib import loads, dumps, FMT_BINARY
 from pathlib import Path
 import pprint
 from xattr import xattr
+import os
 import os.path
 import sys
+import tempfile
 import subprocess
 import datetime
+import re
+
 
 #this was inspired by osx-tags by "Ben S / scooby" and is published under
 #the same MIT license. See: https://github.com/scooby/osx-tags
@@ -47,6 +51,14 @@ _TAGS = 'com.apple.metadata:_kMDItemUserTags'
 _FINDER_COMMENT = 'com.apple.metadata:kMDItemFinderComment'
 _WHERE_FROM = 'com.apple.metadata:kMDItemWhereFroms'
 _DOWNLOAD_DATE = 'com.apple.metadata:kMDItemDownloadedDate'
+
+_APPLESCRIPT_SET_FINDER_COMMENT = '''
+on run argv
+	set theFile to item 1 of argv
+	set theComment to item 2 of argv
+	tell application "Finder" to set comment of (POSIX file theFile as alias) to theComment
+end run
+'''
 
 class _NullsInString(Exception):
     """Nulls in string."""
@@ -216,6 +228,15 @@ class OSXMetaData:
         except (IOError, OSError) as e:
             quit(_onError(e))
 
+        #setup applescript for writing finder comments
+        # self.__setfc_script_fh = tempfile.NamedTemporaryFile(suffix=".scpt",prefix="osxmd",mode="w",delete=False)
+        # self.__setfc_script = self.__setfc_script_fh.name
+        # fd = self.__setfc_script_fh.file
+        # fd.write(_APPLESCRIPT_SET_FINDER_COMMENT)
+        # fd.close()
+        # print("applescript = %s" % self.__setfc_script)
+
+        #initialize meta data
         self.__tags = {}
         self.__findercomment = None
         self.__wherefrom = []
@@ -249,6 +270,27 @@ class OSXMetaData:
     #     else:
     #         return None
 
+    def __del__(self):
+        pass
+        # print("removing temp file: %s" % self.__setfc_script)
+        # os.remove(self.__setfc_script)
+
+    def __build_fc_script(self,fname,fc):
+        fname = fname.replace('"','\\"')
+        fc = fc.replace('"','\\"')
+        script = 'on run\n' + \
+	             '   set theFile to "' + fname + '"\n' + \
+	             '   set theComment to "' + fc + '"\n' + \
+	             '   tell application "Finder" to set comment of (POSIX file theFile as alias) to theComment\n' + \
+                 'end run\n'
+
+        self.__setfc_script_fh = tempfile.NamedTemporaryFile(suffix=".scpt",prefix="osxmd",mode="w",delete=False)
+        self.__setfc_script = self.__setfc_script_fh.name
+        fd = self.__setfc_script_fh.file
+        fd.write(script)
+        fd.close()
+        return self.__setfc_script
+
     def __load_findercomment(self):
         try:
             self.__fcvalue = self.__attrs[_FINDER_COMMENT]
@@ -264,6 +306,11 @@ class OSXMetaData:
 
     @finder_comment.setter
     def finder_comment(self, fc):
+        '''
+        TODO: this creates a temporary script file which gets runs by osascript every time
+              not very efficient.  Perhaps use py-applescript in the future but that increases
+              dependencies + PyObjC
+        '''
         if fc is None:
             fc = ""
         elif not isinstance(fc, str):
@@ -272,17 +319,24 @@ class OSXMetaData:
         if len(fc) > _MAX_FINDERCOMMENT:
             raise ValueError("Finder comment limited to %d characters" % _MAX_FINDERCOMMENT)
 
-        script = '\'tell application "Finder" to set comment of ' \
-                 '(POSIX file "%s" as alias) to "%s"\'' \
-                 % (self.__fname.resolve().as_posix(), fc)
+        # script = 'tell application "Finder" to set comment of ' \
+        #          '(POSIX file "%s" as alias) to "%s"' \
+        #          % (self.__fname.resolve().as_posix(), fc)
+        # script = re.escape(script)
 
-        setcmd = "%s %s %s" % ('osascript', '-e', script)
+        fname = self.__fname.resolve().as_posix()
+        
+        ''' creates a temp file that needs to be removed when done '''
+        script = self.__build_fc_script(fname,fc)
+
+       # setcmd = "%s %s %s '%s'" % ('osascript', self.__setfc_script, fname, fc)
+        setcmd = ['osascript',script]
         try:
-            subprocess.run(setcmd, check=True, shell=True, 
-                stdout=subprocess.PIPE) 
+            subprocess.run(setcmd, check=True, shell=False,stderr=subprocess.STDOUT) 
         except subprocess.CalledProcessError as e:
             sys.exit("subprocess error calling command %s %s: " % (setcmd, e))
         ###self.__attrs[_FINDER_COMMENT] = dumps(str(fc),fmt=FMT_BINARY)
+        os.remove(script)
         self.__load_findercomment()
 
     def __load_download_wherefrom(self):
@@ -341,4 +395,5 @@ class OSXMetaData:
     @property
     def name(self):
         return self.__fname.resolve().as_posix()
+    
 
