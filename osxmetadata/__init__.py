@@ -10,7 +10,6 @@ import sys
 import tempfile
 import subprocess
 import datetime
-import re
 from . import _applescript
 
 #this was inspired by osx-tags by "Ben S / scooby" and is published under
@@ -303,16 +302,10 @@ class OSXMetaData:
         if len(fc) > _MAX_FINDERCOMMENT:
             raise ValueError("Finder comment limited to %d characters" % _MAX_FINDERCOMMENT)
 
-        # script = 'tell application "Finder" to set comment of ' \
-        #          '(POSIX file "%s" as alias) to "%s"' \
-        #          % (self.__fname.resolve().as_posix(), fc)
-        # script = re.escape(script)
-
         fname = self.__fname.resolve().as_posix()
-        fname = fname.replace('"','\\"')
-        fc = fc.replace('"','\\"')
+
         self.__scpt_set_finder_comment.run(fname,fc)
-        
+
         self.__load_findercomment()
 
     def __load_download_wherefrom(self):
