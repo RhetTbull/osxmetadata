@@ -37,7 +37,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name="osxmetadata",
-    version="0.95",
+    version="0.95.1",
     description="Read and write meta data, such as tags/keywords, on Mac OS X files",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -47,7 +47,6 @@ setup(
     project_urls={"GitHub": "https://github.com/RhetTbull/osxmetadata"},
     download_url="https://github.com/RhetTbull/osxmetadata",
     packages=["osxmetadata"],
-    py_modules=["osxmetadata"],
     license="License :: OSI Approved :: MIT License",
     classifiers=[
         "Development Status :: 4 - Beta",
