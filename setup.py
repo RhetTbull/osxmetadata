@@ -26,30 +26,36 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-#from distutils.core import setup
+# from distutils.core import setup
 from setuptools import setup
 
+# read the contents of README file
+from os import path
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
 setup(
-       name         = 'osxmetadata',
-       version      = '0.94',
-       description  = 'Read and write meta data, such as tags/keywords, on Mac OS X files',
-       author       = 'Rhet Turnbull',
-       author_email = 'rturnbull+git@gmail.com',
-       url          = 'https://github.com/RhetTbull/',
-       project_urls = {
-                       'GitHub': 'https://github.com/RhetTbull/osxmetadata'
-                      },
-       download_url = 'https://github.com/RhetTbull/osxmetadata',
-       packages = ['osxmetadata'],
-       py_modules   = ['osxmetadata'],
-       license      = 'License :: OSI Approved :: MIT License',
-       classifiers  = [
-                       'Development Status :: 4 - Beta',
-                       'Environment :: MacOS X',
-                       'Intended Audience :: Developers',
-                       'License :: OSI Approved :: MIT License',
-                       'Operating System :: MacOS :: MacOS X',
-                       'Programming Language :: Python',
-                       'Topic :: Software Development :: Libraries :: Python Modules',
-         ]
-     )
+    name="osxmetadata",
+    version="0.95",
+    description="Read and write meta data, such as tags/keywords, on Mac OS X files",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    author="Rhet Turnbull",
+    author_email="rturnbull+git@gmail.com",
+    url="https://github.com/RhetTbull/",
+    project_urls={"GitHub": "https://github.com/RhetTbull/osxmetadata"},
+    download_url="https://github.com/RhetTbull/osxmetadata",
+    packages=["osxmetadata"],
+    py_modules=["osxmetadata"],
+    license="License :: OSI Approved :: MIT License",
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "Environment :: MacOS X",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: MacOS :: MacOS X",
+        "Programming Language :: Python",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    ],
+)
