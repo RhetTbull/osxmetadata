@@ -31,7 +31,7 @@ from setuptools import setup
 
 setup(
        name         = 'osxmetadata',
-       version      = '0.93',
+       version      = '0.94',
        description  = 'Read and write meta data, such as tags/keywords, on Mac OS X files',
        author       = 'Rhet Turnbull',
        author_email = 'rturnbull+git@gmail.com',
