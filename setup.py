@@ -45,7 +45,7 @@ setup(
        license      = 'License :: OSI Approved :: MIT License',
        classifiers  = [
                        'Development Status :: 4 - Beta',
-                       'Environment :: MacOS X'
+                       'Environment :: MacOS X',
                        'Intended Audience :: Developers',
                        'License :: OSI Approved :: MIT License',
                        'Operating System :: MacOS :: MacOS X',
