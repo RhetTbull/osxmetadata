@@ -37,7 +37,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name="osxmetadata",
-    version="0.95.1",
+    version="0.95.2",
     description="Read and write meta data, such as tags/keywords, on Mac OS X files",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -56,5 +56,9 @@ setup(
         "Operating System :: MacOS :: MacOS X",
         "Programming Language :: Python",
         "Topic :: Software Development :: Libraries :: Python Modules",
+    ],
+    install_requires=[
+        "xattr",
+        "pyobjc",
     ],
 )
