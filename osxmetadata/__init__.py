@@ -20,7 +20,6 @@ from . import _applescript
 # TODO: check what happens if OSXMetaData.__init__ called with invalid file--should result in error but saw one case where it didn't
 
 
-
 # what to import
 __all__ = ["OSXMetaData"]
 
@@ -65,7 +64,6 @@ class _NullsInString(Exception):
 
 def _onError(e):
     sys.stderr.write(str(e) + "\n")
-
 
 
 class _Tags:
@@ -219,14 +217,9 @@ class OSXMetaData:
     def __init__(self, fname):
 
         self.__fname = Path(fname)
-        try:
-            if not os.path.exists(self.__fname):
-                raise(ValueError)
-        except (ValueError) as e:
-            print("file does not exist %s" % (self.__fname), file=sys.stderr)
-            quit(_onError(e))
+        if not os.path.exists(self.__fname):
+            raise (ValueError("file does not exist: ", fname))
 
-        #FIXME: this doesn't seem to raise error if file doesn't exist
         try:
             self.__attrs = xattr(self.__fname)
         except (IOError, OSError) as e:

@@ -104,6 +104,12 @@ class TestOSXMetaData(unittest.TestCase):
         wf = meta.where_from
         self.assertEqual(wf, ["http://google.com", "https://apple.com"])
 
+    def test_file_not_exists(self):
+        with self.assertRaises(Exception) as context:
+            # kludge to create a file that almost certainly doesn't exist
+            bad_filename = str(self.tempfilename + self.tempfilename)
+            meta = OSXMetaData(bad_filename)
+
     def setUp(self):
         self.tempfile = NamedTemporaryFile(dir=self.TESTDIR)
         self.tempfilename = self.tempfile.name
