@@ -18,6 +18,13 @@ from . import _applescript
 # TODO: What to do about colors
 # TODO: Add ability to remove key instead of just clear contents
 # TODO: check what happens if OSXMetaData.__init__ called with invalid file--should result in error but saw one case where it didn't
+# TODO: fix __repr__ of Tags?
+#    md>>> md = osxmetadata.OSXMetaData('setup.py')
+#    >>> md.tags
+#    Traceback (most recent call last):
+#    File "<stdin>", line 1, in <module>
+#    TypeError: __repr__ returned non-string (type set)
+
 
 # what to import
 __all__ = ["OSXMetaData"]
@@ -128,7 +135,7 @@ class _Tags:
 
     def __repr__(self):
         self.__load_tags()
-        return self.__tag_set
+        return repr(self.__tag_set)
 
     def __str__(self):
         self.__load_tags()
