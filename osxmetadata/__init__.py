@@ -18,12 +18,7 @@ from . import _applescript
 # TODO: What to do about colors
 # TODO: Add ability to remove key instead of just clear contents
 # TODO: check what happens if OSXMetaData.__init__ called with invalid file--should result in error but saw one case where it didn't
-# TODO: fix __repr__ of Tags?
-#    md>>> md = osxmetadata.OSXMetaData('setup.py')
-#    >>> md.tags
-#    Traceback (most recent call last):
-#    File "<stdin>", line 1, in <module>
-#    TypeError: __repr__ returned non-string (type set)
+
 
 
 # what to import
@@ -68,14 +63,9 @@ class _NullsInString(Exception):
     """Nulls in string."""
 
 
-# class _NullsInString
-
-
 def _onError(e):
     sys.stderr.write(str(e) + "\n")
 
-
-# _onError
 
 
 class _Tags:
@@ -230,10 +220,13 @@ class OSXMetaData:
 
         self.__fname = Path(fname)
         try:
-            os.path.exists(self.__fname)
-        except ValueError:
+            if not os.path.exists(self.__fname):
+                raise(ValueError)
+        except (ValueError) as e:
             print("file does not exist %s" % (self.__fname), file=sys.stderr)
+            quit(_onError(e))
 
+        #FIXME: this doesn't seem to raise error if file doesn't exist
         try:
             self.__attrs = xattr(self.__fname)
         except (IOError, OSError) as e:
