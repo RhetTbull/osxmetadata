@@ -1,4 +1,16 @@
 """ applescript -- Easy-to-use Python wrapper for NSAppleScript """
+"""
+    This code is from py-applescript, a public domain package available at:
+    https://github.com/rdhyee/py-applescript
+
+    I've included the whole thing here for simplicity as there is more than one
+    applescript packge on PyPi so there's ambiguity as to which one "import applescript"
+    would use if user had installed another library. 
+    
+    This package is used instead of the others because it uses a native PyObjC 
+    bridge and is thus much faster than others which use osascript.
+
+"""
 
 import sys
 
