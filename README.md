@@ -4,7 +4,7 @@ osxmetadata [Homepage](https://github.com/RhetTbull/osxmetadata)
 What is osxmetadata?
 -----------------
 
-osxmetadata provides a simple interface to access various metadata about Mac OS X files.  Currently supported metadata includes tags/keywords, Finder comments, and download data (downloaded where from and downloaded data).  This package was inspired by [osx-tags](https://github.com/scooby/osx-tags) by "Ben S / scooby" and extended for my needs.  It is published under the same MIT license.
+osxmetadata provides a simple interface to access various metadata about Mac OS X files.  Currently supported metadata includes tags/keywords, Finder comments, and download data (downloaded where from and downloaded data).  This module was inspired by [osx-tags](https://github.com/scooby/osx-tags) by "Ben S / scooby" and extended for my needs.  It is published under the same MIT license.
 
 Supported operating systems
 ---------------------------
@@ -153,10 +153,10 @@ Dependencies
 
 Acknowledgements
 ----------------
-This package was inspired by [osx-tags]( https://github.com/scooby/osx-tags) by "Ben S / scooby".  I leveraged osx-tags to bootstrap the design of this package.  I wanted a more
+This module was inspired by [osx-tags]( https://github.com/scooby/osx-tags) by "Ben S / scooby".  I leveraged osx-tags to bootstrap the design of this module.  I wanted a more
 general OS X metadata library so I rolled my own.
 
-To set the Finder comments, I use [py-applescript]( https://github.com/rdhyee/py-applescript) by "Raymond Yee / rdhyee".  Rather than import this package, I included the entire package
-(which is published as public domain code) in a private package to prevent ambiguity with
-other applescript packages on PyPi.  py-applescript uses a native bridge via PyObjC and
-is very fast compared to the other osascript based packages.
+To set the Finder comments, I use [py-applescript]( https://github.com/rdhyee/py-applescript) by "Raymond Yee / rdhyee".  Rather than import this module, I included the entire module
+(which is published as public domain code) in a private module to prevent ambiguity with
+other applescript modules on PyPi.  py-applescript uses a native bridge via PyObjC and
+is very fast compared to the other osascript based modules.
