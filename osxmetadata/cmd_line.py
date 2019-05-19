@@ -73,6 +73,11 @@ def process_arguments():
         help="Disable the progress bar while running",
     )
 
+    parser.add_argument(
+        "--file",
+        help="Name of output file.  If not specified, output goes to STDOUT",
+    )
+
     # parser.add_argument(
     #     "--list",
     #     action="store_true",
@@ -169,8 +174,47 @@ def get_metadata(fname):
 
 
 def write_json_data(fname, data):
-    print(json.dumps(data, indent=4))
+    if fname is None:
+        print(json.dumps(data, indent=4))
+    else:
+        try:
+            fp = open(fname,"w+")
+            json.dump(data,fp,indent=4)
+            fp.close()
+        except:
+            print(f"error writing to file {fname}",file=sys.stderr)
 
+def write_text_data(fname, data):
+    fp = sys.stdout
+    if fname is not None:
+        try:
+            fp = open(fname,"w+")
+        except:
+            print(f"error opening file for writing {fname}",file=sys.stderr)
+
+    # TODO: preserve order of files as directory is walked?
+    for key in data:
+        fc = data[key]['fc']
+        fc = fc if fc is not None else ""
+
+        dldate = data[key]['dldate']
+        dldate = dldate if dldate is not None else ""
+
+        where_from = data[key]['where_from']
+        where_from = where_from if where_from is not None else ""
+
+        tags = data[key]['tags']
+        tags = tags if len(tags) is not 0 else ""
+
+        print(f"{key}",file=fp)
+        print(f"tags: {tags}",file=fp)
+        print(f"Finder comment: {fc}",file=fp)
+        print(f"Download date: {dldate}",file=fp)
+        print(f"Where from: {where_from}",file=fp)
+        print("\n",file=fp)
+
+    if fname is None:
+        fp.close()
 
 def main():
     args = process_arguments()
@@ -182,9 +226,12 @@ def main():
             quiet=args.quiet,
             verbose=args.verbose,
         )
-        json_file = "test.json"
-        write_json_data(json_file, data)
 
+        output_file = args.file if args.file is not None else None
+        if args.json:
+            write_json_data(output_file, data)
+        else:
+            write_text_data(output_file,data)
 
 if __name__ == "__main__":
     main()
