@@ -94,6 +94,10 @@ def process_arguments():
 
 # simple progress spinner for use while
 # analyzing file tree
+# rolled my own to avoid importing another library
+# using tqdm for progress bar but it lacks a spinner
+# TODO: this could use an async/threaded implementation to slow it down
+# but good enough for now
 def create_progress_spinner():
     def spinning_cursor():
         while True:
@@ -113,7 +117,6 @@ def process_files(files = [], noprogress = False, quiet = False):
     # symlinks can resolve to missing files (e.g. unmounted volume)
     # so catch those errors and set data to None
     # osxmetadata raises ValueError if specified file is missing
-    # TODO: following duplicate code should be moved to function
 
     data = {}
     paths = []
