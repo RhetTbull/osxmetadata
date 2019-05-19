@@ -1,4 +1,4 @@
-#/usr/bin/env python
+# /usr/bin/env python
 
 import osxmetadata
 import argparse
@@ -19,13 +19,14 @@ class MyParser(argparse.ArgumentParser):
         self.print_help()
         sys.exit(2)
 
+
 def onError(e):
     sys.stderr.write(str(e) + "\n")
 
+
 def process_arguments():
     parser = MyParser(
-        description="Import and export metadata from files",
-        add_help=False,
+        description="Import and export metadata from files", add_help=False
     )
 
     parser.add_argument(
@@ -79,18 +80,16 @@ def process_arguments():
     #     help="List all tags found in Yep; does not update any files",
     # )
 
-    parser.add_argument(
-        'files', 
-        nargs='*',
-    )
+    parser.add_argument("files", nargs="*")
 
     args = parser.parse_args()
-    #if no args, show help and exit
-    if len(sys.argv)==1 or args.help:
+    # if no args, show help and exit
+    if len(sys.argv) == 1 or args.help:
         parser.print_help(sys.stderr)
         sys.exit(1)
 
     return args
+
 
 # simple progress spinner for use while
 # analyzing file tree
@@ -101,17 +100,20 @@ def process_arguments():
 def create_progress_spinner():
     def spinning_cursor():
         while True:
-            for cursor in '|/-\\':
+            for cursor in "|/-\\":
                 yield cursor
+
     spinner = spinning_cursor()
     return spinner
+
 
 def update_progress_spinner(spinner):
     sys.stderr.write(next(spinner))
     sys.stderr.flush()
-    sys.stderr.write('\b')
+    sys.stderr.write("\b")
 
-def process_files(files = [], noprogress = False, quiet = False): 
+
+def process_files(files=[], noprogress=False, quiet=False, verbose=False):
     # use os.walk to walk through files and collect metadata
     # on each file
     # symlinks can resolve to missing files (e.g. unmounted volume)
@@ -122,7 +124,7 @@ def process_files(files = [], noprogress = False, quiet = False):
     paths = []
     spinner = create_progress_spinner()
     # collect list of file paths to process
-    if not quiet: 
+    if not quiet:
         print("Collecting files to process", file=sys.stderr)
     for f in files:
         if os.path.isdir(f):
@@ -143,14 +145,17 @@ def process_files(files = [], noprogress = False, quiet = False):
     numfiles = len(paths)
     if not quiet:
         print(f"processing {numfiles} files", file=sys.stderr)
-    for fpath in tqdm(iterable = paths, disable = noprogress):
+    for fpath in tqdm(iterable=paths, disable=noprogress):
         try:
+            if verbose:
+                tqdm.write(f"processing file {fpath}", file=sys.stderr)
             data[str(fpath)] = get_metadata(fpath)
         except ValueError:
             data[str(fpath)] = None
             tqdm.write(f"warning: error getting metadata for {fpath}", file=sys.stderr)
 
     return data
+
 
 def get_metadata(fname):
     md = osxmetadata.OSXMetaData(fname)
@@ -159,19 +164,27 @@ def get_metadata(fname):
     dldate = md.download_date
     dldate = str(dldate) if dldate is not None else None
     where_from = md.where_from
-    data = {"tags" : tags, "fc" : fc, "dldate" : dldate, "where_from" : where_from}
+    data = {"tags": tags, "fc": fc, "dldate": dldate, "where_from": where_from}
     return data
+
 
 def write_json_data(fname, data):
     print(json.dumps(data, indent=4))
+
 
 def main():
     args = process_arguments()
 
     if args.files:
-        data = process_files(args.files, args.noprogress, args.quiet)
+        data = process_files(
+            files=args.files,
+            noprogress=args.noprogress,
+            quiet=args.quiet,
+            verbose=args.verbose,
+        )
         json_file = "test.json"
         write_json_data(json_file, data)
+
 
 if __name__ == "__main__":
     main()
