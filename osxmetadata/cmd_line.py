@@ -7,8 +7,10 @@ import os.path
 import os
 from pathlib import Path
 import json
+from tqdm import tqdm
 
 # TODO: add md5 option
+# TODO: how is metadata on symlink handled?
 
 # custom argparse class to show help if error triggered
 class MyParser(argparse.ArgumentParser):
@@ -55,20 +57,20 @@ def process_arguments():
         help="Output to JSON, optionally provide output file name: --file=file.json",
     )
 
-    # parser.add_argument(
-    #     "-q",
-    #     "--quiet",
-    #     action="store_true",
-    #     default=False,
-    #     help="Be extra quiet when running.",
-    # )
+    parser.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        default=False,
+        help="Be extra quiet when running.",
+    )
 
-    # parser.add_argument(
-    #     "--noprogress",
-    #     action="store_true",
-    #     default=False,
-    #     help="Disable the progress bar while running",
-    # )
+    parser.add_argument(
+        "--noprogress",
+        action="store_true",
+        default=False,
+        help="Disable the progress bar while running",
+    )
 
     # parser.add_argument(
     #     "--list",
@@ -90,7 +92,22 @@ def process_arguments():
 
     return args
 
-def process_files(files = []):
+# simple progress spinner for use while
+# analyzing file tree
+def create_progress_spinner():
+    def spinning_cursor():
+        while True:
+            for cursor in '|/-\\':
+                yield cursor
+    spinner = spinning_cursor()
+    return spinner
+
+def update_progress_spinner(spinner):
+    sys.stderr.write(next(spinner))
+    sys.stderr.flush()
+    sys.stderr.write('\b')
+
+def process_files(files = [], noprogress = False, quiet = False): 
     # use os.walk to walk through files and collect metadata
     # on each file
     # symlinks can resolve to missing files (e.g. unmounted volume)
@@ -99,25 +116,37 @@ def process_files(files = []):
     # TODO: following duplicate code should be moved to function
 
     data = {}
+    paths = []
+    spinner = create_progress_spinner()
+    # collect list of file paths to process
+    if not quiet: 
+        print("Collecting files to process", file=sys.stderr)
     for f in files:
         if os.path.isdir(f):
             for root, dirname, filenames in os.walk(f):
                 for fname in filenames:
+                    if not noprogress:
+                        update_progress_spinner(spinner)
                     fpath = Path(f"{root}/{fname}").resolve()
-                    print(f"processing file {fpath}")
-                    try:
-                        data[str(fpath)] = get_metadata(fpath)
-                    except ValueError:
-                        data[str(fpath)] = None
-                        print(f"warning: error getting metadata for {fpath}") 
+                    paths.append(fpath)
         else:
+            if not noprogress:
+                update_progress_spinner(spinner)
             fpath = Path(f).resolve()
-            print(f"processing file {fpath}")
-            try:
-                data[str(fpath)] = get_metadata(fpath)
-            except ValueError:
-                data[str(fpath)] = None
-                print(f"warning: error getting metadata for {fpath}")
+            paths.append(fpath)
+
+    # process each file path collected above
+    # showprogress = True/False to enable/disable progress bar
+    numfiles = len(paths)
+    if not quiet:
+        print(f"processing {numfiles} files", file=sys.stderr)
+    for fpath in tqdm(iterable = paths, disable = noprogress):
+        try:
+            data[str(fpath)] = get_metadata(fpath)
+        except ValueError:
+            data[str(fpath)] = None
+            tqdm.write(f"warning: error getting metadata for {fpath}", file=sys.stderr)
+
     return data
 
 def get_metadata(fname):
@@ -125,8 +154,9 @@ def get_metadata(fname):
     tags = list(md.tags)
     fc = md.finder_comment
     dldate = md.download_date
+    dldate = str(dldate) if dldate is not None else None
     where_from = md.where_from
-    data = {"tags" : tags, "fc" : fc, "dldate" : str(dldate), "where_from" : where_from}
+    data = {"tags" : tags, "fc" : fc, "dldate" : dldate, "where_from" : where_from}
     return data
 
 def write_json_data(fname, data):
@@ -134,14 +164,9 @@ def write_json_data(fname, data):
 
 def main():
     args = process_arguments()
-    if args.verbose:
-        print("hello")
 
-    if args.json:
-        print("json: ",args.json)
-    
     if args.files:
-        data = process_files(args.files)
+        data = process_files(args.files, args.noprogress, args.quiet)
         json_file = "test.json"
         write_json_data(json_file, data)
 
