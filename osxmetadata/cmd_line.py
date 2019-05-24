@@ -11,6 +11,12 @@ from tqdm import tqdm
 
 # TODO: add md5 option
 # TODO: how is metadata on symlink handled?
+# should symlink be resolved before gathering metadata?
+
+# curstom error handler
+def onError(e):
+    tqdm.write(str(e) + "\n",file=sys.stderr)
+    return e
 
 # custom argparse class to show help if error triggered
 class MyParser(argparse.ArgumentParser):
@@ -18,11 +24,6 @@ class MyParser(argparse.ArgumentParser):
         sys.stderr.write("error: %s\n" % message)
         self.print_help()
         sys.exit(2)
-
-
-def onError(e):
-    sys.stderr.write(str(e) + "\n")
-
 
 def process_arguments():
     parser = MyParser(
@@ -74,9 +75,28 @@ def process_arguments():
     )
 
     parser.add_argument(
-        "--file",
+        "--force",
+        action="store_true",
+        default=False,
+        help="Force new metadata to be written even if unchanged",
+    )
+
+    parser.add_argument(
+        "-o",
+        "--outfile",
         help="Name of output file.  If not specified, output goes to STDOUT",
     )
+
+    parser.add_argument("--addtag", action="append", help="add tags/keywords for file")
+    
+    parser.add_argument(
+        "--cleartags",
+        action="store_true",
+        default=False,
+        help="remove all tags from file",
+    )
+
+    parser.add_argument("--rmtag", action="append", help="remove tag from file")
 
     # parser.add_argument(
     #     "--list",
@@ -118,7 +138,7 @@ def update_progress_spinner(spinner):
     sys.stderr.write("\b")
 
 
-def process_files(files=[], noprogress=False, quiet=False, verbose=False):
+def process_files(files=[], noprogress=False, quiet=False, verbose=False, args={}):
     # use os.walk to walk through files and collect metadata
     # on each file
     # symlinks can resolve to missing files (e.g. unmounted volume)
@@ -131,6 +151,7 @@ def process_files(files=[], noprogress=False, quiet=False, verbose=False):
     # collect list of file paths to process
     if not quiet:
         print("Collecting files to process", file=sys.stderr)
+
     for f in files:
         if os.path.isdir(f):
             for root, dirname, filenames in os.walk(f):
@@ -154,22 +175,47 @@ def process_files(files=[], noprogress=False, quiet=False, verbose=False):
         try:
             if verbose:
                 tqdm.write(f"processing file {fpath}", file=sys.stderr)
-            data[str(fpath)] = get_metadata(fpath)
-        except ValueError:
-            data[str(fpath)] = None
-            tqdm.write(f"warning: error getting metadata for {fpath}", file=sys.stderr)
+            data[str(fpath)] = get_set_metadata(fpath,args)
+        except (IOError, OSError, ValueError):
+            # data[str(fpath)] = None
+            tqdm.write(f"warning: error processing metadata for {fpath}", file=sys.stderr)
 
     return data
 
 
-def get_metadata(fname):
-    md = osxmetadata.OSXMetaData(fname)
-    tags = list(md.tags)
-    fc = md.finder_comment
-    dldate = md.download_date
-    dldate = str(dldate) if dldate is not None else None
-    where_from = md.where_from
-    data = {"tags": tags, "fc": fc, "dldate": dldate, "where_from": where_from}
+# sets metadata based on args then returns dict with all metadata on the file
+def get_set_metadata(fname, args={}):
+    try:
+        md = osxmetadata.OSXMetaData(fname)
+
+        # clear tags
+        if args.cleartags:
+            md.tags.clear()
+
+       # remove tags
+        if args.rmtag:
+            tags = md.tags
+            for t in args.rmtag:
+                if t in tags:
+                    md.tags.remove(t)
+
+        # update tags
+        if args.addtag:
+            new_tags = []
+            new_tags += args.addtag
+            old_tags = md.tags
+            tags_different = sorted(new_tags) != sorted(old_tags) or args.force
+            if tags_different:
+                md.tags.update(*new_tags)
+
+        tags = list(md.tags)
+        fc = md.finder_comment
+        dldate = md.download_date
+        dldate = str(dldate) if dldate is not None else None
+        where_from = md.where_from
+        data = {"tags": tags, "fc": fc, "dldate": dldate, "where_from": where_from}
+    except (IOError, OSError) as e:
+        return(onError(e))
     return data
 
 
@@ -178,43 +224,44 @@ def write_json_data(fname, data):
         print(json.dumps(data, indent=4))
     else:
         try:
-            fp = open(fname,"w+")
-            json.dump(data,fp,indent=4)
+            fp = open(fname, "w+")
+            json.dump(data, fp, indent=4)
             fp.close()
         except:
-            print(f"error writing to file {fname}",file=sys.stderr)
+            print(f"error writing to file {fname}", file=sys.stderr)
+
 
 def write_text_data(fname, data):
     fp = sys.stdout
     if fname is not None:
         try:
-            fp = open(fname,"w+")
+            fp = open(fname, "w+")
         except:
-            print(f"error opening file for writing {fname}",file=sys.stderr)
+            print(f"error opening file for writing {fname}", file=sys.stderr)
 
-    # TODO: preserve order of files as directory is walked?
     for key in data:
-        fc = data[key]['fc']
+        fc = data[key]["fc"]
         fc = fc if fc is not None else ""
 
-        dldate = data[key]['dldate']
+        dldate = data[key]["dldate"]
         dldate = dldate if dldate is not None else ""
 
-        where_from = data[key]['where_from']
+        where_from = data[key]["where_from"]
         where_from = where_from if where_from is not None else ""
 
-        tags = data[key]['tags']
+        tags = data[key]["tags"]
         tags = tags if len(tags) is not 0 else ""
 
-        print(f"{key}",file=fp)
-        print(f"tags: {tags}",file=fp)
-        print(f"Finder comment: {fc}",file=fp)
-        print(f"Download date: {dldate}",file=fp)
-        print(f"Where from: {where_from}",file=fp)
-        print("\n",file=fp)
+        print(f"{key}", file=fp)
+        print(f"tags: {tags}", file=fp)
+        print(f"Finder comment: {fc}", file=fp)
+        print(f"Download date: {dldate}", file=fp)
+        print(f"Where from: {where_from}", file=fp)
+        print("\n", file=fp)
 
-    if fname is None:
+    if fname is not None:
         fp.close()
+
 
 def main():
     args = process_arguments()
@@ -225,13 +272,17 @@ def main():
             noprogress=args.noprogress,
             quiet=args.quiet,
             verbose=args.verbose,
+            args = args,
         )
 
-        output_file = args.file if args.file is not None else None
-        if args.json:
-            write_json_data(output_file, data)
-        else:
-            write_text_data(output_file,data)
+        output_file = args.outfile if args.outfile is not None else None
+        
+        if data:
+            if args.json:
+                write_json_data(output_file, data)
+            else:
+                write_text_data(output_file, data)
+
 
 if __name__ == "__main__":
     main()
