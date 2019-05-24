@@ -26,19 +26,16 @@ Installs command line tool called osxmetadata.  This is not full replacement for
 Currently, only supports reading/writing tags and export to text or JSON.  I will add additional metadata as well as import from JSON in the future.
 
 ```
-usage: osxmetadata [--test] [-h] [-v] [-j] [-q] [--noprogress] [--force]
-                   [-o OUTFILE] [--addtag ADDTAG] [--cleartags]
-                   [--rmtag RMTAG]
+usage: osxmetadata [-h] [-v] [-j] [-q] [--noprogress] [--force] [-o OUTFILE]
+                   [--addtag ADDTAG] [--cleartags] [--rmtag RMTAG]
                    [files [files ...]]
 
-Import and export metadata from files 
+Import and export metadata from files
 
 positional arguments:
   files
 
 optional arguments:
-  --test                Test mode: do not actually modify any files or
-                        metadatamost useful with --verbose
   -h, --help            Show this help message
   -v, --verbose         Print verbose output during processing
   -j, --json            Output to JSON, optionally provide output file name:

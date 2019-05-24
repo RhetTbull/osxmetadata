@@ -30,13 +30,14 @@ def process_arguments():
         description="Import and export metadata from files", add_help=False
     )
 
-    parser.add_argument(
-        "--test",
-        action="store_true",
-        default=False,
-        help="Test mode: do not actually modify any files or metadata"
-        + "most useful with --verbose",
-    )
+    # parser.add_argument(
+    #     "--test",
+    #     action="store_true",
+    #     default=False,
+    #     help="Test mode: do not actually modify any files or metadata"
+    #     + "most useful with --verbose",
+    # )
+
     parser.add_argument(
         "-h",
         "--help",
