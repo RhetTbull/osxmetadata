@@ -21,7 +21,39 @@ osxmetadata uses setuptools, thus simply run:
 Command Line Usage
 ------------------
 
-Currently no command line tool.  I will likely include a command line tool in a future version.
+Installs command line tool called osxmetadata.  This is not full replacement for ```mdls``` and ```xattr``` commands but provides a simple interface to view/edit metadata supported by osxmetadata
+
+Currently, only supports reading/writing tags and export to text or JSON.  I will add additional metadata as well as import from JSON in the future.
+
+```
+usage: osxmetadata [--test] [-h] [-v] [-j] [-q] [--noprogress] [--force]
+                   [-o OUTFILE] [--addtag ADDTAG] [--cleartags]
+                   [--rmtag RMTAG]
+                   [files [files ...]]
+
+Import and export metadata from files 
+
+positional arguments:
+  files
+
+optional arguments:
+  --test                Test mode: do not actually modify any files or
+                        metadatamost useful with --verbose
+  -h, --help            Show this help message
+  -v, --verbose         Print verbose output during processing
+  -j, --json            Output to JSON, optionally provide output file name:
+                        --file=file.json
+  -q, --quiet           Be extra quiet when running.
+  --noprogress          Disable the progress bar while running
+  --force               Force new metadata to be written even if unchanged
+  -o OUTFILE, --outfile OUTFILE
+                        Name of output file. If not specified, output goes to
+                        STDOUT
+  --addtag ADDTAG       add tags/keywords for file
+  --cleartags           remove all tags from file
+  --rmtag RMTAG         remove tag from file
+```
+
 
 Example uses of the module
 --------------------------

@@ -169,6 +169,9 @@ def process_files(files=[], noprogress=False, quiet=False, verbose=False, args={
     # process each file path collected above
     # showprogress = True/False to enable/disable progress bar
     numfiles = len(paths)
+    if numfiles < 10:
+        noprogress = True
+
     if not quiet:
         print(f"processing {numfiles} files", file=sys.stderr)
     for fpath in tqdm(iterable=paths, disable=noprogress):
