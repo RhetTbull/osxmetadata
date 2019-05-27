@@ -28,6 +28,7 @@ Currently, only supports reading/writing tags and export to text or JSON.  I wil
 ```
 usage: osxmetadata [-h] [-v] [-j] [-q] [--noprogress] [--force] [-o OUTFILE]
                    [--addtag ADDTAG] [--cleartags] [--rmtag RMTAG]
+                   [--setfc SETFC] [--clearfc] [--addfc ADDFC]
                    [files [files ...]]
 
 Import and export metadata from files
@@ -49,6 +50,9 @@ optional arguments:
   --addtag ADDTAG       add tags/keywords for file
   --cleartags           remove all tags from file
   --rmtag RMTAG         remove tag from file
+  --setfc SETFC         set finder comment
+  --clearfc             clear finder comment
+  --addfc ADDFC         append a Finder comment, preserving existing comment
 ```
 
 
