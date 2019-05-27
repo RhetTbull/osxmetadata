@@ -89,7 +89,11 @@ def process_arguments():
         help="Name of output file.  If not specified, output goes to STDOUT",
     )
 
-    parser.add_argument("--addtag", action="append", help="add tags/keywords for file")
+    parser.add_argument(
+        "--addtag",
+        action="append",
+        help="add tag/keyword for file. To add multiple tags, use multiple --addtag otions. e.g. --addtag foo --addtag bar",
+    )
 
     parser.add_argument(
         "--cleartags",
@@ -100,11 +104,17 @@ def process_arguments():
 
     parser.add_argument("--rmtag", action="append", help="remove tag from file")
 
-    parser.add_argument("--setfc", help="set finder comment")
+    parser.add_argument("--setfc", help="set Finder comment")
 
-    parser.add_argument("--clearfc", action="store_true", default=False, help="clear finder comment")
+    parser.add_argument(
+        "--clearfc", action="store_true", default=False, help="clear Finder comment"
+    )
 
-    parser.add_argument("--addfc", action="append", help="append a Finder comment, preserving existing comment")
+    parser.add_argument(
+        "--addfc",
+        action="append",
+        help="append a Finder comment, preserving existing comment",
+    )
 
     # parser.add_argument(
     #     "--list",
@@ -152,6 +162,8 @@ def process_files(
     for f in files:
         if os.path.isdir(f):
             for root, dirname, filenames in os.walk(f):
+                if args.verbose:
+                    print(f"Processing {root}")
                 for fname in filenames:
                     fpath = Path(f"{root}/{fname}").resolve()
                     process_file(fpath, fp, args)
@@ -192,7 +204,7 @@ def get_set_metadata(fname, args={}):
         if args.addfc:
             for fc in args.addfc:
                 md.finder_comment += fc
-            
+
         if args.setfc:
             old_comment = md.finder_comment
             if (old_comment != args.setfc) or args.force:
@@ -253,7 +265,7 @@ def main():
                 fp = open(output_file, "w+")
             except:
                 print(f"Error opening file {output_file} for writing")
-                sys.quit(2)
+                sys.exit(2)
 
         process_files(
             files=args.files,
