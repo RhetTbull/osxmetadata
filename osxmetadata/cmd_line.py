@@ -14,8 +14,9 @@ import json
 
 # curstom error handler
 def onError(e):
-    tqdm.write(str(e) + "\n",file=sys.stderr)
+    tqdm.write(str(e) + "\n", file=sys.stderr)
     return e
+
 
 # custom argparse class to show help if error triggered
 class MyParser(argparse.ArgumentParser):
@@ -23,6 +24,7 @@ class MyParser(argparse.ArgumentParser):
         sys.stderr.write("error: %s\n" % message)
         self.print_help()
         sys.exit(2)
+
 
 def process_arguments():
     parser = MyParser(
@@ -88,7 +90,7 @@ def process_arguments():
     )
 
     parser.add_argument("--addtag", action="append", help="add tags/keywords for file")
-    
+
     parser.add_argument(
         "--cleartags",
         action="store_true",
@@ -97,6 +99,12 @@ def process_arguments():
     )
 
     parser.add_argument("--rmtag", action="append", help="remove tag from file")
+
+    parser.add_argument("--setfc", help="set finder comment")
+
+    parser.add_argument("--clearfc", action="store_true", default=False, help="clear finder comment")
+
+    parser.add_argument("--addfc", action="append", help="append a Finder comment, preserving existing comment")
 
     # parser.add_argument(
     #     "--list",
@@ -115,19 +123,23 @@ def process_arguments():
 
     return args
 
-def process_file(fpath,fp,args={}):
+
+def process_file(fpath, fp, args={}):
     try:
-        data = get_set_metadata(fpath,args)
+        data = get_set_metadata(fpath, args)
         if args.json:
-            write_json_data(fp,data)
+            write_json_data(fp, data)
         else:
-            write_text_data(fp,data)
+            write_text_data(fp, data)
 
     except (IOError, OSError, ValueError):
         # data[str(fpath)] = None
         print(f"warning: error processing metadata for {fpath}", file=sys.stderr)
 
-def process_files(files=[], fp = sys.stdout, noprogress=False, quiet=False, verbose=False, args={}):
+
+def process_files(
+    files=[], fp=sys.stdout, noprogress=False, quiet=False, verbose=False, args={}
+):
     # use os.walk to walk through files and collect metadata
     # on each file
     # symlinks can resolve to missing files (e.g. unmounted volume)
@@ -142,10 +154,11 @@ def process_files(files=[], fp = sys.stdout, noprogress=False, quiet=False, verb
             for root, dirname, filenames in os.walk(f):
                 for fname in filenames:
                     fpath = Path(f"{root}/{fname}").resolve()
-                    process_file(fpath,fp,args)
+                    process_file(fpath, fp, args)
         else:
             fpath = Path(f).resolve()
-            process_file(fpath,fp,args)
+            process_file(fpath, fp, args)
+
 
 # sets metadata based on args then returns dict with all metadata on the file
 def get_set_metadata(fname, args={}):
@@ -156,7 +169,7 @@ def get_set_metadata(fname, args={}):
         if args.cleartags:
             md.tags.clear()
 
-       # remove tags
+        # remove tags
         if args.rmtag:
             tags = md.tags
             for t in args.rmtag:
@@ -168,18 +181,37 @@ def get_set_metadata(fname, args={}):
             new_tags = []
             new_tags += args.addtag
             old_tags = md.tags
-            tags_different = sorted(new_tags) != sorted(old_tags) or args.force
+            tags_different = (sorted(new_tags) != sorted(old_tags)) or args.force
             if tags_different:
                 md.tags.update(*new_tags)
+
+        # finder comments
+        if args.clearfc:
+            md.finder_comment = ""
+
+        if args.addfc:
+            for fc in args.addfc:
+                md.finder_comment += fc
+            
+        if args.setfc:
+            old_comment = md.finder_comment
+            if (old_comment != args.setfc) or args.force:
+                md.finder_comment = args.setfc
 
         tags = list(md.tags)
         fc = md.finder_comment
         dldate = md.download_date
         dldate = str(dldate) if dldate is not None else None
         where_from = md.where_from
-        data = {"file": str(fname), "tags": tags, "fc": fc, "dldate": dldate, "where_from": where_from}
+        data = {
+            "file": str(fname),
+            "tags": tags,
+            "fc": fc,
+            "dldate": dldate,
+            "where_from": where_from,
+        }
     except (IOError, OSError) as e:
-        return(onError(e))
+        return onError(e)
     return data
 
 
@@ -188,26 +220,26 @@ def write_json_data(fp, data):
 
 
 def write_text_data(fp, data):
-        file = data["file"]
+    file = data["file"]
 
-        fc = data["fc"]
-        fc = fc if fc is not None else ""
+    fc = data["fc"]
+    fc = fc if fc is not None else ""
 
-        dldate = data["dldate"]
-        dldate = dldate if dldate is not None else ""
+    dldate = data["dldate"]
+    dldate = dldate if dldate is not None else ""
 
-        where_from = data["where_from"]
-        where_from = where_from if where_from is not None else ""
+    where_from = data["where_from"]
+    where_from = where_from if where_from is not None else ""
 
-        tags = data["tags"]
-        tags = tags if len(tags) is not 0 else ""
+    tags = data["tags"]
+    tags = tags if len(tags) is not 0 else ""
 
-        print(f"file: {file}", file=fp)
-        print(f"tags: {tags}", file=fp)
-        print(f"Finder comment: {fc}", file=fp)
-        print(f"Download date: {dldate}", file=fp)
-        print(f"Where from: {where_from}", file=fp)
-        print("\n", file=fp)
+    print(f"file: {file}", file=fp)
+    print(f"tags: {tags}", file=fp)
+    print(f"Finder comment: {fc}", file=fp)
+    print(f"Download date: {dldate}", file=fp)
+    print(f"Where from: {where_from}", file=fp)
+    print("\n", file=fp)
 
 
 def main():
@@ -218,7 +250,7 @@ def main():
         fp = sys.stdout
         if output_file is not None:
             try:
-                fp = open(output_file,'w+')
+                fp = open(output_file, "w+")
             except:
                 print(f"Error opening file {output_file} for writing")
                 sys.quit(2)
@@ -228,13 +260,13 @@ def main():
             noprogress=args.noprogress,
             quiet=args.quiet,
             verbose=args.verbose,
-            args = args,
-            fp = fp,
+            args=args,
+            fp=fp,
         )
 
         if output_file is not None:
             fp.close()
-            
+
 
 if __name__ == "__main__":
     main()
