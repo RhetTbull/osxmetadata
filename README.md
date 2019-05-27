@@ -23,7 +23,7 @@ Command Line Usage
 
 Installs command line tool called osxmetadata.  This is not full replacement for ```mdls``` and ```xattr``` commands but provides a simple interface to view/edit metadata supported by osxmetadata
 
-Currently, only supports reading/writing tags and export to text or JSON.  I will add additional metadata as well as import from JSON in the future.
+Currently, only supports reading/writing tags and Finder comments and export to text or JSON.  I will add additional metadata as well as import from JSON in the future.
 
 ```
 usage: osxmetadata [-h] [-v] [-j] [-q] [--noprogress] [--force] [-o OUTFILE]
@@ -47,11 +47,13 @@ optional arguments:
   -o OUTFILE, --outfile OUTFILE
                         Name of output file. If not specified, output goes to
                         STDOUT
-  --addtag ADDTAG       add tags/keywords for file
+  --addtag ADDTAG       add tag/keyword for file. To add multiple tags, use
+                        multiple --addtag otions. e.g. --addtag foo --addtag
+                        bar
   --cleartags           remove all tags from file
   --rmtag RMTAG         remove tag from file
-  --setfc SETFC         set finder comment
-  --clearfc             clear finder comment
+  --setfc SETFC         set Finder comment
+  --clearfc             clear Finder comment
   --addfc ADDFC         append a Finder comment, preserving existing comment
 ```
 
