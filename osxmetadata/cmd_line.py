@@ -7,7 +7,6 @@ import os.path
 import os
 from pathlib import Path
 import json
-from tqdm import tqdm
 
 # TODO: add md5 option
 # TODO: how is metadata on symlink handled?
@@ -116,40 +115,25 @@ def process_arguments():
 
     return args
 
+def process_file(fpath,fp,args={}):
+    try:
+        data = get_set_metadata(fpath,args)
+        if args.json:
+            write_json_data(fp,data)
+        else:
+            write_text_data(fp,data)
 
-# simple progress spinner for use while
-# analyzing file tree
-# rolled my own to avoid importing another library
-# using tqdm for progress bar but it lacks a spinner
-# TODO: this could use an async/threaded implementation to slow it down
-# but good enough for now
-def create_progress_spinner():
-    def spinning_cursor():
-        while True:
-            for cursor in "|/-\\":
-                yield cursor
+    except (IOError, OSError, ValueError):
+        # data[str(fpath)] = None
+        print(f"warning: error processing metadata for {fpath}", file=sys.stderr)
 
-    spinner = spinning_cursor()
-    return spinner
-
-
-def update_progress_spinner(spinner):
-    sys.stderr.write(next(spinner))
-    sys.stderr.flush()
-    sys.stderr.write("\b")
-
-
-def process_files(files=[], noprogress=False, quiet=False, verbose=False, args={}):
+def process_files(files=[], fp = sys.stdout, noprogress=False, quiet=False, verbose=False, args={}):
     # use os.walk to walk through files and collect metadata
     # on each file
     # symlinks can resolve to missing files (e.g. unmounted volume)
     # so catch those errors and set data to None
     # osxmetadata raises ValueError if specified file is missing
 
-    data = {}
-    paths = []
-    spinner = create_progress_spinner()
-    # collect list of file paths to process
     if not quiet:
         print("Collecting files to process", file=sys.stderr)
 
@@ -157,35 +141,11 @@ def process_files(files=[], noprogress=False, quiet=False, verbose=False, args={
         if os.path.isdir(f):
             for root, dirname, filenames in os.walk(f):
                 for fname in filenames:
-                    if not noprogress:
-                        update_progress_spinner(spinner)
                     fpath = Path(f"{root}/{fname}").resolve()
-                    paths.append(fpath)
+                    process_file(fpath,fp,args)
         else:
-            if not noprogress:
-                update_progress_spinner(spinner)
             fpath = Path(f).resolve()
-            paths.append(fpath)
-
-    # process each file path collected above
-    # showprogress = True/False to enable/disable progress bar
-    numfiles = len(paths)
-    if numfiles < 10:
-        noprogress = True
-
-    if not quiet:
-        print(f"processing {numfiles} files", file=sys.stderr)
-    for fpath in tqdm(iterable=paths, disable=noprogress):
-        try:
-            if verbose:
-                tqdm.write(f"processing file {fpath}", file=sys.stderr)
-            data[str(fpath)] = get_set_metadata(fpath,args)
-        except (IOError, OSError, ValueError):
-            # data[str(fpath)] = None
-            tqdm.write(f"warning: error processing metadata for {fpath}", file=sys.stderr)
-
-    return data
-
+            process_file(fpath,fp,args)
 
 # sets metadata based on args then returns dict with all metadata on the file
 def get_set_metadata(fname, args={}):
@@ -217,76 +177,64 @@ def get_set_metadata(fname, args={}):
         dldate = md.download_date
         dldate = str(dldate) if dldate is not None else None
         where_from = md.where_from
-        data = {"tags": tags, "fc": fc, "dldate": dldate, "where_from": where_from}
+        data = {"file": str(fname), "tags": tags, "fc": fc, "dldate": dldate, "where_from": where_from}
     except (IOError, OSError) as e:
         return(onError(e))
     return data
 
 
-def write_json_data(fname, data):
-    if fname is None:
-        print(json.dumps(data, indent=4))
-    else:
-        try:
-            fp = open(fname, "w+")
-            json.dump(data, fp, indent=4)
-            fp.close()
-        except:
-            print(f"error writing to file {fname}", file=sys.stderr)
+def write_json_data(fp, data):
+    json.dump(data, fp, indent=4)
 
 
-def write_text_data(fname, data):
-    fp = sys.stdout
-    if fname is not None:
-        try:
-            fp = open(fname, "w+")
-        except:
-            print(f"error opening file for writing {fname}", file=sys.stderr)
+def write_text_data(fp, data):
+        file = data["file"]
 
-    for key in data:
-        fc = data[key]["fc"]
+        fc = data["fc"]
         fc = fc if fc is not None else ""
 
-        dldate = data[key]["dldate"]
+        dldate = data["dldate"]
         dldate = dldate if dldate is not None else ""
 
-        where_from = data[key]["where_from"]
+        where_from = data["where_from"]
         where_from = where_from if where_from is not None else ""
 
-        tags = data[key]["tags"]
+        tags = data["tags"]
         tags = tags if len(tags) is not 0 else ""
 
-        print(f"{key}", file=fp)
+        print(f"file: {file}", file=fp)
         print(f"tags: {tags}", file=fp)
         print(f"Finder comment: {fc}", file=fp)
         print(f"Download date: {dldate}", file=fp)
         print(f"Where from: {where_from}", file=fp)
         print("\n", file=fp)
 
-    if fname is not None:
-        fp.close()
-
 
 def main():
     args = process_arguments()
 
     if args.files:
-        data = process_files(
+        output_file = args.outfile if args.outfile is not None else None
+        fp = sys.stdout
+        if output_file is not None:
+            try:
+                fp = open(output_file,'w+')
+            except:
+                print(f"Error opening file {output_file} for writing")
+                sys.quit(2)
+
+        process_files(
             files=args.files,
             noprogress=args.noprogress,
             quiet=args.quiet,
             verbose=args.verbose,
             args = args,
+            fp = fp,
         )
 
-        output_file = args.outfile if args.outfile is not None else None
-        
-        if data:
-            if args.json:
-                write_json_data(output_file, data)
-            else:
-                write_text_data(output_file, data)
-
+        if output_file is not None:
+            fp.close()
+            
 
 if __name__ == "__main__":
     main()
