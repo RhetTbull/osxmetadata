@@ -26,7 +26,7 @@ Installs command line tool called osxmetadata.  This is not full replacement for
 Currently, only supports reading/writing tags and Finder comments and export to text or JSON.  I will add additional metadata as well as import from JSON in the future.
 
 ```
-usage: osxmetadata [-h] [-v] [-j] [-q] [--noprogress] [--force] [-o OUTFILE]
+usage: osxmetadata [-h] [-v] [-j] [-q] [--force] [-o OUTFILE]
                    [--addtag ADDTAG] [--cleartags] [--rmtag RMTAG]
                    [--setfc SETFC] [--clearfc] [--addfc ADDFC]
                    [files [files ...]]
@@ -42,7 +42,6 @@ optional arguments:
   -j, --json            Output to JSON, optionally provide output file name:
                         --file=file.json
   -q, --quiet           Be extra quiet when running.
-  --noprogress          Disable the progress bar while running
   --force               Force new metadata to be written even if unchanged
   -o OUTFILE, --outfile OUTFILE
                         Name of output file. If not specified, output goes to
