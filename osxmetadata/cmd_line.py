@@ -69,12 +69,12 @@ def process_arguments():
         help="Be extra quiet when running.",
     )
 
-    parser.add_argument(
-        "--noprogress",
-        action="store_true",
-        default=False,
-        help="Disable the progress bar while running",
-    )
+    # parser.add_argument(
+    #     "--noprogress",
+    #     action="store_true",
+    #     default=False,
+    #     help="Disable the progress bar while running",
+    # )
 
     parser.add_argument(
         "--force",
@@ -148,16 +148,13 @@ def process_file(fpath, fp, args={}):
 
 
 def process_files(
-    files=[], fp=sys.stdout, noprogress=False, quiet=False, verbose=False, args={}
+    files=[], fp=sys.stdout, quiet=False, verbose=False, args={}
 ):
     # use os.walk to walk through files and collect metadata
     # on each file
     # symlinks can resolve to missing files (e.g. unmounted volume)
     # so catch those errors and set data to None
     # osxmetadata raises ValueError if specified file is missing
-
-    if not quiet:
-        print("Collecting files to process", file=sys.stderr)
 
     for f in files:
         if os.path.isdir(f):
@@ -269,7 +266,6 @@ def main():
 
         process_files(
             files=args.files,
-            noprogress=args.noprogress,
             quiet=args.quiet,
             verbose=args.verbose,
             args=args,
