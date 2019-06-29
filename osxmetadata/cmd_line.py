@@ -58,7 +58,7 @@ def process_arguments():
         "--json",
         action="store_true",
         default=False,
-        help="Output to JSON, optionally provide output file name: --file=file.json",
+        help="Output to JSON, optionally provide output file name: --outfile=file.json",
     )
 
     parser.add_argument(

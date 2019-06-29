@@ -23,7 +23,9 @@ Command Line Usage
 
 Installs command line tool called osxmetadata.  This is not full replacement for ```mdls``` and ```xattr``` commands but provides a simple interface to view/edit metadata supported by osxmetadata
 
-Currently, only supports reading/writing tags and Finder comments and export to text or JSON.  I will add additional metadata as well as import from JSON in the future.
+Currently, only supports reading/writing tags and Finder comments and export to text or JSON.  I plan to add additional metadata as well as import from JSON in the future.
+
+If you only care about the command line tool, I recommend installing with [pipx](https://github.com/pipxproject/pipx)
 
 ```
 usage: osxmetadata [-h] [-v] [-j] [-q] [--force] [-o OUTFILE]
@@ -40,7 +42,7 @@ optional arguments:
   -h, --help            Show this help message
   -v, --verbose         Print verbose output during processing
   -j, --json            Output to JSON, optionally provide output file name:
-                        --file=file.json
+                        --outfile=file.json
   -q, --quiet           Be extra quiet when running.
   --force               Force new metadata to be written even if unchanged
   -o OUTFILE, --outfile OUTFILE

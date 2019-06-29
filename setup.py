@@ -38,7 +38,7 @@ with open(path.join(this_directory, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="osxmetadata",
-    version="0.96.0",
+    version="0.96.1",
     description="Read and write meta data, such as tags/keywords, on Mac OS X files",
     long_description=long_description,
     long_description_content_type="text/markdown",
