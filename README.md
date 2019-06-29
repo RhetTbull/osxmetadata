@@ -32,7 +32,7 @@ Currently, only supports reading/writing tags and Finder comments and export to 
 If you only care about the command line tool, I recommend installing with [pipx](https://github.com/pipxproject/pipx)
 
 ```
-usage: osxmetadata [-h] [-v] [-j] [-q] [--force] [-o OUTFILE]
+usage: osxmetadata [-h] [-v] [-j] [-q] [--force] [-o OUTFILE] [-r RESTORE]
                    [--addtag ADDTAG] [--cleartags] [--rmtag RMTAG]
                    [--setfc SETFC] [--clearfc] [--addfc ADDFC]
                    [files [files ...]]
@@ -46,12 +46,21 @@ optional arguments:
   -h, --help            Show this help message
   -v, --verbose         Print verbose output during processing
   -j, --json            Output to JSON, optionally provide output file name:
-                        --outfile=file.json
+                        --outfile=file.json NOTE: if processing multiple files
+                        each JSON object is written to a new line as a
+                        separate object (ie. not a list of objects)
   -q, --quiet           Be extra quiet when running.
   --force               Force new metadata to be written even if unchanged
   -o OUTFILE, --outfile OUTFILE
                         Name of output file. If not specified, output goes to
                         STDOUT
+  -r RESTORE, --restore RESTORE
+                        Restore all metadata by reading from JSON file RESTORE
+                        (previously created with --json --outfile=RESTORE).
+                        Will overwrite all existing metadata with the metadata
+                        specified in the restore file. NOTE: JSON file
+                        expected to have one object per line as written by
+                        --json
   --addtag ADDTAG       add tag/keyword for file. To add multiple tags, use
                         multiple --addtag otions. e.g. --addtag foo --addtag
                         bar
