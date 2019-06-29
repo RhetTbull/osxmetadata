@@ -27,7 +27,7 @@ Command Line Usage
 
 Installs command line tool called osxmetadata.  This is not full replacement for ```mdls``` and ```xattr``` commands but provides a simple interface to view/edit metadata supported by osxmetadata
 
-Currently, only supports reading/writing tags and Finder comments and export to text or JSON.  I plan to add additional metadata as well as import from JSON in the future.
+Currently, only supports reading/writing tags and Finder comments and export to text or JSON.  Can import metadata from a JSON file to restore tags & Finder comments.  I plan to add additional metadata in the future.  My use case for import/export to JSON is to backup metadata for use with cloud services such as [backblaze](https://www.backblaze.com) that do not preserve metadata stored in extended attributes.  By exporting all metadata to a JSON file which backblaze etc. will backup, you can restore metadata if you ever need to restore files from backup.
 
 If you only care about the command line tool, I recommend installing with [pipx](https://github.com/pipxproject/pipx)
 
