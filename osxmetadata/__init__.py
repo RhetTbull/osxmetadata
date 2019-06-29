@@ -18,7 +18,7 @@ from . import _applescript
 # TODO: What to do about colors
 # TODO: Add ability to remove key instead of just clear contents
 # TODO: check what happens if OSXMetaData.__init__ called with invalid file--should result in error but saw one case where it didn't
-
+# TODO: cleartags does not always clear colors--this is a new behavior, did Mac OS change something in implementation of colors?
 
 # what to import
 __all__ = ["OSXMetaData"]

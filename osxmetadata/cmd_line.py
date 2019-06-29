@@ -58,7 +58,8 @@ def process_arguments():
         "--json",
         action="store_true",
         default=False,
-        help="Output to JSON, optionally provide output file name: --outfile=file.json",
+        help="Output to JSON, optionally provide output file name: --outfile=file.json  "
+        + "NOTE: if processing multiple files each JSON object is written to a new line as a separate object (ie. not a list of objects)",
     )
 
     parser.add_argument(
@@ -87,6 +88,14 @@ def process_arguments():
         "-o",
         "--outfile",
         help="Name of output file.  If not specified, output goes to STDOUT",
+    )
+
+    parser.add_argument(
+        "-r",
+        "--restore",
+        help="Restore all metadata by reading from JSON file RESTORE (previously created with --json --outfile=RESTORE). "
+        + "Will overwrite all existing metadata with the metadata specified in the restore file. "
+        + "NOTE: JSON file expected to have one object per line as written by --json",
     )
 
     parser.add_argument(
@@ -147,9 +156,7 @@ def process_file(fpath, fp, args={}):
         print(f"warning: error processing metadata for {fpath}", file=sys.stderr)
 
 
-def process_files(
-    files=[], fp=sys.stdout, quiet=False, verbose=False, args={}
-):
+def process_files(files=[], fp=sys.stdout, quiet=False, verbose=False, args={}):
     # use os.walk to walk through files and collect metadata
     # on each file
     # symlinks can resolve to missing files (e.g. unmounted volume)
@@ -224,8 +231,44 @@ def get_set_metadata(fname, args={}):
     return data
 
 
+# sets metadata based on data dict as returned by get_set_metadata or restore_from_json
+# clears any existing metadata
+def set_metadata(data, quiet=False):
+    try:
+        md = osxmetadata.OSXMetaData(data["file"])
+
+        md.tags.clear()
+        if data["tags"]:
+            if not quiet:
+                print(f"Tags: {data['tags']}")
+            md.tags.update(*data["tags"])
+
+        md.finder_comment = ""
+        if data["fc"]:
+            if not quiet:
+                print(f"Finder comment: {data['fc']}")
+            md.finder_comment = data["fc"]
+
+        # tags = list(md.tags)
+        # fc = md.finder_comment
+        # dldate = md.download_date
+        # dldate = str(dldate) if dldate is not None else None
+        # where_from = md.where_from
+        # data = {
+        #     "file": str(fname),
+        #     "tags": tags,
+        #     "fc": fc,
+        #     "dldate": dldate,
+        #     "where_from": where_from,
+        # }
+    except (IOError, OSError) as e:
+        return onError(e)
+    return data
+
+
 def write_json_data(fp, data):
-    json.dump(data, fp, indent=4)
+    json.dump(data, fp)
+    fp.write("\n")
 
 
 def write_text_data(fp, data):
@@ -251,25 +294,41 @@ def write_text_data(fp, data):
     print("\n", file=fp)
 
 
+def restore_from_json(json_file, quiet=False):
+    fp = None
+    try:
+        fp = open(json_file, mode="r")
+    except:
+        print(f"Error opening file {json_file} for reading")
+        sys.exit(2)
+
+    for line in fp:
+        data = json.loads(line)
+        if not quiet:
+            print(f"Restoring metadata for {data['file']}")
+        set_metadata(data, quiet)
+
+
 def main():
     args = process_arguments()
 
-    if args.files:
+    if args.restore:
+        if not args.quiet:
+            print(f"Restoring metadata from file {args.restore}")
+        restore_from_json(args.restore, args.quiet)
+
+    elif args.files:
         output_file = args.outfile if args.outfile is not None else None
         fp = sys.stdout
         if output_file is not None:
             try:
-                fp = open(output_file, "w+")
+                fp = open(output_file, mode="w+")
             except:
                 print(f"Error opening file {output_file} for writing")
                 sys.exit(2)
 
         process_files(
-            files=args.files,
-            quiet=args.quiet,
-            verbose=args.verbose,
-            args=args,
-            fp=fp,
+            files=args.files, quiet=args.quiet, verbose=args.verbose, args=args, fp=fp
         )
 
         if output_file is not None:
