@@ -11,6 +11,12 @@ import json
 # TODO: add md5 option
 # TODO: how is metadata on symlink handled?
 # should symlink be resolved before gathering metadata?
+# currently, symlinks are resolved before handling metadata but not sure this is the right behavior
+# in 10.13.6: synlinks appear to inherit tags but not Finder Comments:
+#   e.g. changes to tags in a file changes tags in the symlink but symlink can have it's own finder comment
+#   Finder aliases inherit neither
+# TODO: add selective restore (e.g only restore files matching command line path)
+#   e.g osxmetadata -r meta.json *.pdf
 
 # curstom error handler
 def onError(e):
