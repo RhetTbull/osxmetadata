@@ -44,6 +44,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            Show this help message
+  --version             Print version number
   -v, --verbose         Print verbose output during processing
   -j, --json            Output to JSON, optionally provide output file name:
                         --outfile=file.json NOTE: if processing multiple files
