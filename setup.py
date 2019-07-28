@@ -36,9 +36,12 @@ this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
+# import __version__ into setup.py namespace
+exec(open("./osxmetadata/version.py").read())
+
 setup(
     name="osxmetadata",
-    version="0.96.6",
+    version=__version__,
     description="Read and write meta data, such as tags/keywords, on Mac OS X files",
     long_description=long_description,
     long_description_content_type="text/markdown",

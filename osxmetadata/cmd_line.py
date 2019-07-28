@@ -8,6 +8,8 @@ import os
 from pathlib import Path
 import json
 
+from . import version
+
 # TODO: add md5 option
 # TODO: how is metadata on symlink handled?
 # should symlink be resolved before gathering metadata?
@@ -52,6 +54,11 @@ def process_arguments():
         default=False,
         help="Show this help message",
     )
+
+    parser.add_argument(
+        "--version", action="store_true", default=False, help="Print version number"
+    )
+
     parser.add_argument(
         "-v",
         "--verbose",
@@ -59,6 +66,7 @@ def process_arguments():
         default=False,
         help="Print verbose output during processing",
     )
+
     parser.add_argument(
         "-j",
         "--json",
@@ -318,7 +326,11 @@ def restore_from_json(json_file, quiet=False):
 def main():
     args = process_arguments()
 
-    if args.restore:
+    if args.version:
+        print(f"Version {version.__version__}")
+        exit
+
+    elif args.restore:
         if not args.quiet:
             print(f"Restoring metadata from file {args.restore}")
         restore_from_json(args.restore, args.quiet)
