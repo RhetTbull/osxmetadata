@@ -38,13 +38,13 @@ with open(path.join(this_directory, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="osxmetadata",
-    version="0.96.4",
+    version="0.96.5",
     description="Read and write meta data, such as tags/keywords, on Mac OS X files",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Rhet Turnbull",
     author_email="rturnbull+git@gmail.com",
-    url="https://github.com/RhetTbull/",
+    url="https://github.com/RhetTbull/osxmetadata",
     project_urls={"GitHub": "https://github.com/RhetTbull/osxmetadata"},
     download_url="https://github.com/RhetTbull/osxmetadata",
     packages=["osxmetadata"],
