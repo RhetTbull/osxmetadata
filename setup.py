@@ -1,47 +1,27 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
-# setup.py script for osxmetdata
-#
-# Copyright (c) 2018 Rhet Turnbull, rturnbull+git@gmail.com
-# All rights reserved.
-#
-# Permission is hereby granted, free of charge, to any person
-# obtaining a copy of this software and associated documentation files
-# (the "Software"), to deal in the Software without restriction,
-# including without limitation the rights to use, copy, modify, merge,
-# publish, distribute, sublicense, and/or sell copies of the Software,
-# and to permit persons to whom the Software is furnished to do so,
-# subject to the following conditions:
 
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
-# BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-# ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
-# from distutils.core import setup
 from setuptools import setup
+import sys
+import os.path
+
+# uses f-strings so check for python >= 3.6
+if sys.version_info < (3, 6, 0):
+    sys.stderr.write("ERROR: You need Python 3.6 or later to use osxmetadata.\n")
+    exit(1)
+
+# we'll import stuff from the source tree, let's ensure is on the sys path
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+
+from osxmetadata.version import __version__ as version
 
 # read the contents of README file
-from os import path
-
-this_directory = path.abspath(path.dirname(__file__))
-with open(path.join(this_directory, "README.md"), encoding="utf-8") as f:
+this_directory = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
-
-# import __version__ into setup.py namespace
-exec(open("./osxmetadata/version.py").read())
 
 setup(
     name="osxmetadata",
-    version=__version__,
+    version=version,
     description="Read and write meta data, such as tags/keywords, on Mac OS X files",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -58,9 +38,10 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: MacOS :: MacOS X",
-        "Programming Language :: Python",
+        "Programming Language :: Python :: 3.6",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     install_requires=["xattr", "pyobjc"],
+    python_requires=">=3.6",
     entry_points={"console_scripts": ["osxmetadata=osxmetadata.cmd_line:main"]},
 )
