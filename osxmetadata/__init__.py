@@ -75,9 +75,8 @@ class _Tags:
         self.__load_tags()
 
     def __tag_split(self, tag):
-        """
-        Extracts the color information from a Finder tag.
-        """
+        # Extracts the color information from a Finder tag.
+
         parts = tag.rsplit("\n", 1)
         if len(parts) == 1:
             return parts[0], 0
@@ -175,9 +174,8 @@ class _Tags:
         return self
 
     def __write_tags(self, *tags):
-        """
-        Overwrites the existing tags with the iterable of tags provided.
-        """
+        # Overwrites the existing tags with the iterable of tags provided.
+
         if not all(isinstance(tag, str) for tag in tags):
             raise TypeError("Tags must be strings")
         tag_plist = dumps(list(map(self.__tag_normalize, tags)), fmt=FMT_BINARY)
@@ -217,8 +215,9 @@ class _Tags:
 
 
 class OSXMetaData:
+    """Create an OSXMetaData object to access file metadata"""
     def __init__(self, fname):
-
+        """Create an OSXMetaData object to access file metadata"""
         self.__fname = Path(fname)
         if not os.path.exists(self.__fname):
             raise (ValueError("file does not exist: ", fname))
@@ -256,13 +255,10 @@ class OSXMetaData:
 
         # TODO: Lot's of repetitive code here
         # need to read these dynamically
-        """ Get Finder comment """
         self.__load_findercomment()
 
-        """ Get Where From (for downloaded files) """
         self.__load_download_wherefrom()
 
-        """ Get Download Date (for downloaded files) """
         self.__load_download_date()
 
     # @property
@@ -295,16 +291,17 @@ class OSXMetaData:
 
     @property
     def finder_comment(self):
+        """ Get/set the Finder comment (or None) associated with the file.
+            Functions as a string: e.g. finder_comment += 'my comment'. """
         self.__load_findercomment()
         return self.__findercomment
 
     @finder_comment.setter
     def finder_comment(self, fc):
-        """
-        TODO: this creates a temporary script file which gets runs by osascript every time
-              not very efficient.  Perhaps use py-applescript in the future but that increases
-              dependencies + PyObjC
-        """
+        # TODO: this creates a temporary script file which gets runs by osascript every time
+        #       not very efficient.  Perhaps use py-applescript in the future but that increases
+        #       dependencies + PyObjC
+
         if fc is None:
             fc = ""
         elif not isinstance(fc, str):
@@ -331,6 +328,7 @@ class OSXMetaData:
 
     @property
     def where_from(self):
+        """ Get/set list of URL(s) where file was downloaded from. """
         self.__load_download_wherefrom()
         return self.__wherefrom
 
@@ -369,6 +367,7 @@ class OSXMetaData:
 
     @property
     def download_date(self):
+        """ Get/set date file was downloaded, as a datetime.datetime object. """
         self.__load_download_date()
         return self.__downloaddate
 
@@ -385,4 +384,5 @@ class OSXMetaData:
 
     @property
     def name(self):
+        """ The file name """
         return self.__fname.resolve().as_posix()
