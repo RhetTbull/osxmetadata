@@ -12,8 +12,8 @@ import subprocess
 import datetime
 from . import _applescript
 
-#DEBUG
-from loguru import logger
+# DEBUG
+# from loguru import logger
 
 # this was inspired by osx-tags by "Ben S / scooby" and is published under
 # the same MIT license. See: https://github.com/scooby/osx-tags
@@ -353,17 +353,19 @@ class OSXMetaData:
 
     def __load_download_date(self):
         try:
-            logger.debug(self.__fname)
+            # logger.debug(self.__fname)
             self.__ddvalue = self.__attrs[_DOWNLOAD_DATE]
-            logger.debug(self.__ddvalue)
+            # logger.debug(self.__ddvalue)
             # load the binary plist value
             # returns an array with a single datetime.datetime object
             self.__downloaddate = loads(self.__ddvalue)[0]
-            logger.debug(self.__downloaddate)
+            # logger.debug(self.__downloaddate)
         except KeyError:
             self.__downloaddate = None
         except:
-            logger.debug("Not a KeyError")
+            pass
+            # logger.debug("Not a KeyError")
+            # TODO: is this needed?
 
     @property
     def download_date(self):
