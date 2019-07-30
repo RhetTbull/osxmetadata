@@ -11,6 +11,9 @@ import tempfile
 import subprocess
 import datetime
 from . import _applescript
+from . import version
+
+__version__ = version.__version__
 
 # DEBUG
 # from loguru import logger

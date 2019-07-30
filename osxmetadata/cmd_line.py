@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import json
 
-from osxmetadata.version import _version_
+from osxmetadata.version import __version__
 
 # TODO: add md5 option
 # TODO: how is metadata on symlink handled?
@@ -327,7 +327,7 @@ def main():
     args = process_arguments()
 
     if args.version:
-        print(f"Version {_version_}")
+        print(f"Version {__version__}")
         exit() 
 
     if args.restore:

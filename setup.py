@@ -12,7 +12,7 @@ if sys.version_info < (3, 6, 0):
 # we'll import stuff from the source tree, let's ensure is on the sys path
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 
-from osxmetadata.version import _version_ as version
+from osxmetadata.version import __version__ as version
 
 # read the contents of README file
 this_directory = os.path.abspath(os.path.dirname(__file__))
