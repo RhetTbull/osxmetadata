@@ -42,6 +42,7 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     install_requires=["xattr", "pyobjc"],
+    setup_requires=["xattr", "pyobjc"],
     python_requires=">=3.6",
     entry_points={"console_scripts": ["osxmetadata=osxmetadata.cmd_line:main"]},
 )
