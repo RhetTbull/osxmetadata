@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 # TODO: This fails if xattr and pyobjc not already installed
 # for now, need to hard code version in both setup.py and osxmetadata/version.py
 # from osxmetadata.version import __version__ as version
-version = "0.96.87"
+version = "0.96.88"
 
 # read the contents of README file
 this_directory = os.path.abspath(os.path.dirname(__file__))
