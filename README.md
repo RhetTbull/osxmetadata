@@ -8,7 +8,7 @@ osxmetadata [Homepage](https://github.com/RhetTbull/osxmetadata)
 What is osxmetadata?
 -----------------
 
-osxmetadata provides a simple interface to access various metadata about Mac OS X files.  Currently supported metadata includes tags/keywords, Finder comments, and download data (downloaded where from and downloaded data).  This module was inspired by [osx-tags](https://github.com/scooby/osx-tags) by "Ben S / scooby" and extended for my needs.  It is published under the same MIT license.
+osxmetadata provides a simple interface to access various metadata about MacOS / OS X files.  Currently supported metadata includes tags/keywords, Finder comments, and download data (downloaded where from and downloaded date).  This module was inspired by [osx-tags](https://github.com/scooby/osx-tags) by "Ben S / scooby" and extended for my needs.  It is published under the same MIT license.
 
 Supported operating systems
 ---------------------------
