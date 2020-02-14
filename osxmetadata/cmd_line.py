@@ -1,13 +1,13 @@
 # /usr/bin/env python
 
-import osxmetadata
 import argparse
-import sys
-import os.path
-import os
-from pathlib import Path
 import json
+import os
+import os.path
+import sys
+from pathlib import Path
 
+import osxmetadata
 from osxmetadata.version import __version__
 
 # TODO: add md5 option
@@ -328,7 +328,7 @@ def main():
 
     if args.version:
         print(f"Version {__version__}")
-        exit() 
+        exit()
 
     if args.restore:
         if not args.quiet:

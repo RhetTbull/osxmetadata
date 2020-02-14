@@ -1,22 +1,23 @@
 #!/usr/bin/env python
 
-from plistlib import loads, dumps, FMT_BINARY
-from pathlib import Path
-import pprint
-from xattr import xattr
+import datetime
 import os
 import os.path
+import pathlib
+import plistlib
+import pprint
+import subprocess
 import sys
 import tempfile
-import subprocess
-import datetime
-from . import _applescript
-from . import version
+
+from plistlib import FMT_BINARY
+
+from xattr import xattr
+
+from . import _applescript, version
 
 __version__ = version.__version__
 
-# DEBUG
-# from loguru import logger
 
 # this was inspired by osx-tags by "Ben S / scooby" and is published under
 # the same MIT license. See: https://github.com/scooby/osx-tags
@@ -74,10 +75,10 @@ def _onError(e):
 
 class _Tags:
     def __init__(self, xa: xattr):
-        self.__attrs = xa
-        self.__load_tags()
+        self._attrs = xa
+        self._load_tags()
 
-    def __tag_split(self, tag):
+    def _tag_split(self, tag):
         # Extracts the color information from a Finder tag.
 
         parts = tag.rsplit("\n", 1)
@@ -90,25 +91,25 @@ class _Tags:
         else:
             return parts[0], int(parts[1])
 
-    def __load_tags(self):
-        self.__tags = {}
+    def _load_tags(self):
+        self._tags = {}
         try:
-            self.__tagvalues = self.__attrs[_TAGS]
+            self.__tagvalues = self._attrs[_TAGS]
             # load the binary plist value
-            self.__tagvalues = loads(self.__tagvalues)
+            self.__tagvalues = plistlib.loads(self.__tagvalues)
             for x in self.__tagvalues:
-                (tag, color) = self.__tag_split(x)
-                self.__tags[tag] = color
-                # self.__tags = [self.__tag_strip_color(x) for x in self.__tagvalues]
+                (tag, color) = self._tag_split(x)
+                self._tags[tag] = color
+                # self._tags = [self.__tag_strip_color(x) for x in self.__tagvalues]
         except KeyError:
-            self.__tags = None
-        if self.__tags:
-            self.__tag_set = set(self.__tags.keys())
+            self._tags = None
+        if self._tags:
+            self.__tag_set = set(self._tags.keys())
         else:
             self.__tag_set = set([])
 
     def __iter__(self):
-        self.__load_tags()
+        self._load_tags()
         self.__tag_list = list(self.__tag_set)
         self.__tag_count = len(self.__tag_list)
         self.__tag_counter = 0
@@ -123,68 +124,68 @@ class _Tags:
             raise StopIteration
 
     def __len__(self):
-        self.__load_tags()
+        self._load_tags()
         return len(self.__tag_set)
 
     def __repr__(self):
-        self.__load_tags()
+        self._load_tags()
         return repr(self.__tag_set)
 
     def __str__(self):
-        self.__load_tags()
+        self._load_tags()
         return ", ".join(self.__tag_set)
 
     def add(self, tag):
         if not isinstance(tag, str):
             raise TypeError("Tags must be strings")
-        self.__load_tags()
-        tags = set(map(self.__tag_normalize, self.__tag_set))
-        tags.add(self.__tag_normalize(tag))
-        self.__write_tags(*tags)
+        self._load_tags()
+        tags = set(map(self._tag_normalize, self.__tag_set))
+        tags.add(self._tag_normalize(tag))
+        self._write_tags(*tags)
 
     def update(self, *tags):
         if not all(isinstance(tag, str) for tag in tags):
             raise TypeError("Tags must be strings")
-        self.__load_tags()
-        old_tags = set(map(self.__tag_normalize, self.__tag_set))
-        new_tags = old_tags.union(set(map(self.__tag_normalize, tags)))
-        self.__write_tags(*new_tags)
+        self._load_tags()
+        old_tags = set(map(self._tag_normalize, self.__tag_set))
+        new_tags = old_tags.union(set(map(self._tag_normalize, tags)))
+        self._write_tags(*new_tags)
 
     def clear(self):
         try:
-            self.__attrs.remove(_TAGS)
+            self._attrs.remove(_TAGS)
         except (IOError, OSError):
             pass
 
     def remove(self, tag):
-        self.__load_tags()
+        self._load_tags()
         if not isinstance(tag, str):
             raise TypeError("Tags must be strings")
-        tags = set(map(self.__tag_normalize, self.__tag_set))
-        tags.remove(self.__tag_normalize(tag))
-        self.__write_tags(*tags)
+        tags = set(map(self._tag_normalize, self.__tag_set))
+        tags.remove(self._tag_normalize(tag))
+        self._write_tags(*tags)
 
     def discard(self, tag):
-        self.__load_tags()
+        self._load_tags()
         if not isinstance(tag, str):
             raise TypeError("Tags must be strings")
-        tags = set(map(self.__tag_normalize, self.__tag_set))
-        tags.discard(self.__tag_normalize(tag))
-        self.__write_tags(*tags)
+        tags = set(map(self._tag_normalize, self.__tag_set))
+        tags.discard(self._tag_normalize(tag))
+        self._write_tags(*tags)
 
     def __iadd__(self, tag):
         self.add(tag)
         return self
 
-    def __write_tags(self, *tags):
+    def _write_tags(self, *tags):
         # Overwrites the existing tags with the iterable of tags provided.
 
         if not all(isinstance(tag, str) for tag in tags):
             raise TypeError("Tags must be strings")
-        tag_plist = dumps(list(map(self.__tag_normalize, tags)), fmt=FMT_BINARY)
-        self.__attrs.set(_TAGS, tag_plist)
+        tag_plist = plistlib.dumps(list(map(self._tag_normalize, tags)), fmt=FMT_BINARY)
+        self._attrs.set(_TAGS, tag_plist)
 
-    def __tag_colored(self, tag, color):
+    def _tag_colored(self, tag, color):
         """
         Sets the color of a tag.
 
@@ -195,22 +196,22 @@ class _Tags:
         Return:
         (str) the tag with encoded color.
         """
-        return "{}\n{}".format(self.__tag_nocolor(tag), color)
+        return "{}\n{}".format(self._tag_nocolor(tag), color)
 
-    def __tag_normalize(self, tag):
+    def _tag_normalize(self, tag):
         """
         Ensures a color is set if not none.
         :param tag: a possibly non-normal tag.
         :return: A colorized tag.
         """
-        tag, color = self.__tag_split(tag)
+        tag, color = self._tag_split(tag)
         if tag.title() in _COLORNAMES:
             # ignore the color passed and set proper color name
-            return self.__tag_colored(tag.title(), _COLORNAMES[tag.title()])
+            return self._tag_colored(tag.title(), _COLORNAMES[tag.title()])
         else:
-            return self.__tag_colored(tag, color)
+            return self._tag_colored(tag, color)
 
-    def __tag_nocolor(self, tag):
+    def _tag_nocolor(self, tag):
         """
         Removes the color information from a Finder tag.
         """
@@ -219,19 +220,20 @@ class _Tags:
 
 class OSXMetaData:
     """Create an OSXMetaData object to access file metadata"""
+
     def __init__(self, fname):
         """Create an OSXMetaData object to access file metadata"""
-        self.__fname = Path(fname)
-        if not os.path.exists(self.__fname):
-            raise (ValueError("file does not exist: ", fname))
+        self.__fname = pathlib.Path(fname)
+        if not self.__fname.exists():
+            raise ValueError("file does not exist: ", fname)
 
         try:
-            self.__attrs = xattr(self.__fname)
+            self._attrs = xattr(self.__fname)
         except (IOError, OSError) as e:
             quit(_onError(e))
 
         # setup applescript for writing finder comments
-        self.__scpt_set_finder_comment = _applescript.AppleScript(
+        self._scpt_set_finder_comment = _applescript.AppleScript(
             """
             on run {fname, fc}
 	            set theFile to fname
@@ -241,28 +243,21 @@ class OSXMetaData:
             """
         )
 
-        # self.__setfc_script_fh = tempfile.NamedTemporaryFile(suffix=".scpt",prefix="osxmd",mode="w",delete=False)
-        # self.__setfc_script = self.__setfc_script_fh.name
-        # fd = self.__setfc_script_fh.file
-        # fd.write(_APPLESCRIPT_SET_FINDER_COMMENT)
-        # fd.close()
-        # print("applescript = %s" % self.__setfc_script)
-
         # initialize meta data
-        self.__tags = {}
-        self.__findercomment = None
-        self.__wherefrom = []
-        self.__downloaddate = None
+        self._tags = {}
+        self._findercomment = None
+        self._wherefrom = []
+        self._downloaddate = None
 
-        self.tags = _Tags(self.__attrs)
+        self.tags = _Tags(self._attrs)
 
         # TODO: Lot's of repetitive code here
         # need to read these dynamically
-        self.__load_findercomment()
+        self._load_findercomment()
 
-        self.__load_download_wherefrom()
+        self._load_download_wherefrom()
 
-        self.__load_download_date()
+        self._load_download_date()
 
     # @property
     # def colors(self):
@@ -270,9 +265,9 @@ class OSXMetaData:
     #         do not return None (e.g. ignore tags with no color)
     #     """
     #     colors = []
-    #     if self.__tags:
-    #         for t in self.__tags.keys():
-    #             c = self.__tags[t]
+    #     if self._tags:
+    #         for t in self._tags.keys():
+    #             c = self._tags[t]
     #             if c == 0: continue
     #             colors.append(_COLORIDS[c])
     #         return colors
@@ -284,20 +279,20 @@ class OSXMetaData:
         # print("removing temp file: %s" % self.__setfc_script)
         # os.remove(self.__setfc_script)
 
-    def __load_findercomment(self):
+    def _load_findercomment(self):
         try:
-            self.__fcvalue = self.__attrs[_FINDER_COMMENT]
+            self.__fcvalue = self._attrs[_FINDER_COMMENT]
             # load the binary plist value
-            self.__findercomment = loads(self.__fcvalue)
+            self._findercomment = plistlib.loads(self.__fcvalue)
         except KeyError:
-            self.__findercomment = None
+            self._findercomment = None
 
     @property
     def finder_comment(self):
         """ Get/set the Finder comment (or None) associated with the file.
             Functions as a string: e.g. finder_comment += 'my comment'. """
-        self.__load_findercomment()
-        return self.__findercomment
+        self._load_findercomment()
+        return self._findercomment
 
     @finder_comment.setter
     def finder_comment(self, fc):
@@ -317,23 +312,23 @@ class OSXMetaData:
 
         fname = self.__fname.resolve().as_posix()
 
-        self.__scpt_set_finder_comment.run(fname, fc)
+        self._scpt_set_finder_comment.run(fname, fc)
 
-        self.__load_findercomment()
+        self._load_findercomment()
 
-    def __load_download_wherefrom(self):
+    def _load_download_wherefrom(self):
         try:
-            self.__wfvalue = self.__attrs[_WHERE_FROM]
+            self.__wfvalue = self._attrs[_WHERE_FROM]
             # load the binary plist value
-            self.__wherefrom = loads(self.__wfvalue)
+            self._wherefrom = plistlib.loads(self.__wfvalue)
         except KeyError:
-            self.__wherefrom = None
+            self._wherefrom = None
 
     @property
     def where_from(self):
         """ Get/set list of URL(s) where file was downloaded from. """
-        self.__load_download_wherefrom()
-        return self.__wherefrom
+        self._load_download_wherefrom()
+        return self._wherefrom
 
     @where_from.setter
     def where_from(self, wf):
@@ -348,21 +343,21 @@ class OSXMetaData:
                     "Where from URL limited to %d characters" % _MAX_WHEREFROM
                 )
 
-        wf_plist = dumps(wf, fmt=FMT_BINARY)
-        self.__attrs.set(_WHERE_FROM, wf_plist)
-        self.__load_download_wherefrom()
+        wf_plist = plistlib.dumps(wf, fmt=FMT_BINARY)
+        self._attrs.set(_WHERE_FROM, wf_plist)
+        self._load_download_wherefrom()
 
-    def __load_download_date(self):
+    def _load_download_date(self):
         try:
             # logger.debug(self.__fname)
-            self.__ddvalue = self.__attrs[_DOWNLOAD_DATE]
+            self.__ddvalue = self._attrs[_DOWNLOAD_DATE]
             # logger.debug(self.__ddvalue)
             # load the binary plist value
             # returns an array with a single datetime.datetime object
-            self.__downloaddate = loads(self.__ddvalue)[0]
-            # logger.debug(self.__downloaddate)
+            self._downloaddate = plistlib.loads(self.__ddvalue)[0]
+            # logger.debug(self._downloaddate)
         except KeyError:
-            self.__downloaddate = None
+            self._downloaddate = None
         except:
             pass
             # logger.debug("Not a KeyError")
@@ -371,8 +366,8 @@ class OSXMetaData:
     @property
     def download_date(self):
         """ Get/set date file was downloaded, as a datetime.datetime object. """
-        self.__load_download_date()
-        return self.__downloaddate
+        self._load_download_date()
+        return self._downloaddate
 
     @download_date.setter
     def download_date(self, dt):
@@ -381,9 +376,9 @@ class OSXMetaData:
         elif not isinstance(dt, datetime.datetime):
             raise TypeError("Download date must be a datetime object")
 
-        dt_plist = dumps([dt], fmt=FMT_BINARY)
-        self.__attrs.set(_DOWNLOAD_DATE, dt_plist)
-        self.__load_download_date()
+        dt_plist = plistlib.dumps([dt], fmt=FMT_BINARY)
+        self._attrs.set(_DOWNLOAD_DATE, dt_plist)
+        self._load_download_date()
 
     @property
     def name(self):
