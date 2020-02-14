@@ -56,11 +56,15 @@ def process_arguments():
     )
 
     parser.add_argument(
-        "--version", action="store_true", default=False, help="Print version number"
+        "-v",
+        "--version",
+        action="store_true",
+        default=False,
+        help="Print version number",
     )
 
     parser.add_argument(
-        "-v",
+        "-V",
         "--verbose",
         action="store_true",
         default=False,
