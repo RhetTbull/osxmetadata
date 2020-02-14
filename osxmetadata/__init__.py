@@ -87,6 +87,7 @@ class _Tags:
         self._load_tags()
 
     def add(self, tag):
+        """ add a tag """
         if not isinstance(tag, str):
             raise TypeError("Tags must be strings")
         self._load_tags()
@@ -95,6 +96,7 @@ class _Tags:
         self._write_tags(*tags)
 
     def update(self, *tags):
+        """ update tag list adding any new tags in *tags """
         if not all(isinstance(tag, str) for tag in tags):
             raise TypeError("Tags must be strings")
         self._load_tags()
@@ -103,12 +105,14 @@ class _Tags:
         self._write_tags(*new_tags)
 
     def clear(self):
+        """ clear tags (remove all tags) """
         try:
             self._attrs.remove(_TAGS)
         except (IOError, OSError):
             pass
 
     def remove(self, tag):
+        """ remove a tag, raise exception if tag does not exist """
         self._load_tags()
         if not isinstance(tag, str):
             raise TypeError("Tags must be strings")
@@ -117,6 +121,7 @@ class _Tags:
         self._write_tags(*tags)
 
     def discard(self, tag):
+        """ remove a tag, does not raise exception if tag does not exist """
         self._load_tags()
         if not isinstance(tag, str):
             raise TypeError("Tags must be strings")
