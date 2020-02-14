@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+from setuptools import setup, find_packages
 import sys
 import os.path
 
@@ -36,7 +36,7 @@ setup(
     url="https://github.com/RhetTbull/osxmetadata",
     project_urls={"GitHub": "https://github.com/RhetTbull/osxmetadata"},
     download_url="https://github.com/RhetTbull/osxmetadata",
-    packages=["osxmetadata"],
+    packages=find_packages(exclude=["tests"]),
     license="License :: OSI Approved :: MIT License",
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -47,8 +47,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    install_requires=["xattr", "pyobjc"],
-    setup_requires=["xattr", "pyobjc"],
+    install_requires=["xattr", "pyobjc>=6.0.1"],
     python_requires=">=3.6",
     entry_points={"console_scripts": ["osxmetadata=osxmetadata.__main__:main"]},
 )
