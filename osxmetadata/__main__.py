@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 import osxmetadata
-from osxmetadata.version import __version__
+from ._version import __version__
 
 # TODO: add md5 option
 # TODO: how is metadata on symlink handled?

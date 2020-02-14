@@ -12,19 +12,22 @@ if sys.version_info < (3, 6, 0):
 # we'll import stuff from the source tree, let's ensure is on the sys path
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 
-# TODO: This fails if xattr and pyobjc not already installed
-# for now, need to hard code version in both setup.py and osxmetadata/version.py
-# from osxmetadata.version import __version__ as version
-version = "0.96.88"
-
 # read the contents of README file
 this_directory = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
+about = {}
+with open(
+    os.path.join(this_directory, "osxmetadata", "_version.py"),
+    mode="r",
+    encoding="utf-8",
+) as f:
+    exec(f.read(), about)
+
 setup(
     name="osxmetadata",
-    version=version,
+    version=about["__version__"],
     description="Read and write meta data, such as tags/keywords, on Mac OS X files",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -47,5 +50,5 @@ setup(
     install_requires=["xattr", "pyobjc"],
     setup_requires=["xattr", "pyobjc"],
     python_requires=">=3.6",
-    entry_points={"console_scripts": ["osxmetadata=osxmetadata.cmd_line:main"]},
+    entry_points={"console_scripts": ["osxmetadata=osxmetadata.__main__:main"]},
 )

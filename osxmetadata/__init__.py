@@ -14,9 +14,7 @@ from plistlib import FMT_BINARY
 
 from xattr import xattr
 
-from . import _applescript, version
-
-__version__ = version.__version__
+from . import _applescript
 
 
 # this was inspired by osx-tags by "Ben S / scooby" and is published under
