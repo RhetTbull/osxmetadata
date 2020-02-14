@@ -222,6 +222,8 @@ class OSXMetaData:
         except (IOError, OSError) as e:
             quit(_onError(e))
 
+        self._data = {}
+
         # setup applescript for writing finder comments
         self._scpt_set_finder_comment = _applescript.AppleScript(
             """
@@ -232,12 +234,6 @@ class OSXMetaData:
             end run
             """
         )
-
-        # initialize meta data
-        self._tags = {}
-        self._findercomment = None
-        self._wherefrom = []
-        self._downloaddate = None
 
         self.tags = _Tags(self._attrs)
 
@@ -254,7 +250,7 @@ class OSXMetaData:
         """ Get/set the Finder comment (or None) associated with the file.
             Functions as a string: e.g. finder_comment += 'my comment'. """
         self._load_findercomment()
-        return self._findercomment
+        return self._data[_FINDER_COMMENT]
 
     @finder_comment.setter
     def finder_comment(self, fc):
@@ -284,7 +280,7 @@ class OSXMetaData:
     def where_from(self):
         """ Get/set list of URL(s) where file was downloaded from. """
         self._load_download_wherefrom()
-        return self._wherefrom
+        return self._data[_WHERE_FROM]
 
     @where_from.setter
     def where_from(self, wf):
@@ -308,7 +304,7 @@ class OSXMetaData:
     def download_date(self):
         """ Get/set date file was downloaded, as a datetime.datetime object. """
         self._load_download_date()
-        return self._downloaddate
+        return self._data[_DOWNLOAD_DATE]
 
     @download_date.setter
     def download_date(self, dt):
@@ -344,32 +340,23 @@ class OSXMetaData:
 
     def _load_findercomment(self):
         try:
-            self._fcvalue = self._attrs[_FINDER_COMMENT]
             # load the binary plist value
-            self._findercomment = plistlib.loads(self._fcvalue)
+            self._data[_FINDER_COMMENT] = plistlib.loads(self._attrs[_FINDER_COMMENT])
         except KeyError:
-            self._findercomment = None
+            self._data[_FINDER_COMMENT] = None
 
     def _load_download_wherefrom(self):
         try:
-            self._wfvalue = self._attrs[_WHERE_FROM]
             # load the binary plist value
-            self._wherefrom = plistlib.loads(self._wfvalue)
+            self._data[_WHERE_FROM] = plistlib.loads(self._attrs[_WHERE_FROM])
         except KeyError:
-            self._wherefrom = None
+            self._data[_WHERE_FROM] = None
 
     def _load_download_date(self):
         try:
-            # logger.debug(self._fname)
-            self._ddvalue = self._attrs[_DOWNLOAD_DATE]
-            # logger.debug(self._ddvalue)
             # load the binary plist value
             # returns an array with a single datetime.datetime object
-            self._downloaddate = plistlib.loads(self._ddvalue)[0]
+            self._data[_DOWNLOAD_DATE] = plistlib.loads(self._attrs[_DOWNLOAD_DATE])[0]
             # logger.debug(self._downloaddate)
         except KeyError:
-            self._downloaddate = None
-        except:
-            pass
-            # logger.debug("Not a KeyError")
-            # TODO: is this needed?
+            self._data[_DOWNLOAD_DATE] = None
