@@ -22,7 +22,7 @@ from ._version import __version__
 
 # curstom error handler
 def onError(e):
-    tqdm.write(str(e) + "\n", file=sys.stderr)
+    print(str(e) + "\n", file=sys.stderr)
     return e
 
 
@@ -179,7 +179,7 @@ def process_files(files=[], fp=sys.stdout, quiet=False, verbose=False, args={}):
 
     for f in files:
         if os.path.isdir(f):
-            for root, dirname, filenames in os.walk(f):
+            for root, _, filenames in os.walk(f):
                 if args.verbose:
                     print(f"Processing {root}")
                 for fname in filenames:
@@ -298,7 +298,7 @@ def write_text_data(fp, data):
     where_from = where_from if where_from is not None else ""
 
     tags = data["tags"]
-    tags = tags if len(tags) is not 0 else ""
+    tags = tags if len(tags) != 0 else ""
 
     print(f"file: {file}", file=fp)
     print(f"tags: {tags}", file=fp)
