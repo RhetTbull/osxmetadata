@@ -133,4 +133,4 @@ def test_file_not_exists(temp_file):
         # kludge to create a file that almost certainly doesn't exist
         # TODO: make this less kludgy
         bad_filename = str(temp_file + temp_file)
-        meta = OSXMetaData(bad_filename)
+        _ = OSXMetaData(bad_filename)
