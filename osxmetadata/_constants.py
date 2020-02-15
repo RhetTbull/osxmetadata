@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 # color labels
 _COLORNAMES = {
     "None": 0,
@@ -32,3 +34,14 @@ _FINDER_COMMENT = "com.apple.metadata:kMDItemFinderComment"
 _WHERE_FROM = "com.apple.metadata:kMDItemWhereFroms"
 _DOWNLOAD_DATE = "com.apple.metadata:kMDItemDownloadedDate"
 
+
+### Experimenting with generic method of reading / writing attributes
+Attribute = namedtuple("Attribute", ["constant", "type", "as_list"])
+
+_ATTRIBUTES = {
+    "description": Attribute("com.apple.metadata:kMDItemDescription", "str", False),
+    "tags": Attribute("com.apple.metadata:_kMDItemUserTags", "list", False),
+    "downloaddate": Attribute(
+        "com.apple.metadata:kMDItemDownloadedDate", "datetime", False
+    ),
+}

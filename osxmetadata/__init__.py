@@ -27,6 +27,7 @@ from ._constants import (
     _TAGS,
     _VALID_COLORIDS,
     _WHERE_FROM,
+    _ATTRIBUTES,
 )
 
 # this was inspired by osx-tags by "Ben S / scooby" and is published under
@@ -240,9 +241,7 @@ class OSXMetaData:
         # TODO: Lot's of repetitive code here
         # need to read these dynamically
         self._load_findercomment()
-
         self._load_download_wherefrom()
-
         self._load_download_date()
 
     @property
@@ -271,9 +270,7 @@ class OSXMetaData:
             )
 
         fname = self._fname.resolve().as_posix()
-
         self._scpt_set_finder_comment.run(fname, fc)
-
         self._load_findercomment()
 
     @property
@@ -322,6 +319,21 @@ class OSXMetaData:
     def name(self):
         """ POSIX path of the file OSXMetaData is operating on """
         return self._fname.resolve().as_posix()
+
+    ### Experimenting with generic method of reading / writing attributes
+    def load_attribute(self, attribute):
+        """ load attribute and return value or None if attribute was not set 
+        """
+        attr_name = _ATTRIBUTES[attribute].constant
+        try:
+            plist = plistlib.loads(self._attrs[attr_name])
+        except KeyError:
+            plist = None
+
+        if _ATTRIBUTES[attribute].as_list and isinstance(plist, list):
+            return plist[0]
+        else:
+            return plist
 
     # @property
     # def colors(self):
