@@ -16,7 +16,6 @@ from plistlib import FMT_BINARY  # pylint: disable=E0611
 
 import xattr
 
-from . import _applescript
 from .constants import (
     _COLORIDS,
     _COLORNAMES,
