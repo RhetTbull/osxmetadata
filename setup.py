@@ -49,5 +49,5 @@ setup(
     ],
     install_requires=["xattr", "pyobjc>=6.0.1"],
     python_requires=">=3.6",
-    entry_points={"console_scripts": ["osxmetadata=osxmetadata.__main__:main"]},
+    entry_points={"console_scripts": ["osxmetadata=osxmetadata.__main__:cli"]},
 )

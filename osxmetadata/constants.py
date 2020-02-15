@@ -1,4 +1,5 @@
 from collections import namedtuple
+import datetime
 
 # color labels
 _COLORNAMES = {
@@ -36,12 +37,18 @@ _DOWNLOAD_DATE = "com.apple.metadata:kMDItemDownloadedDate"
 
 
 ### Experimenting with generic method of reading / writing attributes
-Attribute = namedtuple("Attribute", ["constant", "type", "as_list"])
+Attribute = namedtuple("Attribute", ["name", "constant", "type", "list", "as_list"])
 
 _ATTRIBUTES = {
-    "description": Attribute("com.apple.metadata:kMDItemDescription", "str", False),
-    "tags": Attribute("com.apple.metadata:_kMDItemUserTags", "list", False),
-    "downloaddate": Attribute(
-        "com.apple.metadata:kMDItemDownloadedDate", "datetime", False
+    "description": Attribute(
+        "description", "com.apple.metadata:kMDItemDescription", str, False, False
+    ),
+    "tags": Attribute("tags", "com.apple.metadata:_kMDItemUserTags", str, True, False),
+    "downloadeddate": Attribute(
+        "downloadeddate",
+        "com.apple.metadata:kMDItemDownloadedDate",
+        datetime.datetime,
+        False,
+        True,
     ),
 }

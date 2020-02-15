@@ -17,7 +17,7 @@ from plistlib import FMT_BINARY  # pylint: disable=E0611
 import xattr
 
 from . import _applescript
-from ._constants import (
+from .constants import (
     _COLORIDS,
     _COLORNAMES,
     _DOWNLOAD_DATE,
@@ -27,7 +27,7 @@ from ._constants import (
     _TAGS,
     _VALID_COLORIDS,
     _WHERE_FROM,
-    _ATTRIBUTES,
+    Attribute,
 )
 
 # this was inspired by osx-tags by "Ben S / scooby" and is published under
@@ -321,19 +321,72 @@ class OSXMetaData:
         return self._fname.resolve().as_posix()
 
     ### Experimenting with generic method of reading / writing attributes
-    def load_attribute(self, attribute):
+    def get_attribute(self, attribute):
         """ load attribute and return value or None if attribute was not set 
+            attribute: an osxmetadata Attribute namedtuple
         """
-        attr_name = _ATTRIBUTES[attribute].constant
+        if not isinstance(attribute, Attribute):
+            raise TypeError(
+                "attribute must be osxmetada.constants.Attribute namedtuple"
+            )
+
         try:
-            plist = plistlib.loads(self._attrs[attr_name])
+            plist = plistlib.loads(self._attrs[attribute.constant])
         except KeyError:
             plist = None
 
-        if _ATTRIBUTES[attribute].as_list and isinstance(plist, list):
+        # TODO: should I check Attribute.type is correct?
+        if attribute.as_list and isinstance(plist, list):
             return plist[0]
         else:
             return plist
+
+    def set_attribute(self, attribute, value):
+        """ write attribute to file
+            attribute: an osxmetadata Attribute namedtuple """
+        if not isinstance(attribute, Attribute):
+            raise TypeError(
+                "attribute must be osxmetada.constants.Attribute namedtuple"
+            )
+
+        # verify type is correct
+        if attribute.list and type(value) == list:
+            for val in value:
+                if attribute.type != type(val):
+                    raise ValueError(
+                        f"Expected type {attribute.type} but value is type {type(val)}"
+                    )
+        elif not attribute.list and type(value) == list:
+            raise TypeError(f"Expected single value but got list for {attribute.type}")
+        else:
+            if attribute.type != type(value):
+                raise ValueError(
+                    f"Expected type {attribute.type} but value is type {type(value)}"
+                )
+
+        if attribute.as_list:
+            # some attributes like kMDItemDownloadedDate are stored in a list
+            # even though they only have only a single value
+            value = [value]
+
+        try:
+            plist = plistlib.dumps(value, fmt=FMT_BINARY)
+            self._attrs.set(attribute.constant, plist)
+        except Exception as e:
+            raise
+
+        return value
+
+    def _list_attributes(self):
+        """ list the attributes set on the file """
+        return self._attrs.list()
+
+    def list_metadata(self):
+        """ list the Apple metadata attributes:
+            e.g. those in com.apple.metadata namespace """
+        mdlist = self._attrs.list()
+        mdlist = [md for md in mdlist if md.startswith("com.apple.metadata")]
+        return mdlist
 
     # @property
     # def colors(self):
