@@ -328,7 +328,7 @@ def validate_attribute_value(attribute, value):
                 )
         elif attribute.type == datetime.datetime:
             try:
-                new_val = datetime.datetime(val)
+                new_val = datetime.datetime.fromisoformat(val)
             except:
                 raise TypeError(
                     f"{val} cannot be convereted to expected type {attribute.type}"
@@ -338,7 +338,7 @@ def validate_attribute_value(attribute, value):
         new_value.append(new_val)
 
     logging.debug(f"new_value = {new_value}")
-    if attribute.list or attribute.as_list:
+    if attribute.list:
         return new_value
     else:
         return new_value[0]
