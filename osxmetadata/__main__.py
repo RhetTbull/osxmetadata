@@ -14,7 +14,7 @@ import click
 import osxmetadata
 
 from ._version import __version__
-from .constants import _ATTRIBUTES
+from .constants import ATTRIBUTES
 
 # TODO: add md5 option
 # TODO: how is metadata on symlink handled?
@@ -25,6 +25,8 @@ from .constants import _ATTRIBUTES
 #   Finder aliases inherit neither
 # TODO: add selective restore (e.g only restore files matching command line path)
 #   e.g osxmetadata -r meta.json *.pdf
+
+# TODO: need special handling for --set color GREEN, etc.
 
 # setup debugging and logging
 _DEBUG = False
@@ -221,6 +223,13 @@ SET_OPTION = click.option(
     multiple=True,
     required=False,
 )
+LIST_OPTION = click.option(
+    "--list",
+    "list_",
+    help="List all metadata attributes for FILE",
+    is_flag=True,
+    default=False,
+)
 
 
 # @click.group(context_settings=CTX_SETTINGS)
@@ -250,8 +259,9 @@ SET_OPTION = click.option(
 @WALK_OPTION
 @JSON_OPTION
 @SET_OPTION
+@LIST_OPTION
 @click.pass_context
-def cli(ctx, debug, files, walk, json_, set_):
+def cli(ctx, debug, files, walk, json_, set_, list_):
     """ Read metadata from file(s). """
 
     if debug:
@@ -269,16 +279,16 @@ def cli(ctx, debug, files, walk, json_, set_):
     if set_ is not None:
         for item in set_:
             attr = item[0]
-            if attr not in _ATTRIBUTES:
+            if attr not in ATTRIBUTES:
                 click.echo(f"Invalid attribute {attr} for --set", err=True)
                 click.echo(ctx.get_help())
                 ctx.exit()
 
-    process_files(files=files, walk=walk, json_=json_, set_=set_)
+    process_files(files=files, walk=walk, json_=json_, set_=set_, list_=list_)
 
 
 def process_files(
-    files, verbose=False, quiet=False, walk=False, json_=False, set_=None
+    files, verbose=False, quiet=False, walk=False, json_=False, set_=None, list_=None
 ):
     # if walk, use os.walk to walk through files and collect metadata
     # on each file
@@ -293,7 +303,7 @@ def process_files(
                     print(f"Processing {root}")
                 for fname in filenames:
                     fpath = pathlib.Path(f"{root}/{fname}").resolve()
-                    process_file(fpath, json_, set_)
+                    process_file(fpath, json_, set_, list_)
         elif os.path.isdir(f):
             # skip directory
             if _DEBUG:
@@ -301,7 +311,7 @@ def process_files(
             continue
         else:
             fpath = pathlib.Path(f).resolve()
-            process_file(fpath, json_, set_)
+            process_file(fpath, json_, set_, list_)
 
 
 def validate_attribute_value(attribute, value):
@@ -344,7 +354,7 @@ def validate_attribute_value(attribute, value):
         return new_value[0]
 
 
-def process_file(fpath, json_, set_):
+def process_file(fpath, json_, set_, list_):
     if _DEBUG:
         logging.debug(f"process_file: {fpath}")
 
@@ -356,7 +366,7 @@ def process_file(fpath, json_, set_):
         attr_dict = {}
         for item in set_:
             attr, val = item
-            attribute = _ATTRIBUTES[attr]
+            attribute = ATTRIBUTES[attr]
             logging.debug(f"setting {attr}={val}")
             if attribute in attr_dict:
                 attr_dict[attribute].append(val)
@@ -367,16 +377,26 @@ def process_file(fpath, json_, set_):
             value = validate_attribute_value(attribute, value)
             md.set_attribute(attribute, value)
 
-    try:
-        data = read_metadata(fpath)
-    except (IOError, OSError, ValueError):
-        logging.warning(f"warning: error processing metadata for {fpath}")
+    if list_:
+        attribute_list = md.list_metadata()
+        for attr in attribute_list:
+            if attr in ATTRIBUTES:
+                attribute = ATTRIBUTES[attr]
+                value = md.get_attribute(attribute)
+                click.echo(f"{attribute.name}, {attribute.constant}: {value}")
+            else:
+                click.echo(f"UNKNOWN, {attr}: THIS ATTRIBUTE NOT HANDLED")
 
-    fp = sys.stdout
-    if json_:
-        write_json_data(fp, data)
-    else:
-        write_text_data(fp, data)
+    # try:
+    #     data = read_metadata(fpath)
+    # except (IOError, OSError, ValueError):
+    #     logging.warning(f"warning: error processing metadata for {fpath}")
+
+    # fp = sys.stdout
+    # if json_:
+    #     write_json_data(fp, data)
+    # else:
+    #     write_text_data(fp, data)
 
 
 def process_files_(files=[], fp=sys.stdout, quiet=False, verbose=False, args={}):
@@ -407,7 +427,7 @@ def read_metadata(fname):
         dldate = md.download_date
         dldate = str(dldate) if dldate is not None else None
         where_from = md.where_from
-        descr = md.get_attribute(_ATTRIBUTES["description"])
+        descr = md.get_attribute(ATTRIBUTES["description"])
         data = {
             "file": str(fname),
             "description": descr,

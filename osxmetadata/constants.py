@@ -1,5 +1,6 @@
-from collections import namedtuple
 import datetime
+from collections import namedtuple
+
 
 # color labels
 _COLORNAMES = {
@@ -39,7 +40,7 @@ _DOWNLOAD_DATE = "com.apple.metadata:kMDItemDownloadedDate"
 ### Experimenting with generic method of reading / writing attributes
 Attribute = namedtuple("Attribute", ["name", "constant", "type", "list", "as_list"])
 
-_ATTRIBUTES = {
+ATTRIBUTES = {
     "description": Attribute(
         "description", "com.apple.metadata:kMDItemDescription", str, False, False
     ),
@@ -51,4 +52,30 @@ _ATTRIBUTES = {
         False,
         True,
     ),
+    "wherefroms": Attribute(
+        "wherefroms", "com.apple.metadata:kMDItemWhereFroms", str, True, False
+    ),
+    "findercomment": Attribute(
+        "findercomment", "com.apple.metadata:kMDItemFinderComment", str, False, False
+    ),
+    "keywords": Attribute(
+        "keywords", "com.apple.metadata:kMDItemKeywords", str, True, False
+    ),
+    "creator": Attribute(
+        "creator", "com.apple.metadata:kMDItemCreator", str, False, False
+    ),
 }
+
+
+# also add entries for attributes by constant
+_temp_attributes = {}
+for attribute in ATTRIBUTES.values():
+    if attribute.constant not in ATTRIBUTES:
+        _temp_attributes[attribute.constant] = attribute
+    else:
+        raise ValueError(f"Duplicate attribute in ATTRIBUTES: {attribute}")
+if _temp_attributes:
+    ATTRIBUTES.update(_temp_attributes)
+
+# Special handling for Finder comments
+_FINDER_COMMENT_NAMES = ["findercomment", "com.apple.metadata:kMDItemFinderComment"]

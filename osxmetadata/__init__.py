@@ -28,7 +28,9 @@ from .constants import (
     _VALID_COLORIDS,
     _WHERE_FROM,
     Attribute,
+    _FINDER_COMMENT_NAMES,
 )
+from .utils import set_finder_comment
 
 # this was inspired by osx-tags by "Ben S / scooby" and is published under
 # the same MIT license. See: https://github.com/scooby/osx-tags
@@ -215,6 +217,8 @@ class OSXMetaData:
     def __init__(self, fname):
         """Create an OSXMetaData object to access file metadata"""
         self._fname = pathlib.Path(fname)
+        self._posix_name = self._fname.resolve().as_posix()
+
         if not self._fname.exists():
             raise ValueError("file does not exist: ", fname)
 
@@ -224,18 +228,6 @@ class OSXMetaData:
             quit(_onError(e))
 
         self._data = {}
-
-        # setup applescript for writing finder comments
-        self._scpt_set_finder_comment = _applescript.AppleScript(
-            """
-            on run {fname, fc}
-	            set theFile to fname
-	            set theComment to fc
-	            tell application "Finder" to set comment of (POSIX file theFile as alias) to theComment
-            end run
-            """
-        )
-
         self.tags = _Tags(self._attrs)
 
         # TODO: Lot's of repetitive code here
@@ -269,8 +261,8 @@ class OSXMetaData:
                 "Finder comment limited to %d characters" % _MAX_FINDERCOMMENT
             )
 
-        fname = self._fname.resolve().as_posix()
-        self._scpt_set_finder_comment.run(fname, fc)
+        fname = self._posix_name
+        set_finder_comment(fname, fc)
         self._load_findercomment()
 
     @property
@@ -370,6 +362,11 @@ class OSXMetaData:
             value = [value]
 
         try:
+            if attribute.name in _FINDER_COMMENT_NAMES:
+                # Finder Comment needs special handling
+                # code following will also set the attribute for Finder Comment
+                set_finder_comment(self._posix_name, value)
+
             plist = plistlib.dumps(value, fmt=FMT_BINARY)
             self._attrs.set(attribute.constant, plist)
         except Exception as e:
