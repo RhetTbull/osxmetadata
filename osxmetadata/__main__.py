@@ -14,7 +14,7 @@ import click
 import osxmetadata
 
 from ._version import __version__
-from .constants import ATTRIBUTES, ATTRIBUTES_LIST
+from .constants import ATTRIBUTES, ATTRIBUTES_LIST, _TAGS_NAMES
 
 # TODO: add md5 option
 # TODO: how is metadata on symlink handled?
@@ -192,6 +192,16 @@ class CLI_Obj:
         self.files = files
 
 
+class MyClickCommand(click.Command):
+    """ Custom click.Command that overrides get_help() to show additional info """
+
+    def get_help(self, ctx):
+        help_text = super().get_help(ctx)
+        help_text += "\n\nValid attributes for ATTRIBUTE:\n(either Short or Long Name may be passsed to option expecting an attribute)\n"
+        help_text += "\n".join(ATTRIBUTES_LIST)
+        return help_text
+
+
 CTX_SETTINGS = dict(help_option_names=["--help", "-h"])
 FILES_ARGUMENT = click.argument(
     "files", metavar="FILE", nargs=-1, type=click.Path(exists=True)
@@ -208,7 +218,7 @@ JSON_OPTION = click.option(
     "-j",
     "json_",
     is_flag=True,
-    help="Print output in JSON format",
+    help="Print output in JSON format, for use with --list.",
     default=False,
 )
 DEBUG_OPTION = click.option(
@@ -223,6 +233,14 @@ SET_OPTION = click.option(
     multiple=True,
     required=False,
 )
+GET_OPTION = click.option(
+    "--get",
+    help="Get value of ATTRIBUTE",
+    metavar="ATTRIBUTE",
+    nargs=1,
+    multiple=True,
+    required=False,
+)
 LIST_OPTION = click.option(
     "--list",
     "list_",
@@ -230,9 +248,9 @@ LIST_OPTION = click.option(
     is_flag=True,
     default=False,
 )
-CLEAR_OPTION = click.option(
+CLEAROPTION = click.option(
     "--clear",
-    "clear_",
+    "clear",
     help="Remove attribute from FILE",
     metavar="ATTRIBUTE",
     nargs=1,
@@ -241,7 +259,7 @@ CLEAR_OPTION = click.option(
 )
 APPEND_OPTION = click.option(
     "--append",
-    "append_",
+    "append",
     metavar="ATTRIBUTE VALUE",
     help="Append VALUE to ATTRIBUTE",
     nargs=2,
@@ -269,7 +287,7 @@ APPEND_OPTION = click.option(
 #         click.echo(cli.commands[topic].get_help(ctx))
 
 
-@click.command()
+@click.command(cls=MyClickCommand)
 @click.version_option(__version__, "--version", "-v")
 @DEBUG_OPTION
 @FILES_ARGUMENT
@@ -277,33 +295,41 @@ APPEND_OPTION = click.option(
 @JSON_OPTION
 @SET_OPTION
 @LIST_OPTION
-@CLEAR_OPTION
+@CLEAROPTION
 @APPEND_OPTION
+@GET_OPTION
 @click.pass_context
-def cli(ctx, debug, files, walk, json_, set_, list_, clear_, append_):
+def cli(ctx, debug, files, walk, json_, set_, list_, clear, append, get):
     """ Read metadata from file(s). """
 
     if debug:
         logging.disable(logging.NOTSET)
 
     logging.debug(
-        f"ctx={ctx} debug={debug} files={files} walk={walk} json={json_} set={set_} clear={clear_}"
+        f"ctx={ctx} debug={debug} files={files} walk={walk} json={json_} "
+        f"set={set_}, list={list_},clear={clear},append={append},get={get}"
     )
 
     if not files:
         click.echo(ctx.get_help())
         ctx.exit()
 
-    # validate values for --set, --clear
-    if any([set_, clear_, append_]):
-        attributes = [a[0] for a in set_] + [a for a in clear_]
+    # validate values for --set, --clear, append, get
+    if any([set_, clear, append, get]):
+        attributes = (
+            [a[0] for a in set_] + [a[0] for a in append] + list(clear) + list(get)
+        )
         logging.debug(f"attributes = {attributes}")
+        invalid_attr = False
         for attr in attributes:
             logging.debug(f"attr = {attr}")
             if attr not in ATTRIBUTES:
-                click.echo(f"Invalid attribute {attr}\n", err=True)
-                click.echo(ctx.get_help())
-                ctx.exit()
+                click.echo(f"Invalid attribute {attr}", err=True)
+                invalid_attr = True
+        if invalid_attr:
+            click.echo("")  # add a new line before rest of help text
+            click.echo(ctx.get_help())
+            ctx.exit()
 
     process_files(
         files=files,
@@ -311,8 +337,9 @@ def cli(ctx, debug, files, walk, json_, set_, list_, clear_, append_):
         json_=json_,
         set_=set_,
         list_=list_,
-        clear_=clear_,
-        append_=append_,
+        clear=clear,
+        append=append,
+        get=get,
     )
 
 
@@ -324,8 +351,9 @@ def process_files(
     json_=False,
     set_=None,
     list_=None,
-    clear_=None,
-    append_=None,
+    clear=None,
+    append=None,
+    get=None,
 ):
     # if walk, use os.walk to walk through files and collect metadata
     # on each file
@@ -340,7 +368,7 @@ def process_files(
                     print(f"Processing {root}")
                 for fname in filenames:
                     fpath = pathlib.Path(f"{root}/{fname}").resolve()
-                    process_file(fpath, json_, set_, list_, clear_, append_)
+                    process_file(fpath, json_, set_, list_, clear, append, get)
         elif os.path.isdir(f):
             # skip directory
             if _DEBUG:
@@ -348,7 +376,7 @@ def process_files(
             continue
         else:
             fpath = pathlib.Path(f).resolve()
-            process_file(fpath, json_, set_, list_, clear_, append_)
+            process_file(fpath, json_, set_, list_, clear, append, get)
 
 
 def validate_attribute_value(attribute, value):
@@ -391,14 +419,15 @@ def validate_attribute_value(attribute, value):
         return new_value[0]
 
 
-def process_file(fpath, json_, set_, list_, clear_, append_):
+def process_file(fpath, json_, set_, list_, clear, append, get):
+    """ process a single file to apply the options 
+        options processed in this order: set, append, clear, get, list
+        Note: expects all attributes passed in parameters to be validated """
+
     if _DEBUG:
         logging.debug(f"process_file: {fpath}")
 
     md = osxmetadata.OSXMetaData(fpath)
-
-    # options processed in this order:
-    # set, append, clear, list
 
     if set_ is not None:
         # set data
@@ -415,13 +444,19 @@ def process_file(fpath, json_, set_, list_, clear_, append_):
 
         for attribute, value in attr_dict.items():
             value = validate_attribute_value(attribute, value)
-            md.set_attribute(attribute, value)
+            # tags get special handling
+            if attribute.name in _TAGS_NAMES:
+                tags = md.tags
+                tags.clear()
+                tags.update(*value)
+            else:
+                md.set_attribute(attribute, value)
 
-    if append_ is not None:
+    if append is not None:
         # set data
         # check attribute is valid
         attr_dict = {}
-        for item in append_:
+        for item in append:
             attr, val = item
             attribute = ATTRIBUTES[attr]
             logging.debug(f"appending {attr}={val}")
@@ -432,23 +467,44 @@ def process_file(fpath, json_, set_, list_, clear_, append_):
 
         for attribute, value in attr_dict.items():
             value = validate_attribute_value(attribute, value)
-            md.append_attribute(attribute, value)
+            # tags get special handling
+            if attribute.name in _TAGS_NAMES:
+                tags = md.tags
+                tags.update(*value)
+            else:
+                md.append_attribute(attribute, value)
 
-    if clear_ is not None:
-        for attr in clear_:
+    if clear is not None:
+        for attr in clear:
             attribute = ATTRIBUTES[attr]
             logging.debug(f"clearing {attr}")
             md.clear_attribute(attribute)
+
+    if get is not None:
+        logging.debug(f"get: {get}")
+        for attr in get:
+            attribute = ATTRIBUTES[attr]
+            logging.debug(f"getting {attr}")
+            # tags get special handling
+            if attribute.name in _TAGS_NAMES:
+                value = md.tags
+            else:
+                value = md.get_attribute(attribute)
+            click.echo(f"{attribute.name:16}{attribute.constant:50} = {value}")
 
     if list_:
         attribute_list = md.list_metadata()
         for attr in attribute_list:
             if attr in ATTRIBUTES:
                 attribute = ATTRIBUTES[attr]
-                value = md.get_attribute(attribute)
-                click.echo(f"{attribute.name}, {attribute.constant}: {value}")
+                # tags get special handling
+                if attribute.name in _TAGS_NAMES:
+                    value = md.tags
+                else:
+                    value = md.get_attribute(attribute)
+                click.echo(f"{attribute.name:16}{attribute.constant:50} = {value}")
             else:
-                click.echo(f"UNKNOWN, {attr}: THIS ATTRIBUTE NOT HANDLED")
+                click.echo(f"{'UNKNOWN':16}{attr:50} = THIS ATTRIBUTE NOT HANDLED")
 
     # try:
     #     data = read_metadata(fpath)
@@ -462,136 +518,116 @@ def process_file(fpath, json_, set_, list_, clear_, append_):
     #     write_text_data(fp, data)
 
 
-def process_files_(files=[], fp=sys.stdout, quiet=False, verbose=False, args={}):
-    # use os.walk to walk through files and collect metadata
-    # on each file
-    # symlinks can resolve to missing files (e.g. unmounted volume)
-    # so catch those errors and set data to None
-    # osxmetadata raises ValueError if specified file is missing
-
-    for f in files:
-        if os.path.isdir(f):
-            for root, _, filenames in os.walk(f):
-                if args.verbose:
-                    print(f"Processing {root}")
-                for fname in filenames:
-                    fpath = Path(f"{root}/{fname}").resolve()
-                    process_file(fpath, fp, args)
-        else:
-            fpath = Path(f).resolve()
-            process_file(fpath, fp, args)
-
-
-def read_metadata(fname):
-    try:
-        md = osxmetadata.OSXMetaData(fname)
-        tags = list(md.tags)
-        fc = md.finder_comment
-        dldate = md.download_date
-        dldate = str(dldate) if dldate is not None else None
-        where_from = md.where_from
-        descr = md.get_attribute(ATTRIBUTES["description"])
-        data = {
-            "file": str(fname),
-            "description": descr,
-            "tags": tags,
-            "fc": fc,
-            "dldate": dldate,
-            "where_from": where_from,
-        }
-    except (IOError, OSError) as e:
-        return onError(e)
-    return data
+# def read_metadata(fname):
+#     try:
+#         md = osxmetadata.OSXMetaData(fname)
+#         tags = list(md.tags)
+#         fc = md.finder_comment
+#         dldate = md.download_date
+#         dldate = str(dldate) if dldate is not None else None
+#         where_from = md.where_from
+#         descr = md.get_attribute(ATTRIBUTES["description"])
+#         data = {
+#             "file": str(fname),
+#             "description": descr,
+#             "tags": tags,
+#             "fc": fc,
+#             "dldate": dldate,
+#             "where_from": where_from,
+#         }
+#     except (IOError, OSError) as e:
+#         return onError(e)
+#     return data
 
 
 # sets metadata based on args then returns dict with all metadata on the file
-def get_set_metadata(fname, args={}):
-    try:
-        md = osxmetadata.OSXMetaData(fname)
+# def get_set_metadata(fname, args={}):
+#     try:
+#         md = osxmetadata.OSXMetaData(fname)
 
-        # clear tags
-        if args.cleartags:
-            md.tags.clear()
+#         # clear tags
+#         if args.cleartags:
+#             md.tags.clear()
 
-        # remove tags
-        if args.rmtag:
-            tags = md.tags
-            for t in args.rmtag:
-                if t in tags:
-                    md.tags.remove(t)
+#         # remove tags
+#         if args.rmtag:
+#             tags = md.tags
+#             for t in args.rmtag:
+#                 if t in tags:
+#                     md.tags.remove(t)
 
-        # update tags
-        if args.addtag:
-            new_tags = []
-            new_tags += args.addtag
-            old_tags = md.tags
-            tags_different = (sorted(new_tags) != sorted(old_tags)) or args.force
-            if tags_different:
-                md.tags.update(*new_tags)
+#         # update tags
+#         if args.addtag:
+#             new_tags = []
+#             new_tags += args.addtag
+#             old_tags = md.tags
+#             tags_different = (sorted(new_tags) != sorted(old_tags)) or args.force
+#             if tags_different:
+#                 md.tags.update(*new_tags)
 
-        # finder comments
-        if args.clearfc:
-            md.finder_comment = ""
+#         # finder comments
+#         if args.clearfc:
+#             md.finder_comment = ""
 
-        if args.addfc:
-            for fc in args.addfc:
-                md.finder_comment += fc
+#         if args.addfc:
+#             for fc in args.addfc:
+#                 md.finder_comment += fc
 
-        if args.setfc:
-            old_comment = md.finder_comment
-            if (old_comment != args.setfc) or args.force:
-                md.finder_comment = args.setfc
+#         if args.setfc:
+#             old_comment = md.finder_comment
+#             if (old_comment != args.setfc) or args.force:
+#                 md.finder_comment = args.setfc
 
-        tags = list(md.tags)
-        fc = md.finder_comment
-        dldate = md.download_date
-        dldate = str(dldate) if dldate is not None else None
-        where_from = md.where_from
-        data = {
-            "file": str(fname),
-            "tags": tags,
-            "fc": fc,
-            "dldate": dldate,
-            "where_from": where_from,
-        }
-    except (IOError, OSError) as e:
-        return onError(e)
-    return data
+#         tags = list(md.tags)
+#         fc = md.finder_comment
+#         dldate = md.download_date
+#         dldate = str(dldate) if dldate is not None else None
+#         where_from = md.where_from
+#         data = {
+#             "file": str(fname),
+#             "tags": tags,
+#             "fc": fc,
+#             "dldate": dldate,
+#             "where_from": where_from,
+#         }
+#     except (IOError, OSError) as e:
+#         return onError(e)
+#     return data
 
 
 # sets metadata based on data dict as returned by get_set_metadata or restore_from_json
 # clears any existing metadata
-def set_metadata(data, quiet=False):
-    try:
-        md = osxmetadata.OSXMetaData(data["file"])
+# def set_metadata(data, quiet=False):
+#     try:
+#         md = osxmetadata.OSXMetaData(data["file"])
 
-        md.tags.clear()
-        if data["tags"]:
-            if not quiet:
-                print(f"Tags: {data['tags']}")
-            md.tags.update(*data["tags"])
+#         md.tags.clear()
+#         if data["tags"]:
+#             if not quiet:
+#                 print(f"Tags: {data['tags']}")
+#             md.tags.update(*data["tags"])
 
-        md.finder_comment = ""
-        if data["fc"]:
-            if not quiet:
-                print(f"Finder comment: {data['fc']}")
-            md.finder_comment = data["fc"]
+#         md.finder_comment = ""
+#         if data["fc"]:
+#             if not quiet:
+#                 print(f"Finder comment: {data['fc']}")
+#             md.finder_comment = data["fc"]
 
-        # tags = list(md.tags)
-        # fc = md.finder_comment
-        # dldate = md.download_date
-        # dldate = str(dldate) if dldate is not None else None
-        # where_from = md.where_from
-        # data = {
-        #     "file": str(fname),
-        #     "tags": tags,
-        #     "fc": fc,
-        #     "dldate": dldate,
-        #     "where_from": where_from,
-        # }
-    except (IOError, OSError) as e:
-        return onError(e)
-    return data
+#         # tags = list(md.tags)
+#         # fc = md.finder_comment
+#         # dldate = md.download_date
+#         # dldate = str(dldate) if dldate is not None else None
+#         # where_from = md.where_from
+#         # data = {
+#         #     "file": str(fname),
+#         #     "tags": tags,
+#         #     "fc": fc,
+#         #     "dldate": dldate,
+#         #     "where_from": where_from,
+#         # }
+#     except (IOError, OSError) as e:
+#         return onError(e)
+#     return data
 
 
 def write_json_data(fp, data):
@@ -599,46 +635,46 @@ def write_json_data(fp, data):
     fp.write("\n")
 
 
-def write_text_data(fp, data):
-    file = data["file"]
+# def write_text_data(fp, data):
+#     file = data["file"]
 
-    fc = data["fc"]
-    fc = fc if fc is not None else ""
+#     fc = data["fc"]
+#     fc = fc if fc is not None else ""
 
-    dldate = data["dldate"]
-    dldate = dldate if dldate is not None else ""
+#     dldate = data["dldate"]
+#     dldate = dldate if dldate is not None else ""
 
-    desc = data["description"]
-    desc = desc if desc is not None else ""
+#     desc = data["description"]
+#     desc = desc if desc is not None else ""
 
-    where_from = data["where_from"]
-    where_from = where_from if where_from is not None else ""
+#     where_from = data["where_from"]
+#     where_from = where_from if where_from is not None else ""
 
-    tags = data["tags"]
-    tags = tags if len(tags) != 0 else ""
+#     tags = data["tags"]
+#     tags = tags if len(tags) != 0 else ""
 
-    print(f"file: {file}", file=fp)
-    print(f"description: {desc}", file=fp)
-    print(f"tags: {tags}", file=fp)
-    print(f"Finder comment: {fc}", file=fp)
-    print(f"Download date: {dldate}", file=fp)
-    print(f"Where from: {where_from}", file=fp)
-    print("\n", file=fp)
+#     print(f"file: {file}", file=fp)
+#     print(f"description: {desc}", file=fp)
+#     print(f"tags: {tags}", file=fp)
+#     print(f"Finder comment: {fc}", file=fp)
+#     print(f"Download date: {dldate}", file=fp)
+#     print(f"Where from: {where_from}", file=fp)
+#     print("\n", file=fp)
 
 
-def restore_from_json(json_file, quiet=False):
-    fp = None
-    try:
-        fp = open(json_file, mode="r")
-    except:
-        print(f"Error opening file {json_file} for reading")
-        sys.exit(2)
+# def restore_from_json(json_file, quiet=False):
+#     fp = None
+#     try:
+#         fp = open(json_file, mode="r")
+#     except:
+#         print(f"Error opening file {json_file} for reading")
+#         sys.exit(2)
 
-    for line in fp:
-        data = json.loads(line)
-        if not quiet:
-            print(f"Restoring metadata for {data['file']}")
-        set_metadata(data, quiet)
+#     for line in fp:
+#         data = json.loads(line)
+#         if not quiet:
+#             print(f"Restoring metadata for {data['file']}")
+#         set_metadata(data, quiet)
 
 
 # def main():
@@ -672,4 +708,5 @@ def restore_from_json(json_file, quiet=False):
 
 
 if __name__ == "__main__":
-    cli()
+    cli()  # pylint: disable=no-value-for-parameter
+

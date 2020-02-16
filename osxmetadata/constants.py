@@ -85,5 +85,8 @@ if _temp_attributes:
 
 # Special handling for Finder comments
 _FINDER_COMMENT_NAMES = ["findercomment", "com.apple.metadata:kMDItemFinderComment"]
+_TAGS_NAMES = ["tags", "com.apple.metadata:_kMDItemUserTags"]
 
-ATTRIBUTES_LIST = [f"{a.name} ({a.constant})" for a in ATTRIBUTES.values()]
+# list of all attributes for help text
+ATTRIBUTES_LIST = [f"{'Short Name':16} Long Name"]
+ATTRIBUTES_LIST.extend([f"{a.name:16} {a.constant}" for a in ATTRIBUTES.values()])
