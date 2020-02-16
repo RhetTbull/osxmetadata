@@ -72,8 +72,11 @@ ATTRIBUTES = {
     ),
 }
 
+# used for formatting output of --list
+_SHORT_NAME_WIDTH = max([len(x) for x in ATTRIBUTES.keys()]) + 5
+_LONG_NAME_WIDTH = max([len(x.constant) for x in ATTRIBUTES.values()]) + 10
 
-# also add entries for attributes by constant
+# also add entries for attributes by constant, do this after computing widths above
 _temp_attributes = {}
 for attribute in ATTRIBUTES.values():
     if attribute.constant not in ATTRIBUTES:

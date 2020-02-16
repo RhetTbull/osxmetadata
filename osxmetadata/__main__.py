@@ -14,7 +14,13 @@ import click
 import osxmetadata
 
 from ._version import __version__
-from .constants import ATTRIBUTES, ATTRIBUTES_LIST, _TAGS_NAMES
+from .constants import (
+    _LONG_NAME_WIDTH,
+    _SHORT_NAME_WIDTH,
+    _TAGS_NAMES,
+    ATTRIBUTES,
+    ATTRIBUTES_LIST,
+)
 
 # TODO: add md5 option
 # TODO: how is metadata on symlink handled?
@@ -437,9 +443,9 @@ def process_file(fpath, json_, set_, list_, clear, append, get):
             attr, val = item
             attribute = ATTRIBUTES[attr]
             logging.debug(f"setting {attr}={val}")
-            if attribute in attr_dict:
+            try:
                 attr_dict[attribute].append(val)
-            else:
+            except KeyError:
                 attr_dict[attribute] = [val]
 
         for attribute, value in attr_dict.items():
@@ -460,9 +466,9 @@ def process_file(fpath, json_, set_, list_, clear, append, get):
             attr, val = item
             attribute = ATTRIBUTES[attr]
             logging.debug(f"appending {attr}={val}")
-            if attribute in attr_dict:
+            try:
                 attr_dict[attribute].append(val)
-            else:
+            except KeyError:
                 attr_dict[attribute] = [val]
 
         for attribute, value in attr_dict.items():
@@ -490,7 +496,9 @@ def process_file(fpath, json_, set_, list_, clear, append, get):
                 value = md.tags
             else:
                 value = md.get_attribute(attribute)
-            click.echo(f"{attribute.name:16}{attribute.constant:50} = {value}")
+            click.echo(
+                f"{attribute.name:{_SHORT_NAME_WIDTH}}{attribute.constant:{_LONG_NAME_WIDTH}} = {value}"
+            )
 
     if list_:
         attribute_list = md.list_metadata()
@@ -502,9 +510,13 @@ def process_file(fpath, json_, set_, list_, clear, append, get):
                     value = md.tags
                 else:
                     value = md.get_attribute(attribute)
-                click.echo(f"{attribute.name:16}{attribute.constant:50} = {value}")
+                click.echo(
+                    f"{attribute.name:{_SHORT_NAME_WIDTH}}{attribute.constant:{_LONG_NAME_WIDTH}} = {value}"
+                )
             else:
-                click.echo(f"{'UNKNOWN':16}{attr:50} = THIS ATTRIBUTE NOT HANDLED")
+                click.echo(
+                    f"{'UNKNOWN':{_SHORT_NAME_WIDTH}}{attr:{_LONG_NAME_WIDTH}} = THIS ATTRIBUTE NOT HANDLED"
+                )
 
     # try:
     #     data = read_metadata(fpath)
@@ -709,4 +721,3 @@ def write_json_data(fp, data):
 
 if __name__ == "__main__":
     cli()  # pylint: disable=no-value-for-parameter
-
