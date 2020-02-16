@@ -2,6 +2,7 @@
     such as tags/keywords and Finder comments from files """
 
 import datetime
+import logging
 import os
 import os.path
 import pathlib
@@ -21,13 +22,13 @@ from .constants import (
     _COLORNAMES,
     _DOWNLOAD_DATE,
     _FINDER_COMMENT,
+    _FINDER_COMMENT_NAMES,
     _MAX_FINDERCOMMENT,
     _MAX_WHEREFROM,
     _TAGS,
     _VALID_COLORIDS,
     _WHERE_FROM,
     Attribute,
-    _FINDER_COMMENT_NAMES,
 )
 from .utils import set_finder_comment
 
@@ -316,6 +317,7 @@ class OSXMetaData:
         """ load attribute and return value or None if attribute was not set 
             attribute: an osxmetadata Attribute namedtuple
         """
+        logging.debug(f"get: {attribute}")
         if not isinstance(attribute, Attribute):
             raise TypeError(
                 "attribute must be osxmetada.constants.Attribute namedtuple"
@@ -335,6 +337,7 @@ class OSXMetaData:
     def set_attribute(self, attribute, value):
         """ write attribute to file
             attribute: an osxmetadata Attribute namedtuple """
+        logging.debug(f"set: {attribute} {value}")
         if not isinstance(attribute, Attribute):
             raise TypeError(
                 "attribute must be osxmetada.constants.Attribute namedtuple"
@@ -372,6 +375,80 @@ class OSXMetaData:
             raise
 
         return value
+
+    def append_attribute(self, attribute, value):
+        """ append attribute to file
+            attribute: an osxmetadata Attribute namedtuple """
+        logging.debug(f"append_attribute: {attribute} {value}")
+        if not isinstance(attribute, Attribute):
+            raise TypeError(
+                "attribute must be osxmetada.constants.Attribute namedtuple"
+            )
+
+        new_value = self.get_attribute(attribute)
+
+        # verify type is correct
+        if attribute.list and type(value) == list:
+            for val in value:
+                if attribute.type != type(val):
+                    raise ValueError(
+                        f"Expected type {attribute.type} but value is type {type(val)}"
+                    )
+                else:
+                    if new_value:
+                        new_value.extend(value)
+                    else:
+                        new_value = value
+                    # convert to set & back to list to avoid duplicates
+                    new_value = list(set(new_value))
+        elif not attribute.list and type(value) == list:
+            raise TypeError(f"Expected single value but got list for {attribute.type}")
+        else:
+            if attribute.type != type(value):
+                raise ValueError(
+                    f"Expected type {attribute.type} but value is type {type(value)}"
+                )
+            else:
+                if new_value:
+                    new_value += value
+                else:
+                    new_value = value
+
+        if attribute.as_list:
+            # some attributes like kMDItemDownloadedDate are stored in a list
+            # even though they only have only a single value
+            new_value = [new_value]
+
+        try:
+            if attribute.name in _FINDER_COMMENT_NAMES:
+                # Finder Comment needs special handling
+                # code following will also set the attribute for Finder Comment
+                set_finder_comment(self._posix_name, new_value)
+
+            plist = plistlib.dumps(new_value, fmt=FMT_BINARY)
+            self._attrs.set(attribute.constant, plist)
+        except Exception as e:
+            raise
+
+        return new_value
+
+    def clear_attribute(self, attribute):
+        """ clear attribute (remove) 
+        attribute: an osxmetadata Attribute namedtuple """
+
+        if not isinstance(attribute, Attribute):
+            raise TypeError(
+                "attribute must be osxmetada.constants.Attribute namedtuple"
+            )
+
+        try:
+            if attribute.name in _FINDER_COMMENT_NAMES:
+                # Finder Comment needs special handling
+                # code following will also clear the attribute for Finder Comment
+                set_finder_comment(self._posix_name, "")
+            self._attrs.remove(attribute.constant)
+        except (IOError, OSError):
+            pass
 
     def _list_attributes(self):
         """ list the attributes set on the file """

@@ -41,10 +41,15 @@ _DOWNLOAD_DATE = "com.apple.metadata:kMDItemDownloadedDate"
 Attribute = namedtuple("Attribute", ["name", "constant", "type", "list", "as_list"])
 
 ATTRIBUTES = {
+    "authors": Attribute(
+        "authors", "com.apple.metadata:kMDItemAuthors", str, True, False
+    ),
+    "creator": Attribute(
+        "creator", "com.apple.metadata:kMDItemCreator", str, False, False
+    ),
     "description": Attribute(
         "description", "com.apple.metadata:kMDItemDescription", str, False, False
     ),
-    "tags": Attribute("tags", "com.apple.metadata:_kMDItemUserTags", str, True, False),
     "downloadeddate": Attribute(
         "downloadeddate",
         "com.apple.metadata:kMDItemDownloadedDate",
@@ -52,17 +57,18 @@ ATTRIBUTES = {
         False,
         True,
     ),
-    "wherefroms": Attribute(
-        "wherefroms", "com.apple.metadata:kMDItemWhereFroms", str, True, False
-    ),
     "findercomment": Attribute(
         "findercomment", "com.apple.metadata:kMDItemFinderComment", str, False, False
+    ),
+    "headline": Attribute(
+        "headline", "com.apple.metadata:kMDItemHeadline", str, False, False
     ),
     "keywords": Attribute(
         "keywords", "com.apple.metadata:kMDItemKeywords", str, True, False
     ),
-    "creator": Attribute(
-        "creator", "com.apple.metadata:kMDItemCreator", str, False, False
+    "tags": Attribute("tags", "com.apple.metadata:_kMDItemUserTags", str, True, False),
+    "wherefroms": Attribute(
+        "wherefroms", "com.apple.metadata:kMDItemWhereFroms", str, True, False
     ),
 }
 
@@ -79,3 +85,5 @@ if _temp_attributes:
 
 # Special handling for Finder comments
 _FINDER_COMMENT_NAMES = ["findercomment", "com.apple.metadata:kMDItemFinderComment"]
+
+ATTRIBUTES_LIST = [f"{a.name} ({a.constant})" for a in ATTRIBUTES.values()]

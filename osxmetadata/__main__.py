@@ -14,7 +14,7 @@ import click
 import osxmetadata
 
 from ._version import __version__
-from .constants import ATTRIBUTES
+from .constants import ATTRIBUTES, ATTRIBUTES_LIST
 
 # TODO: add md5 option
 # TODO: how is metadata on symlink handled?
@@ -230,7 +230,24 @@ LIST_OPTION = click.option(
     is_flag=True,
     default=False,
 )
-
+CLEAR_OPTION = click.option(
+    "--clear",
+    "clear_",
+    help="Remove attribute from FILE",
+    metavar="ATTRIBUTE",
+    nargs=1,
+    multiple=True,
+    required=False,
+)
+APPEND_OPTION = click.option(
+    "--append",
+    "append_",
+    metavar="ATTRIBUTE VALUE",
+    help="Append VALUE to ATTRIBUTE",
+    nargs=2,
+    multiple=True,
+    required=False,
+)
 
 # @click.group(context_settings=CTX_SETTINGS)
 # @click.version_option(__version__, "--version", "-v")
@@ -260,35 +277,55 @@ LIST_OPTION = click.option(
 @JSON_OPTION
 @SET_OPTION
 @LIST_OPTION
+@CLEAR_OPTION
+@APPEND_OPTION
 @click.pass_context
-def cli(ctx, debug, files, walk, json_, set_, list_):
+def cli(ctx, debug, files, walk, json_, set_, list_, clear_, append_):
     """ Read metadata from file(s). """
 
     if debug:
         logging.disable(logging.NOTSET)
 
     logging.debug(
-        f"ctx={ctx} debug={debug} files={files} walk={walk} json={json_} set={set_}"
+        f"ctx={ctx} debug={debug} files={files} walk={walk} json={json_} set={set_} clear={clear_}"
     )
 
     if not files:
         click.echo(ctx.get_help())
         ctx.exit()
 
-    # validate values for --set
-    if set_ is not None:
-        for item in set_:
-            attr = item[0]
+    # validate values for --set, --clear
+    if any([set_, clear_, append_]):
+        attributes = [a[0] for a in set_] + [a for a in clear_]
+        logging.debug(f"attributes = {attributes}")
+        for attr in attributes:
+            logging.debug(f"attr = {attr}")
             if attr not in ATTRIBUTES:
-                click.echo(f"Invalid attribute {attr} for --set", err=True)
+                click.echo(f"Invalid attribute {attr}\n", err=True)
                 click.echo(ctx.get_help())
                 ctx.exit()
 
-    process_files(files=files, walk=walk, json_=json_, set_=set_, list_=list_)
+    process_files(
+        files=files,
+        walk=walk,
+        json_=json_,
+        set_=set_,
+        list_=list_,
+        clear_=clear_,
+        append_=append_,
+    )
 
 
 def process_files(
-    files, verbose=False, quiet=False, walk=False, json_=False, set_=None, list_=None
+    files,
+    verbose=False,
+    quiet=False,
+    walk=False,
+    json_=False,
+    set_=None,
+    list_=None,
+    clear_=None,
+    append_=None,
 ):
     # if walk, use os.walk to walk through files and collect metadata
     # on each file
@@ -303,7 +340,7 @@ def process_files(
                     print(f"Processing {root}")
                 for fname in filenames:
                     fpath = pathlib.Path(f"{root}/{fname}").resolve()
-                    process_file(fpath, json_, set_, list_)
+                    process_file(fpath, json_, set_, list_, clear_, append_)
         elif os.path.isdir(f):
             # skip directory
             if _DEBUG:
@@ -311,7 +348,7 @@ def process_files(
             continue
         else:
             fpath = pathlib.Path(f).resolve()
-            process_file(fpath, json_, set_, list_)
+            process_file(fpath, json_, set_, list_, clear_, append_)
 
 
 def validate_attribute_value(attribute, value):
@@ -354,11 +391,14 @@ def validate_attribute_value(attribute, value):
         return new_value[0]
 
 
-def process_file(fpath, json_, set_, list_):
+def process_file(fpath, json_, set_, list_, clear_, append_):
     if _DEBUG:
         logging.debug(f"process_file: {fpath}")
 
     md = osxmetadata.OSXMetaData(fpath)
+
+    # options processed in this order:
+    # set, append, clear, list
 
     if set_ is not None:
         # set data
@@ -376,6 +416,29 @@ def process_file(fpath, json_, set_, list_):
         for attribute, value in attr_dict.items():
             value = validate_attribute_value(attribute, value)
             md.set_attribute(attribute, value)
+
+    if append_ is not None:
+        # set data
+        # check attribute is valid
+        attr_dict = {}
+        for item in append_:
+            attr, val = item
+            attribute = ATTRIBUTES[attr]
+            logging.debug(f"appending {attr}={val}")
+            if attribute in attr_dict:
+                attr_dict[attribute].append(val)
+            else:
+                attr_dict[attribute] = [val]
+
+        for attribute, value in attr_dict.items():
+            value = validate_attribute_value(attribute, value)
+            md.append_attribute(attribute, value)
+
+    if clear_ is not None:
+        for attr in clear_:
+            attribute = ATTRIBUTES[attr]
+            logging.debug(f"clearing {attr}")
+            md.clear_attribute(attribute)
 
     if list_:
         attribute_list = md.list_metadata()
