@@ -3,34 +3,32 @@
 
 import datetime
 import logging
-import os
-import os.path
 import pathlib
 import plistlib
-import pprint
-import subprocess
 import sys
-import tempfile
 
 # plistlib creates constants at runtime which causes pylint to complain
 from plistlib import FMT_BINARY  # pylint: disable=E0611
 
 import xattr
 
-from .constants import (
+from .attributes import ATTRIBUTES, Attribute
+from .classes import _AttributeList, _AttributeTagsSet
+from .constants import (  # _DOWNLOAD_DATE,; _FINDER_COMMENT,; _TAGS,; _WHERE_FROM,
     _COLORIDS,
     _COLORNAMES,
-    _DOWNLOAD_DATE,
-    _FINDER_COMMENT,
     _FINDER_COMMENT_NAMES,
     _MAX_FINDERCOMMENT,
     _MAX_WHEREFROM,
-    _TAGS,
     _VALID_COLORIDS,
-    _WHERE_FROM,
-    Attribute,
 )
-from .utils import set_finder_comment
+from .utils import (
+    _debug,
+    _get_logger,
+    _set_debug,
+    set_finder_comment,
+    validate_attribute_value,
+)
 
 # this was inspired by osx-tags by "Ben S / scooby" and is published under
 # the same MIT license. See: https://github.com/scooby/osx-tags
@@ -52,167 +50,25 @@ def _onError(e):
     sys.stderr.write(str(e) + "\n")
 
 
-class _Tags:
-    """ represents a tag/keyword """
-
-    def __init__(self, xa: xattr.xattr):
-        self._attrs = xa
-
-        # used for __iter__
-        self._tag_list = None
-        self._tag_count = None
-        self._tag_counter = None
-
-        # initialize
-        self._load_tags()
-
-    def add(self, tag):
-        """ add a tag """
-        if not isinstance(tag, str):
-            raise TypeError("Tags must be strings")
-        self._load_tags()
-        tags = set(map(self._tag_normalize, self._tag_set))
-        tags.add(self._tag_normalize(tag))
-        self._write_tags(*tags)
-
-    def update(self, *tags):
-        """ update tag list adding any new tags in *tags """
-        if not all(isinstance(tag, str) for tag in tags):
-            raise TypeError("Tags must be strings")
-        self._load_tags()
-        old_tags = set(map(self._tag_normalize, self._tag_set))
-        new_tags = old_tags.union(set(map(self._tag_normalize, tags)))
-        self._write_tags(*new_tags)
-
-    def clear(self):
-        """ clear tags (remove all tags) """
-        try:
-            self._attrs.remove(_TAGS)
-        except (IOError, OSError):
-            pass
-
-    def remove(self, tag):
-        """ remove a tag, raise exception if tag does not exist """
-        self._load_tags()
-        if not isinstance(tag, str):
-            raise TypeError("Tags must be strings")
-        tags = set(map(self._tag_normalize, self._tag_set))
-        tags.remove(self._tag_normalize(tag))
-        self._write_tags(*tags)
-
-    def discard(self, tag):
-        """ remove a tag, does not raise exception if tag does not exist """
-        self._load_tags()
-        if not isinstance(tag, str):
-            raise TypeError("Tags must be strings")
-        tags = set(map(self._tag_normalize, self._tag_set))
-        tags.discard(self._tag_normalize(tag))
-        self._write_tags(*tags)
-
-    def _tag_split(self, tag):
-        # Extracts the color information from a Finder tag.
-
-        parts = tag.rsplit("\n", 1)
-        if len(parts) == 1:
-            return parts[0], 0
-        elif (
-            len(parts[1]) != 1 or parts[1] not in _VALID_COLORIDS
-        ):  # Not a color number
-            return tag, 0
-        else:
-            return parts[0], int(parts[1])
-
-    def _load_tags(self):
-        self._tags = {}
-        try:
-            self._tagvalues = self._attrs[_TAGS]
-            # load the binary plist value
-            self._tagvalues = plistlib.loads(self._tagvalues)
-            for x in self._tagvalues:
-                (tag, color) = self._tag_split(x)
-                self._tags[tag] = color
-                # self._tags = [self._tag_strip_color(x) for x in self._tagvalues]
-        except KeyError:
-            self._tags = None
-        if self._tags:
-            self._tag_set = set(self._tags.keys())
-        else:
-            self._tag_set = set([])
-
-    def _write_tags(self, *tags):
-        # Overwrites the existing tags with the iterable of tags provided.
-
-        if not all(isinstance(tag, str) for tag in tags):
-            raise TypeError("Tags must be strings")
-        tag_plist = plistlib.dumps(list(map(self._tag_normalize, tags)), fmt=FMT_BINARY)
-        self._attrs.set(_TAGS, tag_plist)
-
-    def _tag_colored(self, tag, color):
-        """
-        Sets the color of a tag.
-
-        Parameters:
-        tag(str): a tag name
-        color(int): an integer from 1 through 7
-
-        Return:
-        (str) the tag with encoded color.
-        """
-        return "{}\n{}".format(self._tag_nocolor(tag), color)
-
-    def _tag_normalize(self, tag):
-        """
-        Ensures a color is set if not none.
-        :param tag: a possibly non-normal tag.
-        :return: A colorized tag.
-        """
-        tag, color = self._tag_split(tag)
-        if tag.title() in _COLORNAMES:
-            # ignore the color passed and set proper color name
-            return self._tag_colored(tag.title(), _COLORNAMES[tag.title()])
-        else:
-            return self._tag_colored(tag, color)
-
-    def _tag_nocolor(self, tag):
-        """
-        Removes the color information from a Finder tag.
-        """
-        return tag.rsplit("\n", 1)[0]
-
-    def __iter__(self):
-        self._load_tags()
-        self._tag_list = list(self._tag_set)
-        self._tag_count = len(self._tag_list)
-        self._tag_counter = 0
-        return self
-
-    def __next__(self):
-        if self._tag_counter < self._tag_count:
-            tag = self._tag_list[self._tag_counter]
-            self._tag_counter += 1
-            return tag
-        else:
-            raise StopIteration
-
-    def __len__(self):
-        self._load_tags()
-        return len(self._tag_set)
-
-    def __repr__(self):
-        self._load_tags()
-        return repr(self._tag_set)
-
-    def __str__(self):
-        self._load_tags()
-        return ", ".join(self._tag_set)
-
-    def __iadd__(self, tag):
-        self.add(tag)
-        return self
-
-
 class OSXMetaData:
     """Create an OSXMetaData object to access file metadata"""
+
+    __slots__ = [
+        "_fname",
+        "_posix_name",
+        "_attrs",
+        "__init",
+        "authors",
+        "creator",
+        "description",
+        "downloadeddate",
+        "findercomment",
+        "headline",
+        "keywords",
+        "tags",
+        "wherefroms",
+        "test",
+    ]
 
     def __init__(self, fname):
         """Create an OSXMetaData object to access file metadata"""
@@ -220,92 +76,92 @@ class OSXMetaData:
         self._posix_name = self._fname.resolve().as_posix()
 
         if not self._fname.exists():
-            raise ValueError("file does not exist: ", fname)
+            raise FileNotFoundError("file does not exist: ", fname)
 
-        try:
-            self._attrs = xattr.xattr(self._fname)
-        except (IOError, OSError) as e:
-            quit(_onError(e))
+        self._attrs = xattr.xattr(self._fname)
 
-        self._data = {}
-        self.tags = _Tags(self._attrs)
+        # create property classes for the multi-valued attributes
+        # tags get special handling due to color labels
+        # self.tags = _AttributeTagsSet(ATTRIBUTES["tags"], self._attrs)
+        # ATTRIBUTES contains both long and short names, want only the short names (attribute.name)
+        for name in set([attribute.name for attribute in ATTRIBUTES.values()]):
+            attribute = ATTRIBUTES[name]
+            if attribute.class_ not in [str, float]:
+                super().__setattr__(name, attribute.class_(attribute, self._attrs))
 
-        # TODO: Lot's of repetitive code here
-        # need to read these dynamically
-        self._load_findercomment()
-        self._load_download_wherefrom()
-        self._load_download_date()
+        # Done with initialization
+        self.__init = True
 
-    @property
-    def finder_comment(self):
-        """ Get/set the Finder comment (or None) associated with the file.
-            Functions as a string: e.g. finder_comment += 'my comment'. """
-        self._load_findercomment()
-        return self._data[_FINDER_COMMENT]
+    # @property
+    # def finder_comment(self):
+    #     """ Get/set the Finder comment (or None) associated with the file.
+    #         Functions as a string: e.g. finder_comment += 'my comment'. """
+    #     self._load_findercomment()
+    #     return self._data[_FINDER_COMMENT]
 
-    @finder_comment.setter
-    def finder_comment(self, fc):
-        """ Get/set the Finder comment (or None) associated with the file.
-            Functions as a string: e.g. finder_comment += 'my comment'. """
-        # TODO: this creates a temporary script file which gets runs by osascript every time
-        #       not very efficient.  Perhaps use py-applescript in the future but that increases
-        #       dependencies + PyObjC
+    # @finder_comment.setter
+    # def finder_comment(self, fc):
+    #     """ Get/set the Finder comment (or None) associated with the file.
+    #         Functions as a string: e.g. finder_comment += 'my comment'. """
+    #     # TODO: this creates a temporary script file which gets runs by osascript every time
+    #     #       not very efficient.  Perhaps use py-applescript in the future but that increases
+    #     #       dependencies + PyObjC
 
-        if fc is None:
-            fc = ""
-        elif not isinstance(fc, str):
-            raise TypeError("Finder comment must be strings")
+    #     if fc is None:
+    #         fc = ""
+    #     elif not isinstance(fc, str):
+    #         raise TypeError("Finder comment must be strings")
 
-        if len(fc) > _MAX_FINDERCOMMENT:
-            raise ValueError(
-                "Finder comment limited to %d characters" % _MAX_FINDERCOMMENT
-            )
+    #     if len(fc) > _MAX_FINDERCOMMENT:
+    #         raise ValueError(
+    #             "Finder comment limited to %d characters" % _MAX_FINDERCOMMENT
+    #         )
 
-        fname = self._posix_name
-        set_finder_comment(fname, fc)
-        self._load_findercomment()
+    #     fname = self._posix_name
+    #     set_finder_comment(fname, fc)
+    #     self._load_findercomment()
 
-    @property
-    def where_from(self):
-        """ Get/set list of URL(s) where file was downloaded from. """
-        self._load_download_wherefrom()
-        return self._data[_WHERE_FROM]
+    # @property
+    # def where_from(self):
+    #     """ Get/set list of URL(s) where file was downloaded from. """
+    #     self._load_download_wherefrom()
+    #     return self._data[_WHERE_FROM]
 
-    @where_from.setter
-    def where_from(self, wf):
-        """ Get/set list of URL(s) where file was downloaded from. """
-        if wf is None:
-            wf = []
-        elif not isinstance(wf, list):
-            raise TypeError("Where from must be a list of one or more URL strings")
+    # @where_from.setter
+    # def where_from(self, wf):
+    #     """ Get/set list of URL(s) where file was downloaded from. """
+    #     if wf is None:
+    #         wf = []
+    #     elif not isinstance(wf, list):
+    #         raise TypeError("Where from must be a list of one or more URL strings")
 
-        for w in wf:
-            if len(w) > _MAX_WHEREFROM:
-                raise ValueError(
-                    "Where from URL limited to %d characters" % _MAX_WHEREFROM
-                )
+    #     for w in wf:
+    #         if len(w) > _MAX_WHEREFROM:
+    #             raise ValueError(
+    #                 "Where from URL limited to %d characters" % _MAX_WHEREFROM
+    #             )
 
-        wf_plist = plistlib.dumps(wf, fmt=FMT_BINARY)
-        self._attrs.set(_WHERE_FROM, wf_plist)
-        self._load_download_wherefrom()
+    #     wf_plist = plistlib.dumps(wf, fmt=FMT_BINARY)
+    #     self._attrs.set(_WHERE_FROM, wf_plist)
+    #     self._load_download_wherefrom()
 
-    @property
-    def download_date(self):
-        """ Get/set date file was downloaded, as a datetime.datetime object. """
-        self._load_download_date()
-        return self._data[_DOWNLOAD_DATE]
+    # @property
+    # def download_date(self):
+    #     """ Get/set date file was downloaded, as a datetime.datetime object. """
+    #     self._load_download_date()
+    #     return self._data[_DOWNLOAD_DATE]
 
-    @download_date.setter
-    def download_date(self, dt):
-        """ Get/set date file was downloaded, as a datetime.datetime object. """
-        if dt is None:
-            dt = []
-        elif not isinstance(dt, datetime.datetime):
-            raise TypeError("Download date must be a datetime object")
+    # @download_date.setter
+    # def download_date(self, dt):
+    #     """ Get/set date file was downloaded, as a datetime.datetime object. """
+    #     if dt is None:
+    #         dt = []
+    #     elif not isinstance(dt, datetime.datetime):
+    #         raise TypeError("Download date must be a datetime object")
 
-        dt_plist = plistlib.dumps([dt], fmt=FMT_BINARY)
-        self._attrs.set(_DOWNLOAD_DATE, dt_plist)
-        self._load_download_date()
+    #     dt_plist = plistlib.dumps([dt], fmt=FMT_BINARY)
+    #     self._attrs.set(_DOWNLOAD_DATE, dt_plist)
+    #     self._load_download_date()
 
     @property
     def name(self):
@@ -328,16 +184,33 @@ class OSXMetaData:
         except KeyError:
             plist = None
 
-        # TODO: should I check Attribute.type is correct?
+        # TODO: should I check Attribute.type_ is correct?
         if attribute.as_list and isinstance(plist, list):
             return plist[0]
         else:
             return plist
 
+    def get_attribute_str(self, attribute):
+        """ returns a string representation of attribute value
+            e.g. if attribute is a datedate.datetime object, will 
+            format using datetime.isoformat() """
+        value = self.get_attribute(attribute)
+        try:
+            iter(value)
+            # must be an interable
+            if type(value[0]) == datetime.datetime:
+                new_value = [v.isoformat() for v in value]
+                return str(new_value)
+            return str(value)
+        except TypeError:
+            # not an iterable
+            if type(value) == datetime.datetime:
+                return value.isoformat()
+            return value
+
     def set_attribute(self, attribute, value):
         """ write attribute to file
             attribute: an osxmetadata Attribute namedtuple """
-        logging.debug(f"set: {attribute} {value}")
         if not isinstance(attribute, Attribute):
             raise TypeError(
                 "attribute must be osxmetada.constants.Attribute namedtuple"
@@ -346,16 +219,16 @@ class OSXMetaData:
         # verify type is correct
         if attribute.list and type(value) == list:
             for val in value:
-                if attribute.type != type(val):
+                if attribute.type_ != type(val):
                     raise ValueError(
-                        f"Expected type {attribute.type} but value is type {type(val)}"
+                        f"Expected type {attribute.type_} but value is type {type(val)}"
                     )
         elif not attribute.list and type(value) == list:
-            raise TypeError(f"Expected single value but got list for {attribute.type}")
+            raise TypeError(f"Expected single value but got list for {attribute.type_}")
         else:
-            if attribute.type != type(value):
+            if attribute.type_ != type(value):
                 raise ValueError(
-                    f"Expected type {attribute.type} but value is type {type(value)}"
+                    f"Expected type {attribute.type_} but value is type {type(value)}"
                 )
 
         if attribute.as_list:
@@ -363,52 +236,82 @@ class OSXMetaData:
             # even though they only have only a single value
             value = [value]
 
-        try:
-            if attribute.name in _FINDER_COMMENT_NAMES:
-                # Finder Comment needs special handling
-                # code following will also set the attribute for Finder Comment
-                set_finder_comment(self._posix_name, value)
-
+        if attribute.name in _FINDER_COMMENT_NAMES:
+            # Finder Comment needs special handling
+            # code following will also set the attribute for Finder Comment
+            set_finder_comment(self._posix_name, value)
+        elif attribute.class_ in [_AttributeList, _AttributeTagsSet]:
+            getattr(self, attribute.name).set_value(value)
+        else:
+            # must be a normal scalar (e.g. str, float)
             plist = plistlib.dumps(value, fmt=FMT_BINARY)
             self._attrs.set(attribute.constant, plist)
-        except Exception as e:
-            raise
 
         return value
 
-    def append_attribute(self, attribute, value):
-        """ append attribute to file
-            attribute: an osxmetadata Attribute namedtuple """
+    def update_attribute(self, attribute, value):
+        """ Update attribute with union of itself and value
+            (this avoids adding duplicate values to attribute)
+            attribute: an osxmetadata Attribute namedtuple
+            value: value to append to attribute """
+        return self.append_attribute(attribute, value, update=True)
+
+    def append_attribute(self, attribute, value, update=False):
+        """ append value to attribute
+            attribute: an osxmetadata Attribute namedtuple
+            value: value to append to attribute
+            update: (bool) if True, update instead of append (e.g. avoid adding duplicates)
+                    (default is False) """
+
         logging.debug(f"append_attribute: {attribute} {value}")
         if not isinstance(attribute, Attribute):
             raise TypeError(
                 "attribute must be osxmetada.constants.Attribute namedtuple"
             )
 
+        # start with existing values
         new_value = self.get_attribute(attribute)
 
         # verify type is correct
         if attribute.list and type(value) == list:
+            # expected a list, got a list
             for val in value:
-                if attribute.type != type(val):
+                # check type of each element in list
+                if attribute.type_ != type(val):
                     raise ValueError(
-                        f"Expected type {attribute.type} but value is type {type(val)}"
+                        f"Expected type {attribute.type_} but value is type {type(val)}"
                     )
                 else:
                     if new_value:
-                        new_value.extend(value)
+                        if update:
+                            # if update, only add values not already in the list
+                            # behaves like set.update
+                            for v in value:
+                                if v not in new_value:
+                                    new_value.append(v)
+                        else:
+                            # not update, add all values
+                            new_value.extend(value)
                     else:
-                        new_value = value
-                    # convert to set & back to list to avoid duplicates
-                    new_value = list(set(new_value))
+                        if update:
+                            # no previous values but still need to make sure we don't have
+                            # dupblicate values: convert to set & back to list
+                            new_value = list(set(value))
+                        else:
+                            # no previous values, set new_value to whatever value is
+                            new_value = value
         elif not attribute.list and type(value) == list:
-            raise TypeError(f"Expected single value but got list for {attribute.type}")
+            raise TypeError(f"Expected single value but got list for {attribute.type_}")
         else:
-            if attribute.type != type(value):
+            # expected scalar, got a scalar, check type is correct
+            if attribute.type_ != type(value):
                 raise ValueError(
-                    f"Expected type {attribute.type} but value is type {type(value)}"
+                    f"Expected type {attribute.type_} but value is type {type(value)}"
                 )
             else:
+                # not a list, could be str, float, datetime.datetime
+                if update:
+                    raise AttributeError(f"Cannot use update on {attribute.type_}")
                 if new_value:
                     new_value += value
                 else:
@@ -428,9 +331,46 @@ class OSXMetaData:
             plist = plistlib.dumps(new_value, fmt=FMT_BINARY)
             self._attrs.set(attribute.constant, plist)
         except Exception as e:
-            raise
+            # todo: should catch this or not?
+            raise e
 
         return new_value
+
+    def remove_attribute(self, attribute, value):
+        """ remove a value from attribute, raise exception if attribute does not contain value
+            only applies to multi-valued attributes, otherwise raises TypeError """
+
+        if not isinstance(attribute, Attribute):
+            raise TypeError(
+                "attribute must be osxmetada.constants.Attribute namedtuple"
+            )
+
+        if not attribute.list:
+            raise TypeError("remove only applies to multi-valued attributes")
+
+        values = self.get_attribute(attribute)
+        values.remove(value)
+        self.set_attribute(attribute, values)
+
+    def discard_attribute(self, attribute, value):
+        """ remove a value from attribute, unlike remove, does not raise exception
+            if attribute does not contain value
+            only applies to multi-valued attributes, otherwise raises TypeError """
+
+        if not isinstance(attribute, Attribute):
+            raise TypeError(
+                "attribute must be osxmetada.constants.Attribute namedtuple"
+            )
+
+        if not attribute.list:
+            raise TypeError("discard only applies to multi-valued attributes")
+
+        values = self.get_attribute(attribute)
+        try:
+            values.remove(value)
+            self.set_attribute(attribute, values)
+        except:
+            pass
 
     def clear_attribute(self, attribute):
         """ clear attribute (remove) 
@@ -457,9 +397,36 @@ class OSXMetaData:
     def list_metadata(self):
         """ list the Apple metadata attributes:
             e.g. those in com.apple.metadata namespace """
+        # also lists com.osxmetadata.test used for debugging
         mdlist = self._attrs.list()
-        mdlist = [md for md in mdlist if md.startswith("com.apple.metadata")]
+        mdlist = [
+            md
+            for md in mdlist
+            if md.startswith("com.apple.metadata")
+            or md.startswith("com.osxmetadata.test")
+        ]
         return mdlist
+
+    def __getattr__(self, name):
+        """ if attribute name is in ATTRIBUTE dict, return the value
+            otherwise raise AttributeError """
+        value = self.get_attribute(ATTRIBUTES[name])
+        return value
+
+    def __setattr__(self, name, value):
+        """ if attribute name is in ATTRIBUTE dict, set the value
+            otherwise raise AttributeError """
+        try:
+            if self.__init:
+                # already initialized
+                attribute = ATTRIBUTES[name]
+                value = validate_attribute_value(attribute, value)
+                if value is None:
+                    self.clear_attribute(attribute)
+                else:
+                    self.set_attribute(attribute, value)
+        except (KeyError, AttributeError):
+            super().__setattr__(name, value)
 
     # @property
     # def colors(self):
@@ -476,25 +443,25 @@ class OSXMetaData:
     #     else:
     #         return None
 
-    def _load_findercomment(self):
-        try:
-            # load the binary plist value
-            self._data[_FINDER_COMMENT] = plistlib.loads(self._attrs[_FINDER_COMMENT])
-        except KeyError:
-            self._data[_FINDER_COMMENT] = None
+    # def _load_findercomment(self):
+    #     try:
+    #         # load the binary plist value
+    #         self._data[_FINDER_COMMENT] = plistlib.loads(self._attrs[_FINDER_COMMENT])
+    #     except KeyError:
+    #         self._data[_FINDER_COMMENT] = None
 
-    def _load_download_wherefrom(self):
-        try:
-            # load the binary plist value
-            self._data[_WHERE_FROM] = plistlib.loads(self._attrs[_WHERE_FROM])
-        except KeyError:
-            self._data[_WHERE_FROM] = None
+    # def _load_download_wherefrom(self):
+    #     try:
+    #         # load the binary plist value
+    #         self._data[_WHERE_FROM] = plistlib.loads(self._attrs[_WHERE_FROM])
+    #     except KeyError:
+    #         self._data[_WHERE_FROM] = None
 
-    def _load_download_date(self):
-        try:
-            # load the binary plist value
-            # returns an array with a single datetime.datetime object
-            self._data[_DOWNLOAD_DATE] = plistlib.loads(self._attrs[_DOWNLOAD_DATE])[0]
-            # logger.debug(self._downloaddate)
-        except KeyError:
-            self._data[_DOWNLOAD_DATE] = None
+    # def _load_download_date(self):
+    #     try:
+    #         # load the binary plist value
+    #         # returns an array with a single datetime.datetime object
+    #         self._data[_DOWNLOAD_DATE] = plistlib.loads(self._attrs[_DOWNLOAD_DATE])[0]
+    #         # logger.debug(self._downloaddate)
+    #     except KeyError:
+    #         self._data[_DOWNLOAD_DATE] = None
