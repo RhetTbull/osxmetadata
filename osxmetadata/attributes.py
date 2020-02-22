@@ -22,7 +22,8 @@ from .classes import _AttributeList, _AttributeTagsSet
 # as_list: (boolean) True if attribute is a single value but stored in a list
 #   Note: the only attribute I've seen this on is com.apple.metadata:kMDItemDownloadedDate
 # class: the attribute class to use, e.g. _AttributeList or str
-# Note: also add short name to __slots__ in OSXMetaData so pylint doesn't protest
+# Note: also add short name to __slots__ in __init__.py OSXMetaData
+# Note: also add the constant name (e.g. kMDItemDateAdded) to constants.py
 
 
 Attribute = namedtuple(
@@ -31,6 +32,8 @@ Attribute = namedtuple(
 
 ATTRIBUTES = {
     "authors": Attribute("authors", kMDItemAuthors, str, True, False, _AttributeList),
+    "comment": Attribute("comment", kMDItemComment, str, False, False, str),
+    "copyright": Attribute("copyright", kMDItemCopyright, str, False, False, str),
     "creator": Attribute("creator", kMDItemCreator, str, False, False, str),
     "description": Attribute("description", kMDItemDescription, str, False, False, str),
     "downloadeddate": Attribute(
@@ -54,31 +57,31 @@ ATTRIBUTES = {
     "wherefroms": Attribute(
         "wherefroms", kMDItemWhereFroms, str, True, False, _AttributeList
     ),
-    "test": Attribute(
-        "test",
-        "com.osxmetadata.test:DontTryThisAtHomeKids",
-        datetime.datetime,
-        True,
-        False,
-        _AttributeList,
-    ),
-    "test_float": Attribute(
-        "test_float",
-        "com.osxmetadata.test:DontTryThisAtHomeKids",
-        float,
-        False,
-        False,
-        float,
-    ),
-    "test_str": Attribute(
-        "test_str", "com.osxmetadata.test:String", str, False, False, str
-    ),
+    # "test": Attribute(
+    #     "test",
+    #     "com.osxmetadata.test:DontTryThisAtHomeKids",
+    #     datetime.datetime,
+    #     True,
+    #     False,
+    #     _AttributeList,
+    # ),
+    # "test_float": Attribute(
+    #     "test_float",
+    #     "com.osxmetadata.test:DontTryThisAtHomeKids",
+    #     float,
+    #     False,
+    #     False,
+    #     float,
+    # ),
+    # "test_str": Attribute(
+    #     "test_str", "com.osxmetadata.test:String", str, False, False, str
+    # ),
 }
 
 # used for formatting output of --list
 _SHORT_NAME_WIDTH = max([len(x) for x in ATTRIBUTES.keys()]) + 5
 _LONG_NAME_WIDTH = max([len(x.constant) for x in ATTRIBUTES.values()]) + 10
-_CONSTANT_WIDTH = 21 + 5  # currently is kMDItemDownloadedDate
+_CONSTANT_WIDTH = 21 + 5  # currently longest is kMDItemDownloadedDate
 
 # also add entries for attributes by constant and short constant
 # do this after computing widths above

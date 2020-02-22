@@ -30,12 +30,6 @@ from .utils import validate_attribute_value
 # TODO: need special handling for --set color GREEN, etc.
 
 
-# custom error handler
-def onError(e):
-    click.echo(str(e) + "\n", err=True)
-    return e
-
-
 # Click CLI object & context settings
 class CLI_Obj:
     def __init__(self, debug=False, files=None):
@@ -122,7 +116,8 @@ APPEND_OPTION = click.option(
 UPDATE_OPTION = click.option(
     "--update",
     metavar="ATTRIBUTE VALUE",
-    help="Update ATTRIBUTE with VALUE",
+    help="Update ATTRIBUTE with VALUE; for multi-valued attributes, "
+    "this adds VALUE to the attribute if not already in the list",
     nargs=2,
     multiple=True,
     required=False,
@@ -135,25 +130,6 @@ REMOVE_OPTION = click.option(
     multiple=True,
     required=False,
 )
-
-# @click.group(context_settings=CTX_SETTINGS)
-# @click.version_option(__version__, "--version", "-v")
-# @DEBUG_OPTION
-# @click.pass_context
-# def cli(ctx, debug):
-#     ctx.obj = CLI_Obj(debug=debug)
-
-
-# @cli.command()
-# @click.argument("topic", default=None, required=False, nargs=1)
-# @click.pass_context
-# def help(ctx, topic, **kw):
-#     """ Print help; for help on commands: help <command>. """
-#     if topic is None:
-#         click.echo(ctx.parent.get_help())
-#     else:
-#         ctx.info_name = topic
-#         click.echo(cli.commands[topic].get_help(ctx))
 
 
 @click.command(cls=MyClickCommand)

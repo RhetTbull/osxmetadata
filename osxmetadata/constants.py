@@ -36,6 +36,8 @@ _MAX_WHEREFROM = (
 
 
 kMDItemAuthors = "com.apple.metadata:kMDItemAuthors"
+kMDItemComment = "com.apple.metadata:kMDItemComment"
+kMDItemCopyright = "com.apple.metadata:kMDItemCopyright"
 kMDItemCreator = "com.apple.metadata:kMDItemCreator"
 kMDItemDescription = "com.apple.metadata:kMDItemDescription"
 kMDItemDownloadedDate = "com.apple.metadata:kMDItemDownloadedDate"
@@ -57,6 +59,8 @@ _TAGS_NAMES = ["tags", "com.apple.metadata:_kMDItemUserTags"]
 
 __all__ = [
     "kMDItemAuthors",
+    "kMDItemComment",
+    "kMDItemCopyright",
     "kMDItemCreator",
     "kMDItemDescription",
     "kMDItemDownloadedDate",

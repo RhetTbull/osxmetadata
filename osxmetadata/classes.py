@@ -27,7 +27,6 @@ class _AttributeList(collections.abc.MutableSequence):
     def _load_data(self):
         self._values = []
         try:
-            # self._tagvalues = self._attrs[self._constant]
             # load the binary plist value
             self._values = plistlib.loads(self._attrs[self._constant])
             if self._values:
@@ -37,10 +36,6 @@ class _AttributeList(collections.abc.MutableSequence):
                     self.data = set([self._values])
             else:
                 self.data = []
-            # for x in self._tagvalues:
-            #     (tag, color) = self._tag_split(x)
-            #     self._tags[tag] = color
-            #     # self._tags = [self._tag_strip_color(x) for x in self._tagvalues]
         except KeyError:
             self.data = []
 
@@ -85,14 +80,8 @@ class _AttributeSet:
         self._attrs = xattr_
         self._constant = attribute.constant
 
-        self.data = set()
-
-        # # used for __iter__
-        # self._list = None
-        # self._count = None
-        # self._counter = None
-
         # initialize
+        self.data = set()
         self._load_data()
 
     def set_value(self, values):
@@ -102,8 +91,6 @@ class _AttributeSet:
 
     def add(self, value):
         """ add a value"""
-        # if not isinstance(tag, list):
-        # raise TypeError("Tags must be strings")
         self._load_data()
         values = set(map(self._normalize, self.data))
         self.data.add(self._normalize(value))
@@ -111,8 +98,6 @@ class _AttributeSet:
 
     def update(self, *values):
         """ update data adding any new values in *values """
-        if not all(isinstance(value, str) for value in values):
-            raise TypeError("Value must be string")
         self._load_data()
         old_values = set(map(self._normalize, self.data))
         new_values = old_values.union(set(map(self._normalize, values)))
@@ -129,8 +114,6 @@ class _AttributeSet:
     def remove(self, value):
         """ remove a value, raise exception if value does not exist in data set """
         self._load_data()
-        if not isinstance(value, str):
-            raise TypeError("Value must be string")
         values = set(map(self._normalize, self.data))
         values.remove(self._normalize(value))
         self.data = values
@@ -139,8 +122,6 @@ class _AttributeSet:
     def discard(self, value):
         """ remove a value, does not raise exception if value does not exist """
         self._load_data()
-        if not isinstance(value, str):
-            raise TypeError("Value must be string")
         values = set(map(self._normalize, self.data))
         values.discard(self._normalize(value))
         self.data = values
@@ -149,7 +130,6 @@ class _AttributeSet:
     def _load_data(self):
         self._values = []
         try:
-            # self._tagvalues = self._attrs[self._constant]
             # load the binary plist value
             self._values = plistlib.loads(self._attrs[self._constant])
             if self._values:
@@ -159,10 +139,6 @@ class _AttributeSet:
                     self.data = set([self._values])
             else:
                 self.data = set()
-            # for x in self._tagvalues:
-            #     (tag, color) = self._tag_split(x)
-            #     self._tags[tag] = color
-            #     # self._tags = [self._tag_strip_color(x) for x in self._tagvalues]
         except KeyError:
             self.data = set()
 
@@ -261,7 +237,6 @@ class _AttributeTagsSet(_AttributeSet):
             for x in self._tagvalues:
                 (tag, color) = self._tag_split(x)
                 self._tags[tag] = color
-                # self._tags = [self._tag_strip_color(x) for x in self._tagvalues]
         except KeyError:
             self._tags = None
         if self._tags:
