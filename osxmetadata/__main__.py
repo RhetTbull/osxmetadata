@@ -230,7 +230,7 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
                 tags.clear()
                 tags.update(*value)
             else:
-                md.set_attribute(attribute, value)
+                md.set_attribute(attribute.name, value)
 
     if append:
         # append data
@@ -252,7 +252,7 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
                 tags = md.tags
                 tags.update(*value)
             else:
-                md.append_attribute(attribute, value)
+                md.append_attribute(attribute.name, value)
 
     if update:
         # update data
@@ -274,7 +274,7 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
                 tags = md.tags
                 tags.update(*value)
             else:
-                md.update_attribute(attribute, value)
+                md.update_attribute(attribute.name, value)
 
     if remove:
         # remove value from attribute
@@ -283,7 +283,7 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
         for attr, val in remove:
             try:
                 attribute = ATTRIBUTES[attr]
-                md.discard_attribute(attribute, val)
+                md.discard_attribute(attribute.name, val)
             except KeyError as e:
                 raise e
 
@@ -291,7 +291,7 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
         for attr in clear:
             attribute = ATTRIBUTES[attr]
             logging.debug(f"clearing {attr}")
-            md.clear_attribute(attribute)
+            md.clear_attribute(attribute.name)
 
     if get:
         logging.debug(f"get: {get}")
@@ -302,7 +302,7 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
             if attribute.name in _TAGS_NAMES:
                 value = md.tags
             else:
-                value = md.get_attribute(attribute)
+                value = md.get_attribute(attribute.name)
             click.echo(
                 f"{attribute.name:{_SHORT_NAME_WIDTH}}{attribute.constant:{_LONG_NAME_WIDTH}} = {value}"
             )
@@ -317,7 +317,7 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
                     # TODO: need to fix it so tags can be returned with proper formatting by get_attribute
                     value = md.tags
                 else:
-                    value = md.get_attribute_str(attribute)
+                    value = md.get_attribute_str(attribute.name)
                 click.echo(
                     f"{attribute.name:{_SHORT_NAME_WIDTH}}{attribute.constant:{_LONG_NAME_WIDTH}} = {value}"
                 )

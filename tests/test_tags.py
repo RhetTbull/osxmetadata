@@ -95,9 +95,9 @@ def test_tags_2(temp_file):
 def test_tags_3(temp_file):
 
     from osxmetadata import OSXMetaData
-    from osxmetadata.attributes import ATTRIBUTES
+    from osxmetadata.constants import kMDItemUserTags
 
-    attribute = ATTRIBUTES["tags"]
+    attribute = kMDItemUserTags
 
     # update tags
     meta = OSXMetaData(temp_file)
@@ -119,5 +119,35 @@ def test_tags_3(temp_file):
     tags = meta.get_attribute(attribute)
     assert sorted(tags) == sorted({"Test", "Green", "Foo"})
 
-    meta.clear_attribute
+    # TODO: should clear_attribute cause get_attribute to return None?
+    # it does for scalar attributes
+    meta.clear_attribute(attribute)
+    tags = meta.get_attribute(attribute)
+    assert set(tags) == set([])
 
+
+def test_tags_assign(temp_file):
+    """ test assigning one tag object to another """
+    from osxmetadata import OSXMetaData
+
+    # update tags
+    meta = OSXMetaData(temp_file)
+    tagset = {"Test", "Green"}
+    meta.tags = tagset
+    assert sorted(meta.tags) == sorted(tagset)
+
+    # create second temp file
+    TESTDIR = None
+    tempfile2 = NamedTemporaryFile(dir=TESTDIR)
+    temp_file_2 = tempfile2.name
+
+    meta2 = OSXMetaData(temp_file_2)
+    tagset2 = {"test2", "Blue"}
+    meta2.tags = tagset2
+    assert sorted(meta2.tags) == sorted(tagset2)
+
+    meta.tags = meta2.tags
+    assert sorted(meta.tags) == sorted(tagset2)
+
+    # close second tempfile, first gets closed automatically
+    tempfile2.close()

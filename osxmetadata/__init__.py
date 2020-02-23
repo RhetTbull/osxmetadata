@@ -27,6 +27,7 @@ from .utils import (
     _get_logger,
     _set_debug,
     set_finder_comment,
+    clear_finder_comment,
     validate_attribute_value,
 )
 
@@ -88,15 +89,13 @@ class OSXMetaData:
         """ POSIX path of the file OSXMetaData is operating on """
         return self._fname.resolve().as_posix()
 
-    def get_attribute(self, attribute):
+    def get_attribute(self, attribute_name):
         """ load attribute and return value or None if attribute was not set 
-            attribute: an osxmetadata Attribute namedtuple
+            attribute_name: name of attribute
         """
+
+        attribute = ATTRIBUTES[attribute_name]
         logging.debug(f"get: {attribute}")
-        if not isinstance(attribute, Attribute):
-            raise TypeError(
-                "attribute must be osxmetada.constants.Attribute namedtuple"
-            )
 
         # user tags need special processing to normalize names
         if attribute.name == "tags":
@@ -113,33 +112,27 @@ class OSXMetaData:
         else:
             return plist
 
-    def get_attribute_str(self, attribute):
+    def get_attribute_str(self, attribute_name):
         """ returns a string representation of attribute value
             e.g. if attribute is a datedate.datetime object, will 
-            format using datetime.isoformat() """
-        value = self.get_attribute(attribute)
-        try:
-            iter(value)
-            # must be an interable
+            format using datetime.isoformat()
+            attribute_name: name of attribute """
+        value = self.get_attribute(attribute_name)
+        if type(value) == list or type(value) == set:
             if type(value[0]) == datetime.datetime:
                 new_value = [v.isoformat() for v in value]
                 return str(new_value)
             return str(value)
-        except TypeError:
-            # not an iterable
+        else:
             if type(value) == datetime.datetime:
                 return value.isoformat()
             return value
 
-    def set_attribute(self, attribute, value):
+    def set_attribute(self, attribute_name, value):
         """ write attribute to file with value
-            attribute: an osxmetadata Attribute namedtuple
+            attribute_name: an osxmetadata Attribute name
             value: value to store in attribute """
-        if not isinstance(attribute, Attribute):
-            raise TypeError(
-                "attribute must be osxmetada.constants.Attribute namedtuple"
-            )
-
+        attribute = ATTRIBUTES[attribute_name]
         # verify type is correct
         if attribute.list and (type(value) == list or type(value) == set):
             for val in value:
@@ -154,7 +147,7 @@ class OSXMetaData:
                 f"Expected type {attribute.type_} but value is type {type(value)}"
             )
 
-        if attribute.as_list:
+        if attribute.as_list and (type(value) != list and type(value) != set):
             # some attributes like kMDItemDownloadedDate are stored in a list
             # even though they only have only a single value
             value = [value]
@@ -172,28 +165,25 @@ class OSXMetaData:
 
         return value
 
-    def update_attribute(self, attribute, value):
+    def update_attribute(self, attribute_name, value):
         """ Update attribute with union of itself and value
             (this avoids adding duplicate values to attribute)
-            attribute: an osxmetadata Attribute namedtuple
+            attribute: an osxmetadata Attribute name
             value: value to append to attribute """
-        return self.append_attribute(attribute, value, update=True)
+        return self.append_attribute(attribute_name, value, update=True)
 
-    def append_attribute(self, attribute, value, update=False):
+    def append_attribute(self, attribute_name, value, update=False):
         """ append value to attribute
-            attribute: an osxmetadata Attribute namedtuple
+            attribute_name: an osxmetadata Attribute name
             value: value to append to attribute
             update: (bool) if True, update instead of append (e.g. avoid adding duplicates)
                     (default is False) """
 
+        attribute = ATTRIBUTES[attribute_name]
         logging.debug(f"append_attribute: {attribute} {value}")
-        if not isinstance(attribute, Attribute):
-            raise TypeError(
-                "attribute must be osxmetada.constants.Attribute namedtuple"
-            )
 
         # start with existing values
-        new_value = self.get_attribute(attribute)
+        new_value = self.get_attribute(attribute.name)
 
         # verify type is correct
         if attribute.list and (type(value) == list or type(value) == set):
@@ -260,57 +250,50 @@ class OSXMetaData:
 
         return new_value
 
-    def remove_attribute(self, attribute, value):
+    def remove_attribute(self, attribute_name, value):
         """ remove a value from attribute, raise exception if attribute does not contain value
-            only applies to multi-valued attributes, otherwise raises TypeError """
+            only applies to multi-valued attributes, otherwise raises TypeError
+            attribute_name: name of OSXMetaData attribute """
 
-        if not isinstance(attribute, Attribute):
-            raise TypeError(
-                "attribute must be osxmetada.constants.Attribute namedtuple"
-            )
+        attribute = ATTRIBUTES[attribute_name]
 
         if not attribute.list:
             raise TypeError("remove only applies to multi-valued attributes")
 
-        values = self.get_attribute(attribute)
+        values = self.get_attribute(attribute.name)
         values = list(values)
         values.remove(value)
-        self.set_attribute(attribute, values)
+        self.set_attribute(attribute.name, values)
 
-    def discard_attribute(self, attribute, value):
+    def discard_attribute(self, attribute_name, value):
         """ remove a value from attribute, unlike remove, does not raise exception
             if attribute does not contain value
-            only applies to multi-valued attributes, otherwise raises TypeError """
+            only applies to multi-valued attributes, otherwise raises TypeError
+            attribute_name: name of OSXMetaData attribute """
 
-        if not isinstance(attribute, Attribute):
-            raise TypeError(
-                "attribute must be osxmetada.constants.Attribute namedtuple"
-            )
+        attribute = ATTRIBUTES[attribute_name]
 
         if not attribute.list:
             raise TypeError("discard only applies to multi-valued attributes")
 
-        values = self.get_attribute(attribute)
+        values = self.get_attribute(attribute.name)
         try:
             values.remove(value)
-            self.set_attribute(attribute, values)
+            self.set_attribute(attribute.name, values)
         except:
             pass
 
-    def clear_attribute(self, attribute):
-        """ clear attribute (remove) 
-        attribute: an osxmetadata Attribute namedtuple """
+    def clear_attribute(self, attribute_name):
+        """ clear anttribute (remove) 
+            attribute_name: name of OSXMetaData attribute """
 
-        if not isinstance(attribute, Attribute):
-            raise TypeError(
-                "attribute must be osxmetada.constants.Attribute namedtuple"
-            )
+        attribute = ATTRIBUTES[attribute_name]
 
         try:
             if attribute.name in _FINDER_COMMENT_NAMES:
                 # Finder Comment needs special handling
                 # code following will also clear the attribute for Finder Comment
-                set_finder_comment(self._posix_name, "")
+                clear_finder_comment(self._posix_name)
             self._attrs.remove(attribute.constant)
         except (IOError, OSError):
             pass
@@ -335,7 +318,7 @@ class OSXMetaData:
     def __getattr__(self, name):
         """ if attribute name is in ATTRIBUTE dict, return the value
             otherwise raise KeyError """
-        value = self.get_attribute(ATTRIBUTES[name])
+        value = self.get_attribute(name)
         return value
 
     def __setattr__(self, name, value):
@@ -350,8 +333,8 @@ class OSXMetaData:
                 attribute = ATTRIBUTES[name]
                 value = validate_attribute_value(attribute, value)
                 if value is None:
-                    self.clear_attribute(attribute)
+                    self.clear_attribute(attribute.name)
                 else:
-                    self.set_attribute(attribute, value)
+                    self.set_attribute(attribute.name, value)
         except (KeyError, AttributeError):
             super().__setattr__(name, value)

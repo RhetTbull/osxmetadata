@@ -12,6 +12,9 @@ class _AttributeList(collections.abc.MutableSequence):
     """ represents a multi-valued OSXMetaData attribute list """
 
     def __init__(self, attribute, xattr_):
+        """ initialize object
+            attribute: an OSXMetaData Attributes namedtuple 
+            xattr_: an instance of xattr.xattr """
         self._attribute = attribute
         self._attrs = xattr_
         self._constant = attribute.constant
@@ -76,6 +79,9 @@ class _AttributeSet:
     """ represents a multi-valued OSXMetaData attribute set """
 
     def __init__(self, attribute, xattr_):
+        """ initialize object
+            attribute: an OSXMetaData Attributes namedtuple 
+            xattr_: an instance of xattr.xattr """
         self._attribute = attribute
         self._attrs = xattr_
         self._constant = attribute.constant

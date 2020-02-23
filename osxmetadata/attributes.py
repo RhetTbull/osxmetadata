@@ -101,13 +101,15 @@ ATTRIBUTES_LIST = [
     f"{'Short Name':{_SHORT_NAME_WIDTH}} {'Constant':{_CONSTANT_WIDTH}} Long Name"
 ]
 ATTRIBUTES_LIST.extend(
-    [
-        f"{a.name:{_SHORT_NAME_WIDTH}} "
-        f"{a.constant.split(':',2)[1]:{_CONSTANT_WIDTH}} "
-        f"{a.constant}"
-        for a in [
-            ATTRIBUTES[a]
-            for a in set([attribute.name for attribute in ATTRIBUTES.values()])
+    sorted(
+        [
+            f"{a.name:{_SHORT_NAME_WIDTH}} "
+            f"{a.constant.split(':',2)[1]:{_CONSTANT_WIDTH}} "
+            f"{a.constant}"
+            for a in [
+                ATTRIBUTES[a]
+                for a in set([attribute.name for attribute in ATTRIBUTES.values()])
+            ]
         ]
-    ]
+    )
 )
