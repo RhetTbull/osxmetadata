@@ -13,7 +13,7 @@ import click
 import osxmetadata
 
 from ._version import __version__
-from .attributes import _LONG_NAME_WIDTH, _SHORT_NAME_WIDTH, ATTRIBUTES, ATTRIBUTES_LIST
+from .attributes import _LONG_NAME_WIDTH, _SHORT_NAME_WIDTH, ATTRIBUTES
 from .constants import _TAGS_NAMES
 from .utils import validate_attribute_value
 
@@ -45,9 +45,48 @@ class MyClickCommand(click.Command):
 
     def get_help(self, ctx):
         help_text = super().get_help(ctx)
-        help_text += "\n\nValid attributes for ATTRIBUTE:\n"
-        help_text += "(Short Name, Constant, or Long Name may be passsed to option expecting an attribute)\n"
-        help_text += "\n".join(ATTRIBUTES_LIST)
+        formatter = click.HelpFormatter()
+
+        # build help text from all the attribute names
+        # get set of attribute names
+        # (to eliminate the duplicate entries for short_constant and long costant)
+        # then sort and get the short constant, long constant, and help text
+        # passed to click.HelpFormatter.write_dl for formatting
+        attr_tuples = [("Short name", "Description")]
+        attr_tuples.extend(
+            (
+                ATTRIBUTES[attr].name,
+                f"{ATTRIBUTES[attr].short_constant}, "
+                + f"{ATTRIBUTES[attr].constant}; {ATTRIBUTES[attr].help}",
+            )
+            for attr in sorted(
+                [attr for attr in {attr.name for attr in ATTRIBUTES.values()}]
+            )
+        )
+
+        formatter.write("\n\n")
+        formatter.write_text("Valid attributes for ATTRIBUTE:\n")
+        formatter.write_text(
+            "Each attribute has a short name, a constant name, and a long constant name\n"
+        )
+        formatter.write_text("Any of these may be used for ATTRIBUTE\n\n")
+        formatter.write_text('For example: --set findercomment "Hello world"\n')
+        formatter.write_text('or:          --set kMDFinderComment "Hello world"\n')
+        formatter.write_text(
+            'or:          --set com.apple.metadata:kMDItemFinderComment "Hello world"\n'
+        )
+        # help_text += "\n".join(ATTRIBUTES_LIST)
+        formatter.write("\n\n")
+        formatter.write_text(
+            "Attributes that are strings can only take one value for --set; "
+            + "--append will append to the existing value.  "
+            + "Attributes that are arrays can be set multiple times to add to the array: "
+            + "e.g. --set keywords 'foo' --set keywords 'bar' will set keywords to ['foo', 'bar']"
+        )
+        formatter.write("\n\n")
+
+        formatter.write_dl(attr_tuples)
+        help_text += formatter.getvalue()
         return help_text
 
 
@@ -69,6 +108,7 @@ JSON_OPTION = click.option(
     is_flag=True,
     help="Print output in JSON format, for use with --list.",
     default=False,
+    hidden=True,
 )
 DEBUG_OPTION = click.option(
     "--debug", required=False, is_flag=True, default=False, hidden=True

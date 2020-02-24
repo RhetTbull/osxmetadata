@@ -65,7 +65,6 @@ __all__ = [
     "kMDItemDescription",
     "kMDItemDownloadedDate",
     "kMDItemFinderComment",
-    "kMDItemFinderComment",
     "kMDItemHeadline",
     "kMDItemKeywords",
     "kMDItemUserTags",

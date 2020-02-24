@@ -1,6 +1,10 @@
 """ Python module to read and write various Mac OS X metadata 
     such as tags/keywords and Finder comments from files """
 
+
+# this was inspired by osx-tags by "Ben S / scooby" and is published under
+# the same MIT license. See: https://github.com/scooby/osx-tags
+
 import datetime
 import logging
 import pathlib
@@ -21,6 +25,18 @@ from .constants import (  # _DOWNLOAD_DATE,; _FINDER_COMMENT,; _TAGS,; _WHERE_FR
     _MAX_FINDERCOMMENT,
     _MAX_WHEREFROM,
     _VALID_COLORIDS,
+    kMDItemAuthors,
+    kMDItemComment,
+    kMDItemCopyright,
+    kMDItemCreator,
+    kMDItemDescription,
+    kMDItemDownloadedDate,
+    kMDItemFinderComment,
+    kMDItemHeadline,
+    kMDItemKeywords,
+    kMDItemUserTags,
+    _kMDItemUserTags,
+    kMDItemWhereFroms,
 )
 from .utils import (
     _debug,
@@ -31,15 +47,27 @@ from .utils import (
     validate_attribute_value,
 )
 
-# this was inspired by osx-tags by "Ben S / scooby" and is published under
-# the same MIT license. See: https://github.com/scooby/osx-tags
+__all__ = [
+    "OSXMetaData",
+    "ATTRIBUTES",
+    "kMDItemAuthors",
+    "kMDItemComment",
+    "kMDItemCopyright",
+    "kMDItemCreator",
+    "kMDItemDescription",
+    "kMDItemDownloadedDate",
+    "kMDItemFinderComment",
+    "kMDItemHeadline",
+    "kMDItemKeywords",
+    "kMDItemUserTags",
+    "_kMDItemUserTags",
+    "kMDItemWhereFroms",
+]
+
 
 # TODO: What to do about colors
 # TODO: check what happens if OSXMetaData.__init__ called with invalid file--should result in error but saw one case where it didn't
 # TODO: cleartags does not always clear colors--this is a new behavior, did Mac OS change something in implementation of colors?
-
-# what to import
-__all__ = ["OSXMetaData"]
 
 
 class OSXMetaData:
