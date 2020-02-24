@@ -52,7 +52,7 @@ class MyClickCommand(click.Command):
         # (to eliminate the duplicate entries for short_constant and long costant)
         # then sort and get the short constant, long constant, and help text
         # passed to click.HelpFormatter.write_dl for formatting
-        attr_tuples = [("Short name", "Description")]
+        attr_tuples = [("Short Name", "Description")]
         attr_tuples.extend(
             (
                 ATTRIBUTES[attr].name,
@@ -65,25 +65,25 @@ class MyClickCommand(click.Command):
         )
 
         formatter.write("\n\n")
-        formatter.write_text("Valid attributes for ATTRIBUTE:\n")
         formatter.write_text(
-            "Each attribute has a short name, a constant name, and a long constant name\n"
+            "Valid attributes for ATTRIBUTE: "
+            + "Each attribute has a short name, a constant name, and a long constant name. "
+            + "Any of these may be used for ATTRIBUTE"
         )
-        formatter.write_text("Any of these may be used for ATTRIBUTE\n\n")
-        formatter.write_text('For example: --set findercomment "Hello world"\n')
-        formatter.write_text('or:          --set kMDFinderComment "Hello world"\n')
+        formatter.write("\n")
+        formatter.write_text('For example: --set findercomment "Hello world"')
+        formatter.write_text('or:          --set kMDFinderComment "Hello world"')
         formatter.write_text(
-            'or:          --set com.apple.metadata:kMDItemFinderComment "Hello world"\n'
+            'or:          --set com.apple.metadata:kMDItemFinderComment "Hello world"'
         )
-        # help_text += "\n".join(ATTRIBUTES_LIST)
-        formatter.write("\n\n")
+        formatter.write("\n")
         formatter.write_text(
             "Attributes that are strings can only take one value for --set; "
             + "--append will append to the existing value.  "
             + "Attributes that are arrays can be set multiple times to add to the array: "
             + "e.g. --set keywords 'foo' --set keywords 'bar' will set keywords to ['foo', 'bar']"
         )
-        formatter.write("\n\n")
+        formatter.write("\n")
 
         formatter.write_dl(attr_tuples)
         help_text += formatter.getvalue()

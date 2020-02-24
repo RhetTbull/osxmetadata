@@ -152,7 +152,8 @@ ATTRIBUTES = {
         True,
         False,
         _AttributeTagsSet,
-        'Finder tags; searchable in Spotlight using "tag:tag_name"',
+        'Finder tags; searchable in Spotlight using "tag:tag_name".  '
+        + "If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords.",
     ),
     "wherefroms": Attribute(
         "wherefroms",
