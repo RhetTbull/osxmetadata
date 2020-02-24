@@ -28,7 +28,7 @@ with open(
 setup(
     name="osxmetadata",
     version=about["__version__"],
-    description="Read and write meta data, such as tags/keywords, on Mac OS X files",
+    description="Read and write meta data, such as tags/keywords, Finder comments, etc. on MacOS files",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Rhet Turnbull",

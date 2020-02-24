@@ -1,91 +1,175 @@
-osxmetadata 
-========
+# osxmetadata 
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
-What is osxmetadata?
------------------
+## What is osxmetadata?
 
-osxmetadata provides a simple interface to access various metadata about MacOS / OS X files.  Currently supported metadata includes tags/keywords, Finder comments, and download data (downloaded where from and downloaded date).  
+osxmetadata provides a simple interface to access various metadata about MacOS / OS X files.  Currently supported metadata attributes include tags/keywords, Finder comments, authors, etc.  
 
-Supported operating systems
----------------------------
+## Why this package?
 
-Only works on Mac OS X.
+Apple provides rich support for file metadata through various metadata extended attributes  MacOS provides tools to view and set these various metadata attributes.  For example, `mdls` lists metadata associated with a file and `xattr` allows the user to set extended attributes.  However, neither of these tools makes it easy to modify.  `xattr`, for example, can set metadata attributes but requires the value be in the form of a plist which is impractical.   `osxmetadata` makes it easy to to manipulate the MacOS metadata attributes, either programmatically or through a command line tool.
 
-Installation instructions
--------------------------
+## Supported operating systems
+
+Only works on MacOS.  Requires Python 3.6+. 
+
+## Installation instructions
 
 osxmetadata uses setuptools, thus simply run:
 
 	python setup.py install
 
-Command Line Usage
-------------------
+## Command Line Usage
 
-Installs command line tool called osxmetadata.  This is not full replacement for ```mdls``` and ```xattr``` commands but provides a simple interface to view/edit metadata supported by osxmetadata
-
-Currently, only supports reading/writing tags and Finder comments and export to text or JSON.  Can import metadata from a JSON file to restore tags & Finder comments.  I plan to add additional metadata in the future.  My use case for import/export to JSON is to backup metadata for use with cloud services such as [backblaze](https://www.backblaze.com) that do not preserve metadata stored in extended attributes.  By exporting all metadata to a JSON file which backblaze etc. will backup, you can restore metadata if you ever need to restore files from backup.
+Installs command line tool called osxmetadata which provides a simple interface to view/edit metadata supported by osxmetadata.
 
 If you only care about the command line tool, I recommend installing with [pipx](https://github.com/pipxproject/pipx)
 
+The command line tool can also be run via `python -m osxmetadata`.  Running it with no arguments or with --help option will print a help message:
+
 ```
-usage: osxmetadata [-h] [-v] [-V] [-j] [-q] [--force] [-o OUTFILE] [-r RESTORE] [--addtag ADDTAG] [--cleartags]
-                   [--rmtag RMTAG] [--setfc SETFC] [--clearfc] [--addfc ADDFC]
-                   [files [files ...]]
+Usage: osxmetadata [OPTIONS] FILE
 
-Import and export metadata from files
+  Read/write metadata from file(s).
 
-positional arguments:
-  files
+Options:
+  -v, --version             Show the version and exit.
+  -w, --walk                Walk directory tree, processing each file in the
+                            tree
+  --set ATTRIBUTE VALUE     Set ATTRIBUTE to VALUE
+  --list                    List all metadata attributes for FILE
+  --clear ATTRIBUTE         Remove attribute from FILE
+  --append ATTRIBUTE VALUE  Append VALUE to ATTRIBUTE
+  --get ATTRIBUTE           Get value of ATTRIBUTE
+  --remove ATTRIBUTE VALUE  Remove VALUE from ATTRIBUTE; only applies to
+                            multi-valued attributes
+  --update ATTRIBUTE VALUE  Update ATTRIBUTE with VALUE; for multi-valued
+                            attributes, this adds VALUE to the attribute if
+                            not already in the list
+  --help                    Show this message and exit.
 
-optional arguments:
-  -h, --help            Show this help message
-  -v, --version         Print version number
-  -V, --verbose         Print verbose output during processing
-  -j, --json            Output to JSON, optionally provide output file name: --outfile=file.json NOTE: if processing
-                        multiple files each JSON object is written to a new line as a separate object (ie. not a list
-                        of objects)
-  -q, --quiet           Be extra quiet when running.
-  --force               Force new metadata to be written even if unchanged
-  -o OUTFILE, --outfile OUTFILE
-                        Name of output file. If not specified, output goes to STDOUT
-  -r RESTORE, --restore RESTORE
-                        Restore all metadata by reading from JSON file RESTORE (previously created with --json
-                        --outfile=RESTORE). Will overwrite all existing metadata with the metadata specified in the
-                        restore file. NOTE: JSON file expected to have one object per line as written by --json
-  --addtag ADDTAG       add tag/keyword for file. To add multiple tags, use multiple --addtag otions. e.g. --addtag
-                        foo --addtag bar
-  --cleartags           remove all tags from file
-  --rmtag RMTAG         remove tag from file
-  --setfc SETFC         set Finder comment
-  --clearfc             clear Finder comment
-  --addfc ADDFC         append a Finder comment, preserving existing comment
+Valid attributes for ATTRIBUTE: Each attribute has a short name, a constant
+name, and a long constant name. Any of these may be used for ATTRIBUTE
+
+For example: --set findercomment "Hello world"
+or:          --set kMDFinderComment "Hello world"
+or:          --set com.apple.metadata:kMDItemFinderComment "Hello world"
+
+Attributes that are strings can only take one value for --set; --append will
+append to the existing value.  Attributes that are arrays can be set multiple
+times to add to the array: e.g. --set keywords 'foo' --set keywords 'bar' will
+set keywords to ['foo', 'bar']
+
+Short Name      Description
+authors         kMDItemAuthors, com.apple.metadata:kMDItemAuthors; The
+                author, or authors, of the contents of the file. An array of
+                strings.
+comment         kMDItemComment, com.apple.metadata:kMDItemComment; A comment
+                related to the file. This differs from the Finder comment,
+                kMDItemFinderComment. A string.
+copyright       kMDItemCopyright, com.apple.metadata:kMDItemCopyright; The
+                copyright owner of the file contents. A string.
+creator         kMDItemCreator, com.apple.metadata:kMDItemCreator;
+                Application used to create the document content (for example
+                “Word”, “Pages”, and so on). A string.
+description     kMDItemDescription, com.apple.metadata:kMDItemDescription; A
+                description of the content of the resource. The description
+                may include an abstract, table of contents, reference to a
+                graphical representation of content or a free-text account
+                of the content. A string.
+downloadeddate  kMDItemDownloadedDate,
+                com.apple.metadata:kMDItemDownloadedDate; The date the item
+                was downloaded.  A date in ISO 8601 format: e.g.
+                2000-01-12T12:00:00 or 2000-12-31 (ISO 8601 w/o time zone)
+findercomment   kMDItemFinderComment,
+                com.apple.metadata:kMDItemFinderComment; Finder comments for
+                this file. A string.
+headline        kMDItemHeadline, com.apple.metadata:kMDItemHeadline; A
+                publishable entry providing a synopsis of the contents of
+                the file. A string.
+keywords        kMDItemKeywords, com.apple.metadata:kMDItemKeywords;
+                Keywords associated with this file. For example, “Birthday”,
+                “Important”, etc. This differs from Finder tags
+                (_kMDItemUserTags) which are keywords/tags shown in the
+                Finder and searchable in Spotlight using "tag:tag_name"An
+                array of strings.
+tags            _kMDItemUserTags, com.apple.metadata:_kMDItemUserTags;
+                Finder tags; searchable in Spotlight using "tag:tag_name".
+                If you want tags/keywords visible in the Finder, use this
+                instead of kMDItemKeywords.
+wherefroms      kMDItemWhereFroms, com.apple.metadata:kMDItemWhereFroms;
+                Describes where the file was obtained from (e.g. URL
+                downloaded from). An array of strings.
 ```
 
 
-Example uses of the module
---------------------------
+## Supported Attributes
+
+Information about commonly used MacOS metadata attributes is available from [Apple](https://developer.apple.com/documentation/coreservices/file_metadata/mditem/common_metadata_attribute_keys?language=objc).  
+
+`osxmetadata` currently supports the following metadata attributes:
+
+| Constant | Short Name | Long Constant | Description |
+|---------------|----------|---------|-----------|
+|kMDItemAuthors|authors|com.apple.metadata:kMDItemAuthors|The author, or authors, of the contents of the file. An array of strings.|
+|kMDItemComment|comment|com.apple.metadata:kMDItemComment|A comment related to the file. This differs from the Finder comment, kMDItemFinderComment. A string.|
+|kMDItemCopyright|copyright|com.apple.metadata:kMDItemCopyright|The copyright owner of the file contents. A string.|
+|kMDItemCreator|creator|com.apple.metadata:kMDItemCreator|Application used to create the document content (for example “Word”, “Pages”, and so on). A string.|
+|kMDItemDescription|description|com.apple.metadata:kMDItemDescription|A description of the content of the resource. The description may include an abstract, table of contents, reference to a graphical representation of content or a free-text account of the content. A string.|
+|kMDItemDownloadedDate|downloadeddate|com.apple.metadata:kMDItemDownloadedDate|The date the item was downloaded.  A date in ISO 8601 format: e.g. 2000-01-12T12:00:00 or 2000-12-31 (ISO 8601 w/o time zone)|
+|kMDItemFinderComment|findercomment|com.apple.metadata:kMDItemFinderComment|Finder comments for this file. A string.|
+|kMDItemHeadline|headline|com.apple.metadata:kMDItemHeadline|A publishable entry providing a synopsis of the contents of the file. A string.|
+|kMDItemKeywords|keywords|com.apple.metadata:kMDItemKeywords|Keywords associated with this file. For example, “Birthday”, “Important”, etc. This differs from Finder tags (_kMDItemUserTags) which are keywords/tags shown in the Finder and searchable in Spotlight using "tag:tag_name"An array of strings.|
+|_kMDItemUserTags|tags|com.apple.metadata:_kMDItemUserTags|Finder tags; searchable in Spotlight using "tag:tag_name".  If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords.|
+|kMDItemWhereFroms|wherefroms|com.apple.metadata:kMDItemWhereFroms|Describes where the file was obtained from (e.g. URL downloaded from). An array of strings.|
+
+
+## Example uses of the package
+
+### Using the command line tool to set metadata:
+
+Set Finder tags to Test, append "John Doe" to list of authors, clear (delete) description, set finder comment to "Hello World":
+`osxmetadata --set tags Test --append authors "John Doe" --clear description --set findercomment "Hello World" ~/Downloads/test.jpg`
+
+Walk a directory tree and add the Finder tag "test" to every file:
+`osxmetadata --append tags "Test" --walk ~/Downloads`
+
+### Using the programmatic interface
+
+There are two ways to access metadata using the programmatic interface.  First, an OSXMetaData object will create properties for each supported attribute using the "Short name" in table above.  For example:
 
 ```python
 from osxmetadata import *
 
 fname = 'foo.txt'
-
 meta = OSXMetaData(fname)
-print(meta.name)
-print(meta.finder_comment)
-print(meta.tags)
-print(meta.where_from)
-print(str(meta.download_date))
+meta.description = "This is my document."
+meta.tags.update("Foo")
+meta.authors = ["John Doe","Jane Smith"]
 
 ```
-Tags
-----
 
-Accessed via OSXMetaData.tags
+The second way to access metadata is using methods from OSXMetaData to get/set/update etc. the various attributes.  The various methods take the name of the attribute to be operated on which can be specified using either the short name, constant, or long constant from the table above. `osxmetadata` also exports constants with the same name as specified in the Apple documentation and the table above, for example, `kMDItemDescription`.
+
+```
+from osxmetadata import *
+
+fname = 'foo.txt'
+meta = OSXMetaData(fname)
+description = meta.get_attribute(kMDItemDescription)
+meta.set_attribute(kMDItemCreator,"OSXMetaData")
+meta.append_attribute("tags",["Blue"])
+meta.update_attribute("com.apple.metadata:kMDItemKeywords",["Foo"])
+meta.append_attribute("findercomment","Goodbye")
+meta.clear_attribute("tags")
+```
+
+#### Tags
+
+Accessed via OSXMetaData.tags.  Represents Finder tags (_kMDItemUserTags).
 
 Behaves mostly like a set with following methods:
 
@@ -141,61 +225,20 @@ Foo, Test, Gray, MyCustomTag, FOOBAR
 >>>
 ```
 
-Finder Comments
----------------
+## Usage Notes
 
-Accessed via OXMetaData.finder_comment
-
-Behaves mostly like a string.  You can assign a string or use +=. To clear, assign None or ''
-
-```python
->>> md.finder_comment = 'My Comment'
->>> print(md.finder_comment)
-My Comment
->>> md.finder_comment += ', and FooBar!'
->>> print(md.finder_comment)
-My Comment, and FooBar!
->>> md.finder_comment = None
->>> print(md.finder_comment)
-
->>>
-```
-
-Download Data
--------------
-Accessed via OSXMetaData.download_date (datetime.datetime object) and OSXMetaData.where_from (list of URLs as strings)
-
-
-```python
->>> import datetime
->>> md.download_date = datetime.datetime.now()
->>> print(str(md.download_date))
-2018-12-15 15:45:10.869535
->>> md.where_from = ['http://wwww.mywebsite.com','https://downloads.mywebsite.com/downloads/foo']
->>> print(md.where_from)
-['http://wwww.mywebsite.com', 'https://downloads.mywebsite.com/downloads/foo']
->>> md.where_from=[]
->>> print(md.where_from)
-[]
->>>
-```
-
-Usage Notes
------------
-Changes are immediately written to the file.  For example, OSXMetaData.tags.add('Foo') immediately writes the tag 'Foo' to the file.
+Changes are immediately written to the file.  For example, OSXMetaData.tags.add("Foo") immediately writes the tag 'Foo' to the file.
 
 Metadata is refreshed from disk every time a class property is accessed.
 
 This will only work on file systems that support Mac OS X extended attributes.
 
-Dependencies
-------------
+## Dependencies
 [PyObjC](https://pythonhosted.org/pyobjc/)
 
 [xattr](https://github.com/xattr/xattr)
 
-Acknowledgements
-----------------
+## Acknowledgements
 This module was inspired by [osx-tags]( https://github.com/scooby/osx-tags) by "Ben S / scooby".  I leveraged osx-tags to bootstrap the design of this module.  I wanted a more
 general OS X metadata library so I rolled my own.  This module is published under the same MIT license as osx-tags.
 
