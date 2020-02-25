@@ -182,11 +182,13 @@ meta.clear_attribute("tags")
 
 Accessed via OSXMetaData.tags.  Represents Finder tags (_kMDItemUserTags).
 
+With the exception of tags, all multi-valued attributes behave like lists.  Because it does not make sense to have duplicate Finder tags, osxmetadata enforces no duplicate tags by treating Finder tags as a set.
+
 Behaves mostly like a set with following methods:
 
 * update (sets multiple tags)
 * add (add a single tag)
-* += (add a single tag)
+* |= update the tag set
 * remove (raises error if tag not present)
 * discard (does not raise error if tag not present)
 * clear (removes all tags)
@@ -198,41 +200,42 @@ Duplicate tags will be ignored.
 The standard OS X Finder color labels are handled via tags.  For example, setting a tag name of Gray, Green, Purple, Blue, Yellow, Red, or Orange will also set the equivalent Finder color label. This is consistent with how the Finder works.  If a file has a color label, it will be returned as a tag of the corresponding color name when reading from OSXMetaData.tags
 
 ```python
->>> from osxmetadata import OSXMetaData
->>> md = OSXMetaData('foo.txt')
->>> md.tags.update('Foo','Gray','Red','Test')
->>> print(md.tags)
-Foo, Gray, Red, Test
-#Standard Mac Finder color labels are normalized
->>> md.tags.add('PURPLE')
->>> print(md.tags)
-Foo, Purple, Red, Test, Gray
->>> md.tags.add('FOOBAR')
->>> print(md.tags)
-Foo, Purple, Red, Test, Gray, FOOBAR
->>> md.tags += 'MyCustomTag'
->>> print(md.tags)
-Foo, Purple, Red, Test, Gray, MyCustomTag, FOOBAR
->>> md.tags.remove('Purple')
->>> print(md.tags)
-Foo, Red, Test, Gray, MyCustomTag, FOOBAR
->>> md.tags.remove('Purple')
+>>> import osxmetadata
+>>> md = osxmetadata.OSXMetaData("/Users/rhet/Downloads/wedding.jpg")
+>>> md.tags
+set()
+>>> md.tags = {"Foo","Bar"}
+>>> md.tags
+{'Bar', 'Foo'}
+>>> md.tags.add("Baz")
+>>> md.tags
+{'Baz', 'Bar', 'Foo'}
+>>> md.tags.update(["Hello","World"])
+>>> md.tags
+{'Bar', 'Hello', 'World', 'Baz', 'Foo'}
+>>> md.tags.add("PURPLE")
+# Color names are normalized as the Finder does
+>>> md.tags
+{'Bar', 'Hello', 'World', 'Baz', 'Foo', 'Purple'}
+>>> md.tags |= {"CustomTag"}
+>>> md.tags
+{'Bar', 'Hello', 'World', 'Baz', 'Foo', 'CustomTag', 'Purple'}
+>>> md.tags.remove("Hello")
+>>> md.tags
+{'Bar', 'World', 'Baz', 'Foo', 'CustomTag', 'Purple'}
+# removing an item not present in the set raises error
+>>> md.tags.remove("Hello")
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-  File "osxmetadata/osxmetadata.py", line 148, in remove
-    tags.remove(self.__tag_normalize(tag))
-KeyError: 'Purple\n3'
->>> md.tags.discard('Purple')
->>> md.tags.discard('Red')
->>> print(md.tags)
-Foo, Test, Gray, MyCustomTag, FOOBAR
+  File "/Users/rhet/Dropbox/Code/osxmetadata/osxmetadata/classes.py", line 127, in remove
+    values.remove(self._normalize(value))
+KeyError: 'Hello\n0'
+>>> md.tags.discard("Hello")
 >>> len(md.tags)
-5
+6
 >>> md.tags.clear()
->>> print(md.tags)
-
->>> len(md.tags)
-0
+>>> md.tags
+set()
 >>>
 ```
 

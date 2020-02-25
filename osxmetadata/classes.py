@@ -97,16 +97,19 @@ class _AttributeSet:
 
     def add(self, value):
         """ add a value"""
+        # TODO: should check to see if value is a non-list, set, etc. (single value)
         self._load_data()
-        values = set(map(self._normalize, self.data))
         self.data.add(self._normalize(value))
         self._write_data()
 
-    def update(self, *values):
-        """ update data adding any new values in *values """
+    def update(self, *others):
+        """ update data adding any new values in *others 
+            each item passed in *others must be an iterable """
         self._load_data()
         old_values = set(map(self._normalize, self.data))
-        new_values = old_values.union(set(map(self._normalize, values)))
+        new_values = old_values
+        for item in others:
+            new_values = new_values.union(set(map(self._normalize, item)))
         self.data = new_values
         self._write_data()
 
@@ -180,9 +183,10 @@ class _AttributeSet:
             values = self.data
         return str(list(values))
 
-    def __iadd__(self, value):
-        for v in value:
-            self.add(v)
+    def __ior__(self, values):
+        if type(values) != set:
+            raise TypeError
+        self.update(values)
         return self
 
 

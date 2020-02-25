@@ -26,29 +26,41 @@ def test_tags(temp_file):
     # update tags
     meta = OSXMetaData(temp_file)
     tagset = ["Test", "Green"]
-    meta.tags.update(*tagset)
+    meta.tags.update(tagset)
     assert set(meta.tags) == set(tagset)
 
+    # update non-iterable
+    with pytest.raises(TypeError):
+        meta.tags.update(1,2,3)
+
+    # update with string
+    meta.tags.update("Foo")
+    assert set(meta.tags) == {"Test","Green","F","o"}
+
     # add tags
-    meta.tags.add("Foo")
+    meta.tags.add("Hello")
     assert set(meta.tags) != set(tagset)
-    assert set(meta.tags) == set(["Test", "Green", "Foo"])
+    assert set(meta.tags) == set(["Test", "F", "o", "Green", "Hello"])
 
-    # __iadd__
-    meta.tags += ["Bar"]
-    assert set(meta.tags) == set(["Test", "Green", "Foo", "Bar"])
+    # __ior__ 
+    meta.tags |= {"Bar"}
+    assert set(meta.tags) == set(["Test", "Green", "F", "o", "Hello", "Bar"])
 
-    # __iadd__ set
-    meta.tags += set(["Baz"])
-    assert set(meta.tags) == set(["Test", "Green", "Foo", "Bar", "Baz"])
+    # __ior__ set
+    meta.tags |= set(["Baz"])
+    assert set(meta.tags) == set(["Test", "Green", "F", "o", "Hello", "Bar", "Baz"])
+
+    # __ior__ error
+    with pytest.raises(TypeError):
+        meta.tags |= ["FooBar"]
 
     # __repr__
     tags = set(meta.tags)
-    assert tags == set(["Test", "Green", "Foo", "Bar", "Baz"])
+    assert tags == set(["Test", "Green", "F", "o", "Hello", "Bar", "Baz"])
 
     # remove tags
     meta.tags.remove("Test")
-    assert set(meta.tags) == set(["Green", "Foo", "Bar", "Baz"])
+    assert set(meta.tags) == set(["Green", "F", "o", "Hello", "Bar", "Baz"])
 
     # remove tag that doesn't exist, raises KeyError
     with pytest.raises(KeyError):
@@ -56,14 +68,14 @@ def test_tags(temp_file):
 
     # discard tags
     meta.tags.discard("Green")
-    assert set(meta.tags) == set(["Foo", "Bar", "Baz"])
+    assert set(meta.tags) == set(["F", "o", "Hello", "Bar", "Baz"])
 
     # discard tag that doesn't exist, no error
     meta.tags.discard("FooBar")
-    assert set(meta.tags) == set(["Foo", "Bar", "Baz"])
+    assert set(meta.tags) == set(["F","o", "Hello", "Bar", "Baz"])
 
     # len
-    assert len(meta.tags) == 3
+    assert len(meta.tags) == 5
 
     # clear tags
     meta.tags.clear()
@@ -77,15 +89,16 @@ def test_tags_2(temp_file):
     # update tags
     meta = OSXMetaData(temp_file)
     tagset = ["Test", "Green"]
-    meta.tags.update(*tagset)
+    meta.tags.update(tagset)
     assert set(meta.tags) == set(tagset)
 
-    # __iadd__ string
-    meta.tags += "Bar"
-    assert set(meta.tags) == set(["Test", "Green", "B", "a", "r"])
+    # __ior__ string
+    with pytest.raises(TypeError):
+        meta.tags |= "Bar"
+    assert set(meta.tags) == set(["Test", "Green"])
 
     # len
-    assert len(meta.tags) == 5
+    assert len(meta.tags) == 2 
 
     # clear tags
     meta.tags.clear()
