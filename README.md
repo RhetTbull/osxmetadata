@@ -8,9 +8,9 @@
 
 osxmetadata provides a simple interface to access various metadata about MacOS / OS X files.  Currently supported metadata attributes include tags/keywords, Finder comments, authors, etc.  
 
-## Why this package?
+## Motivation
 
-Apple provides rich support for file metadata through various metadata extended attributes  MacOS provides tools to view and set these various metadata attributes.  For example, `mdls` lists metadata associated with a file and `xattr` allows the user to set extended attributes.  However, neither of these tools makes it easy to modify.  `xattr`, for example, can set metadata attributes but requires the value be in the form of a plist which is impractical.   `osxmetadata` makes it easy to to manipulate the MacOS metadata attributes, either programmatically or through a command line tool.
+Apple provides rich support for file metadata through various metadata extended attributes.  MacOS provides tools to view and set these various metadata attributes.  For example, `mdls` lists metadata associated with a file but doesn't let you edit the data while `xattr` allows the user to set extended attributes but requires the values be in the form of a MacOS plist which is impractical.   `osxmetadata` makes it easy to to both view and manipulate the MacOS metadata attributes, either programmatically or through a command line tool.
 
 ## Supported operating systems
 
@@ -132,9 +132,11 @@ Information about commonly used MacOS metadata attributes is available from [App
 ### Using the command line tool to set metadata:
 
 Set Finder tags to Test, append "John Doe" to list of authors, clear (delete) description, set finder comment to "Hello World":
+
 `osxmetadata --set tags Test --append authors "John Doe" --clear description --set findercomment "Hello World" ~/Downloads/test.jpg`
 
 Walk a directory tree and add the Finder tag "test" to every file:
+
 `osxmetadata --append tags "Test" --walk ~/Downloads`
 
 ### Using the programmatic interface
@@ -142,13 +144,22 @@ Walk a directory tree and add the Finder tag "test" to every file:
 There are two ways to access metadata using the programmatic interface.  First, an OSXMetaData object will create properties for each supported attribute using the "Short name" in table above.  For example:
 
 ```python
-from osxmetadata import *
+from osxmetadata import OSXMetaData
 
-fname = 'foo.txt'
-meta = OSXMetaData(fname)
+filename = 'foo.txt'
+meta = OSXMetaData(filename)
+
+# set description
 meta.description = "This is my document."
+
+# add "Foo" to tags but not if tags already contains "Foo"
 meta.tags.update("Foo")
+
+# set authors to "John Doe" and "Jane Smith"
 meta.authors = ["John Doe","Jane Smith"]
+
+# clear copyright
+meta.copyright = None
 
 ```
 
