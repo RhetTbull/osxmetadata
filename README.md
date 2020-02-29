@@ -255,25 +255,33 @@ meta.append_attribute("findercomment","Goodbye")
 meta.clear_attribute("tags")
 ```
 
-#### The following methods are available:
+## Programmatic Interface:
 
-##### `get_attribute(attribute_name)`
+### get_attribute
+`get_attribute(attribute_name)`
+
 Load attribute and return value or None if attribute was not set 
 
 - attribute_name: an osxmetadata Attribute name
 
-##### `get_attribute_str(attribute_name)`
+### get_attribute_str
+`get_attribute_str(attribute_name)`
+
 Returns a string representation of attribute value.  e.g. if attribute is a datedate.datetime object, will format using datetime.isoformat()
 
 - attribute_name: an osxmetadata Attribute name
 
-##### `set_attribute(attribute_name, value)`
+### set_attribute
+`set_attribute(attribute_name, value)`
+
 Write attribute to file with value
 
 - attribute_name: an osxmetadata Attribute name
 - value: value to store in attribute
 
-##### `update_attribute(attribute_name, value)`
+### update_attribute
+`update_attribute(attribute_name, value)`
+
 Update attribute with union of itself and value.  This avoids adding duplicate values to attribute. 
 
 - attribute: an osxmetadata Attribute name
@@ -281,29 +289,39 @@ Update attribute with union of itself and value.  This avoids adding duplicate v
 
 Note: implementation simply calls `append_attribute` with `update=True`; provided for convenience.
 
-##### `append_attribute(attribute_name, value, update=False)`
+### append_attribute
+`append_attribute(attribute_name, value, update=False)`
+
 Append value to attribute.
 
 - attribute_name: an osxmetadata Attribute name
 - value: value to append to attribute
 - update: (bool) if True, update instead of append (e.g. avoid adding duplicates, default is False)
 
-##### `remove_attribute(attribute_name, value)`
+### remove_attribute
+`remove_attribute(attribute_name, value)`
+
 Remove a value from attribute, raise ValueError if attribute does not contain value.  Only applies to multi-valued attributes, otherwise raises TypeError.
 
 - attribute_name: name of OSXMetaData attribute
 
-##### `discard_attribute(attribute_name, value)`
+### discard_attribute
+`discard_attribute(attribute_name, value)`
+
 Remove a value from attribute, unlike remove, does not raise exception if attribute does not contain value.  Only applies to multi-valued attributes, otherwise raises TypeError.
 
 - attribute_name: name of OSXMetaData attribute
 
-##### `clear_attribute(attribute_name)`
+### clear_attribute
+`clear_attribute(attribute_name)`
+
 Clear anttribute (remove it from the file).
 
 - attribute_name: name of OSXMetaData attribute
 
-##### `list_metadata()`
+### list_metadata
+`list_metadata()`
+
 List the Apple metadata attributes set on the file.  e.g. those in com.apple.metadata namespace.
 
 ## Usage Notes
