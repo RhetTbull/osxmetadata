@@ -39,6 +39,8 @@ Options:
   -v, --version             Show the version and exit.
   -w, --walk                Walk directory tree, processing each file in the
                             tree
+  -j, --json                Print output in JSON format, for use with --list
+                            and --get.
   --set ATTRIBUTE VALUE     Set ATTRIBUTE to VALUE
   --list                    List all metadata attributes for FILE
   --clear ATTRIBUTE         Remove attribute from FILE
@@ -65,7 +67,7 @@ set keywords to ['foo', 'bar']
 
 Short Name      Description
 authors         kMDItemAuthors, com.apple.metadata:kMDItemAuthors; The
-                author, or authors, of the contents of the file. An array of
+                author, or authors, of the contents of the file. A list of
                 strings.
 comment         kMDItemComment, com.apple.metadata:kMDItemComment; A comment
                 related to the file. This differs from the Finder comment,
@@ -94,15 +96,15 @@ keywords        kMDItemKeywords, com.apple.metadata:kMDItemKeywords;
                 Keywords associated with this file. For example, “Birthday”,
                 “Important”, etc. This differs from Finder tags
                 (_kMDItemUserTags) which are keywords/tags shown in the
-                Finder and searchable in Spotlight using "tag:tag_name"An
-                array of strings.
+                Finder and searchable in Spotlight using "tag:tag_name"A
+                list of strings.
 tags            _kMDItemUserTags, com.apple.metadata:_kMDItemUserTags;
                 Finder tags; searchable in Spotlight using "tag:tag_name".
                 If you want tags/keywords visible in the Finder, use this
-                instead of kMDItemKeywords.
+                instead of kMDItemKeywords. A list of strings.
 wherefroms      kMDItemWhereFroms, com.apple.metadata:kMDItemWhereFroms;
                 Describes where the file was obtained from (e.g. URL
-                downloaded from). An array of strings.
+                downloaded from). A list of strings.
 ```
 
 

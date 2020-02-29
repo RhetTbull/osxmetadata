@@ -17,7 +17,7 @@ from plistlib import FMT_BINARY  # pylint: disable=E0611
 import xattr
 
 from .attributes import ATTRIBUTES, Attribute
-from .classes import _AttributeList, _AttributeTagsList 
+from .classes import _AttributeList, _AttributeTagsList
 from .constants import (  # _DOWNLOAD_DATE,; _FINDER_COMMENT,; _TAGS,; _WHERE_FROM,
     _COLORIDS,
     _COLORNAMES,
@@ -46,9 +46,11 @@ from .utils import (
     clear_finder_comment,
     validate_attribute_value,
 )
+from ._version import __version__
 
 __all__ = [
     "OSXMetaData",
+    "__version__",
     "ATTRIBUTES",
     "kMDItemAuthors",
     "kMDItemComment",
@@ -127,7 +129,8 @@ class OSXMetaData:
 
         # user tags need special processing to normalize names
         if attribute.name == "tags":
-            return self.tags
+            self.tags._load_data()
+            return self.tags.data
 
         try:
             plist = plistlib.loads(self._attrs[attribute.constant])
@@ -167,7 +170,7 @@ class OSXMetaData:
 
         # verify type is correct
         value = validate_attribute_value(attribute, value)
-        
+
         # if attribute.list and (type(value) == list or type(value) == set):
         #     for val in value:
         #         if attribute.type_ != type(val):
@@ -219,7 +222,7 @@ class OSXMetaData:
         # start with existing values
         new_value = self.get_attribute(attribute.name)
 
-        value = validate_attribute_value(attribute,value)
+        value = validate_attribute_value(attribute, value)
 
         if attribute.list:
             if new_value is not None:
@@ -240,8 +243,7 @@ class OSXMetaData:
             if new_value is not None:
                 new_value += value
             else:
-                new_value = value            
-
+                new_value = value
 
         # # verify type is correct
         # if attribute.list and (type(value) == list or type(value) == set):

@@ -206,6 +206,62 @@ def test_datetime_list_attributes(temp_file, attribute):
     assert meta.get_attribute(attribute) == [dt]
 
 
+def test_get_json(temp_file):
+    import json
+    import pathlib
+    from osxmetadata import OSXMetaData, ATTRIBUTES, __version__
+    from osxmetadata.__main__ import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["--set", "tags", "foo", "--set", "tags", "bar", temp_file]
+    )
+    result = runner.invoke(cli, ["--get", "tags", "--json", temp_file])
+    assert result.exit_code == 0
+    json_ = json.loads(result.stdout)
+    assert json_["com.apple.metadata:_kMDItemUserTags"] == ["foo", "bar"]
+    assert json_["_version"] == __version__
+    assert json_["_filename"] == pathlib.Path(temp_file).name
+
+
+def test_list_json(temp_file):
+    import json
+    import pathlib
+    from osxmetadata import OSXMetaData, ATTRIBUTES, __version__
+    from osxmetadata.__main__ import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["--set", "tags", "foo", "--set", "tags", "bar", temp_file]
+    )
+    result = runner.invoke(cli, ["--list", "--json", temp_file])
+    assert result.exit_code == 0
+    json_ = json.loads(result.stdout)
+    assert json_["com.apple.metadata:_kMDItemUserTags"] == ["foo", "bar"]
+    assert json_["_version"] == __version__
+    assert json_["_filename"] == pathlib.Path(temp_file).name
+
+
+def test_cli_error_json(temp_file):
+    from osxmetadata import OSXMetaData, ATTRIBUTES
+    from osxmetadata.__main__ import cli
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--set", "tags", "foo", "--json", temp_file])
+    assert result.exit_code == 2
+    assert "--json can only be used with --get or --list" in result.stdout
+
+
+def test_cli_error_bad_attribute(temp_file):
+    from osxmetadata import OSXMetaData, ATTRIBUTES
+    from osxmetadata.__main__ import cli
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--set", "foo", "bar", temp_file])
+    assert result.exit_code == 2
+    assert "Invalid attribute foo" in result.stdout
+
+
 def test_cli_error(temp_file):
     from osxmetadata.__main__ import cli
 

@@ -14,6 +14,7 @@ import osxmetadata
 
 from ._version import __version__
 from .attributes import _LONG_NAME_WIDTH, _SHORT_NAME_WIDTH, ATTRIBUTES
+from .classes import _AttributeList, _AttributeTagsList
 from .constants import _TAGS_NAMES
 from .utils import validate_attribute_value
 
@@ -106,9 +107,8 @@ JSON_OPTION = click.option(
     "-j",
     "json_",
     is_flag=True,
-    help="Print output in JSON format, for use with --list.",
+    help="Print output in JSON format, for use with --list and --get.",
     default=False,
-    hidden=True, # not yet implemented
 )
 DEBUG_OPTION = click.option(
     "--debug", required=False, is_flag=True, default=False, hidden=True
@@ -218,7 +218,14 @@ def cli(
         if invalid_attr:
             click.echo("")  # add a new line before rest of help text
             click.echo(ctx.get_help())
-            ctx.exit()
+            ctx.exit(2)
+
+    # check that json_ only used with get or list_
+    if json_ and not any([get, list_]):
+        click.echo("--json can only be used with --get or --list", err=True)
+        click.echo("")  # add a new line before rest of help text
+        click.echo(ctx.get_help())
+        ctx.exit(2)
 
     for f in files:
         if walk and os.path.isdir(f):
@@ -319,59 +326,69 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
 
     if get:
         logging.debug(f"get: {get}")
+        if json_:
+            data = {}
+            data["_version"] = __version__
+            data["_filepath"] = str(fpath)
+            data["_filename"] = fpath.name
         for attr in get:
             attribute = ATTRIBUTES[attr]
             logging.debug(f"getting {attr}")
-            value = md.get_attribute(attribute.name)
-            click.echo(
-                f"{attribute.name:{_SHORT_NAME_WIDTH}}{attribute.constant:{_LONG_NAME_WIDTH}} = {value}"
-            )
-
-    if list_:
-        attribute_list = md.list_metadata()
-        for attr in attribute_list:
-            try:
-                attribute = ATTRIBUTES[attr]
+            if json_:
+                if attribute.type_ == datetime.datetime:
+                    # need to convert datetime.datetime to string to serialize
+                    value = md.get_attribute(attribute.name)
+                    if type(value) == list:
+                        value = [v.isoformat() for v in value]
+                    else:
+                        value = value.isoformat()
+                    data[attribute.constant] = value
+                else:
+                    # get raw value
+                    data[attribute.constant] = md.get_attribute(attribute.name)
+            else:
                 value = md.get_attribute_str(attribute.name)
                 click.echo(
                     f"{attribute.name:{_SHORT_NAME_WIDTH}}{attribute.constant:{_LONG_NAME_WIDTH}} = {value}"
                 )
+        if json_:
+            json_str = json.dumps(data)
+            click.echo(json_str)
+
+    if list_:
+        attribute_list = md.list_metadata()
+        if json_:
+            data = {}
+            data["_version"] = __version__
+            data["_filepath"] = str(fpath)
+            data["_filename"] = fpath.name
+        for attr in attribute_list:
+            try:
+                attribute = ATTRIBUTES[attr]
+                if json_:
+                    if attribute.type_ == datetime.datetime:
+                        # need to convert datetime.datetime to string to serialize
+                        value = md.get_attribute(attribute.name)
+                        if type(value) == list:
+                            value = [v.isoformat() for v in value]
+                        else:
+                            value = value.isoformat()
+                        data[attribute.constant] = value
+                    else:
+                        # get raw value
+                        data[attribute.constant] = md.get_attribute(attribute.name)
+                else:
+                    value = md.get_attribute_str(attribute.name)
+                    click.echo(
+                        f"{attribute.name:{_SHORT_NAME_WIDTH}}{attribute.constant:{_LONG_NAME_WIDTH}} = {value}"
+                    )
             except KeyError:
                 click.echo(
                     f"{'UNKNOWN':{_SHORT_NAME_WIDTH}}{attr:{_LONG_NAME_WIDTH}} = THIS ATTRIBUTE NOT HANDLED"
                 )
-
-
-# def write_json_data(fp, data):
-#     json.dump(data, fp)
-#     fp.write("\n")
-
-
-# def write_text_data(fp, data):
-#     file = data["file"]
-
-#     fc = data["fc"]
-#     fc = fc if fc is not None else ""
-
-#     dldate = data["dldate"]
-#     dldate = dldate if dldate is not None else ""
-
-#     desc = data["description"]
-#     desc = desc if desc is not None else ""
-
-#     where_from = data["where_from"]
-#     where_from = where_from if where_from is not None else ""
-
-#     tags = data["tags"]
-#     tags = tags if len(tags) != 0 else ""
-
-#     print(f"file: {file}", file=fp)
-#     print(f"description: {desc}", file=fp)
-#     print(f"tags: {tags}", file=fp)
-#     print(f"Finder comment: {fc}", file=fp)
-#     print(f"Download date: {dldate}", file=fp)
-#     print(f"Where from: {where_from}", file=fp)
-#     print("\n", file=fp)
+        if json_:
+            json_str = json.dumps(data)
+            click.echo(json_str)
 
 
 # def restore_from_json(json_file, quiet=False):
