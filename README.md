@@ -260,7 +260,7 @@ meta.clear_attribute("tags")
 ### get_attribute
 `get_attribute(attribute_name)`
 
-Load attribute and return value or None if attribute was not set 
+Load attribute and return value or None if attribute was not set (for list attributes, returns empty list if not set).
 
 - attribute_name: an osxmetadata Attribute name
 
