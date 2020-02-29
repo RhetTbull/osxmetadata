@@ -21,88 +21,61 @@ def temp_file():
 
 def test_tags(temp_file):
 
-    from osxmetadata import OSXMetaData, _MAX_FINDERCOMMENT
+    from osxmetadata import OSXMetaData
 
     # update tags
     meta = OSXMetaData(temp_file)
     tagset = ["Test", "Green"]
-    meta.tags.update(tagset)
-    assert set(meta.tags) == set(tagset)
+    meta.tags.extend(tagset)
+    assert meta.tags == tagset
 
-    # update non-iterable
-    with pytest.raises(TypeError):
-        meta.tags.update(1,2,3)
-
-    # update with string
-    meta.tags.update("Foo")
-    assert set(meta.tags) == {"Test","Green","F","o"}
+    # extend with string
+    meta.tags.extend("Foo")
+    assert meta.tags == ["Test", "Green", "F", "o", "o"]
 
     # add tags
-    meta.tags.add("Hello")
-    assert set(meta.tags) != set(tagset)
-    assert set(meta.tags) == set(["Test", "F", "o", "Green", "Hello"])
+    meta.tags.append("Hello")
+    assert meta.tags != tagset
+    assert meta.tags == ["Test", "Green", "F", "o", "o", "Hello"]
 
-    # __ior__ 
-    meta.tags |= {"Bar"}
-    assert set(meta.tags) == set(["Test", "Green", "F", "o", "Hello", "Bar"])
-
-    # __ior__ set
-    meta.tags |= set(["Baz"])
-    assert set(meta.tags) == set(["Test", "Green", "F", "o", "Hello", "Bar", "Baz"])
-
-    # __ior__ error
-    with pytest.raises(TypeError):
-        meta.tags |= ["FooBar"]
+    # __iadd__
+    meta.tags += ["Bar"]
+    assert meta.tags == ["Test", "Green", "F", "o", "o", "Hello", "Bar"]
 
     # __repr__
-    tags = set(meta.tags)
-    assert tags == set(["Test", "Green", "F", "o", "Hello", "Bar", "Baz"])
+    # TODO
 
     # remove tags
     meta.tags.remove("Test")
-    assert set(meta.tags) == set(["Green", "F", "o", "Hello", "Bar", "Baz"])
+    assert meta.tags == ["Green", "F", "o", "o", "Hello", "Bar"]
 
     # remove tag that doesn't exist, raises KeyError
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         assert meta.tags.remove("FooBar")
 
-    # discard tags
-    meta.tags.discard("Green")
-    assert set(meta.tags) == set(["F", "o", "Hello", "Bar", "Baz"])
-
-    # discard tag that doesn't exist, no error
-    meta.tags.discard("FooBar")
-    assert set(meta.tags) == set(["F","o", "Hello", "Bar", "Baz"])
-
     # len
-    assert len(meta.tags) == 5
+    assert len(meta.tags) == 6
 
     # clear tags
     meta.tags.clear()
-    assert set(meta.tags) == set([])
+    assert meta.tags == []
 
 
 def test_tags_2(temp_file):
 
-    from osxmetadata import OSXMetaData, _MAX_FINDERCOMMENT
+    from osxmetadata import OSXMetaData
 
     # update tags
     meta = OSXMetaData(temp_file)
     tagset = ["Test", "Green"]
-    meta.tags.update(tagset)
-    assert set(meta.tags) == set(tagset)
+    meta.tags = tagset
+    assert meta.tags == tagset
 
-    # __ior__ string
-    with pytest.raises(TypeError):
-        meta.tags |= "Bar"
-    assert set(meta.tags) == set(["Test", "Green"])
+    assert "Test" in meta.tags
+    assert "Foo" not in meta.tags
 
-    # len
-    assert len(meta.tags) == 2 
-
-    # clear tags
-    meta.tags.clear()
-    assert set(meta.tags) == set([])
+    meta.tags.remove("Test")
+    assert "Test" not in meta.tags
 
 
 def test_tags_3(temp_file):
@@ -114,29 +87,47 @@ def test_tags_3(temp_file):
 
     # update tags
     meta = OSXMetaData(temp_file)
-    tagset = {"Test", "Green"}
+    tagset = ["Test", "Green"]
 
     meta.set_attribute(attribute, tagset)
     tags = meta.get_attribute(attribute)
-    assert sorted(tags) == sorted(tagset)
+    assert tags == tagset
 
     meta.update_attribute(attribute, ["Foo"])
     tags = meta.get_attribute(attribute)
-    assert sorted(tags) == sorted({"Test", "Green", "Foo"})
+    assert tags == ["Test", "Green", "Foo"]
 
     meta.remove_attribute(attribute, "Foo")
     tags = meta.get_attribute(attribute)
-    assert sorted(tags) == sorted({"Test", "Green"})
+    assert tags == ["Test", "Green"]
 
     meta.update_attribute(attribute, {"Foo"})
     tags = meta.get_attribute(attribute)
-    assert sorted(tags) == sorted({"Test", "Green", "Foo"})
+    assert tags == ["Test", "Green", "Foo"]
 
-    # TODO: should clear_attribute cause get_attribute to return None?
-    # it does for scalar attributes
     meta.clear_attribute(attribute)
     tags = meta.get_attribute(attribute)
-    assert set(tags) == set([])
+    assert len(tags) == 0
+
+
+def test_tags_clear(temp_file):
+
+    from osxmetadata import OSXMetaData
+    from osxmetadata.constants import kMDItemUserTags
+
+    attribute = kMDItemUserTags
+
+    # update tags
+    meta = OSXMetaData(temp_file)
+    tagset = ["Test", "Green"]
+
+    meta.set_attribute(attribute, tagset)
+    tags = meta.get_attribute(attribute)
+    assert tags == tagset
+
+    meta.clear_attribute(attribute)
+    tags = meta.get_attribute(attribute)
+    assert tags == []
 
 
 def test_tags_assign(temp_file):
@@ -145,9 +136,9 @@ def test_tags_assign(temp_file):
 
     # update tags
     meta = OSXMetaData(temp_file)
-    tagset = {"Test", "Green"}
+    tagset = ["Test", "Green"]
     meta.tags = tagset
-    assert sorted(meta.tags) == sorted(tagset)
+    assert meta.tags == tagset
 
     # create second temp file
     TESTDIR = None
@@ -155,12 +146,61 @@ def test_tags_assign(temp_file):
     temp_file_2 = tempfile2.name
 
     meta2 = OSXMetaData(temp_file_2)
-    tagset2 = {"test2", "Blue"}
+    tagset2 = ["test2", "Blue"]
     meta2.tags = tagset2
-    assert sorted(meta2.tags) == sorted(tagset2)
+    assert meta2.tags == tagset2
 
     meta.tags = meta2.tags
-    assert sorted(meta.tags) == sorted(tagset2)
+    assert meta.tags == tagset2
 
     # close second tempfile, first gets closed automatically
     tempfile2.close()
+
+
+def test_tags_4(temp_file):
+    """ Test various list methods """
+    from osxmetadata import OSXMetaData
+    from osxmetadata.constants import _kMDItemUserTags
+
+    attribute = _kMDItemUserTags
+
+    # update tags
+    meta = OSXMetaData(temp_file)
+    tagset = ["Test", "Green", "Foo"]
+
+    meta.tags = tagset
+    assert meta.tags == tagset
+    assert meta.get_attribute(attribute) == tagset
+
+    idx = meta.tags.index("Green")
+    assert idx == 1
+
+    count = meta.tags.count("Test")
+    assert count == 1
+
+    count = meta.tags.count("Bar")
+    assert count == 0
+
+    meta.tags.sort()
+    assert meta.tags == ["Foo", "Green", "Test"]
+    assert meta.get_attribute(attribute) == ["Foo", "Green", "Test"]
+
+    meta.tags.sort(reverse=True)
+    assert meta.tags == ["Test", "Green", "Foo"]
+    assert meta.get_attribute(attribute) == ["Test", "Green", "Foo"]
+
+    # sort by key
+    meta.tags.sort(key=lambda tag: len(tag))
+    assert meta.tags == ["Foo", "Test", "Green"]
+    assert meta.get_attribute(attribute) == ["Foo", "Test", "Green"]
+
+    meta.tags.reverse()
+    assert meta.tags == ["Green", "Test", "Foo"]
+    assert meta.get_attribute(attribute) == ["Green", "Test", "Foo"]
+
+    tag_expected = "Test"
+    tag_got = meta.tags.pop(1)
+    assert tag_got == tag_expected
+    assert meta.tags == ["Green", "Foo"]
+    assert meta.get_attribute(attribute) == ["Green", "Foo"]
+

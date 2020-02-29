@@ -2,7 +2,7 @@ from collections import namedtuple
 import datetime
 
 from .constants import *
-from .classes import _AttributeList, _AttributeTagsSet
+from .classes import _AttributeList, _AttributeTagsList
 
 # Information about metadata attributes that can be set
 # Each attribute type needs an Attribute namedtuple entry in ATTRIBUTES dict
@@ -52,7 +52,7 @@ ATTRIBUTES = {
         True,
         False,
         _AttributeList,
-        "The author, or authors, of the contents of the file. An array of strings.",
+        "The author, or authors, of the contents of the file. A list of strings.",
     ),
     "comment": Attribute(
         "comment",
@@ -142,7 +142,7 @@ ATTRIBUTES = {
         "Keywords associated with this file. For example, “Birthday”, “Important”, etc. "
         + "This differs from Finder tags (_kMDItemUserTags) which are keywords/tags shown "
         + 'in the Finder and searchable in Spotlight using "tag:tag_name"'
-        + "An array of strings.",
+        + "A list of strings.",
     ),
     "tags": Attribute(
         "tags",
@@ -151,9 +151,10 @@ ATTRIBUTES = {
         str,
         True,
         False,
-        _AttributeTagsSet,
+        _AttributeTagsList,
         'Finder tags; searchable in Spotlight using "tag:tag_name".  '
-        + "If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords.",
+        + "If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords. "
+        + "A list of strings.",
     ),
     "wherefroms": Attribute(
         "wherefroms",
@@ -164,7 +165,7 @@ ATTRIBUTES = {
         False,
         _AttributeList,
         "Describes where the file was obtained from (e.g. URL downloaded from). "
-        + "An array of strings.",
+        + "A list of strings.",
     ),
     # "test": Attribute(
     #     "test",

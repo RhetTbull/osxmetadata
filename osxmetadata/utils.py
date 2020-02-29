@@ -107,7 +107,6 @@ def validate_attribute_value(attribute, value):
             iter(value)
     except TypeError:
         # ZZZ handle passing in values as _AttributeSet, et
-        # ZZZ also handle string which can iterate but we don't want it to
         value = [value]
 
     # # check for None and convert to list if needed
@@ -152,6 +151,7 @@ def validate_attribute_value(attribute, value):
         new_values.append(new_val)
 
     logging.debug(f"new_value = {new_values}")
+    
     if attribute.list:
         return new_values
     else:

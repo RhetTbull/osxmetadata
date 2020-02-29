@@ -108,7 +108,7 @@ JSON_OPTION = click.option(
     is_flag=True,
     help="Print output in JSON format, for use with --list.",
     default=False,
-    hidden=True,
+    hidden=True, # not yet implemented
 )
 DEBUG_OPTION = click.option(
     "--debug", required=False, is_flag=True, default=False, hidden=True
@@ -264,13 +264,7 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
         for attribute, value in attr_dict.items():
             logging.debug(f"value: {value}")
             value = validate_attribute_value(attribute, value)
-            # tags get special handling
-            if attribute.name in _TAGS_NAMES:
-                tags = md.tags
-                tags.clear()
-                tags.update(*value)
-            else:
-                md.set_attribute(attribute.name, value)
+            md.set_attribute(attribute.name, value)
 
     if append:
         # append data
@@ -287,12 +281,7 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
 
         for attribute, value in attr_dict.items():
             value = validate_attribute_value(attribute, value)
-            # tags get special handling
-            if attribute.name in _TAGS_NAMES:
-                tags = md.tags
-                tags.update(*value)
-            else:
-                md.append_attribute(attribute.name, value)
+            md.append_attribute(attribute.name, value)
 
     if update:
         # update data
@@ -309,12 +298,7 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
 
         for attribute, value in attr_dict.items():
             value = validate_attribute_value(attribute, value)
-            # tags get special handling
-            if attribute.name in _TAGS_NAMES:
-                tags = md.tags
-                tags.update(*value)
-            else:
-                md.update_attribute(attribute.name, value)
+            md.update_attribute(attribute.name, value)
 
     if remove:
         # remove value from attribute
@@ -338,11 +322,7 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
         for attr in get:
             attribute = ATTRIBUTES[attr]
             logging.debug(f"getting {attr}")
-            # tags get special handling
-            if attribute.name in _TAGS_NAMES:
-                value = md.tags
-            else:
-                value = md.get_attribute(attribute.name)
+            value = md.get_attribute(attribute.name)
             click.echo(
                 f"{attribute.name:{_SHORT_NAME_WIDTH}}{attribute.constant:{_LONG_NAME_WIDTH}} = {value}"
             )
@@ -352,12 +332,7 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
         for attr in attribute_list:
             try:
                 attribute = ATTRIBUTES[attr]
-                # tags get special handling
-                if attribute.name in _TAGS_NAMES:
-                    # TODO: need to fix it so tags can be returned with proper formatting by get_attribute
-                    value = md.tags
-                else:
-                    value = md.get_attribute_str(attribute.name)
+                value = md.get_attribute_str(attribute.name)
                 click.echo(
                     f"{attribute.name:{_SHORT_NAME_WIDTH}}{attribute.constant:{_LONG_NAME_WIDTH}} = {value}"
                 )
@@ -367,9 +342,9 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
                 )
 
 
-def write_json_data(fp, data):
-    json.dump(data, fp)
-    fp.write("\n")
+# def write_json_data(fp, data):
+#     json.dump(data, fp)
+#     fp.write("\n")
 
 
 # def write_text_data(fp, data):

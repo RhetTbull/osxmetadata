@@ -114,7 +114,7 @@ Information about commonly used MacOS metadata attributes is available from [App
 
 | Constant | Short Name | Long Constant | Description |
 |---------------|----------|---------|-----------|
-|kMDItemAuthors|authors|com.apple.metadata:kMDItemAuthors|The author, or authors, of the contents of the file. An array of strings.|
+|kMDItemAuthors|authors|com.apple.metadata:kMDItemAuthors|The author, or authors, of the contents of the file. A list of strings.|
 |kMDItemComment|comment|com.apple.metadata:kMDItemComment|A comment related to the file. This differs from the Finder comment, kMDItemFinderComment. A string.|
 |kMDItemCopyright|copyright|com.apple.metadata:kMDItemCopyright|The copyright owner of the file contents. A string.|
 |kMDItemCreator|creator|com.apple.metadata:kMDItemCreator|Application used to create the document content (for example “Word”, “Pages”, and so on). A string.|
@@ -122,9 +122,9 @@ Information about commonly used MacOS metadata attributes is available from [App
 |kMDItemDownloadedDate|downloadeddate|com.apple.metadata:kMDItemDownloadedDate|The date the item was downloaded.  A date in ISO 8601 format: e.g. 2000-01-12T12:00:00 or 2000-12-31 (ISO 8601 w/o time zone)|
 |kMDItemFinderComment|findercomment|com.apple.metadata:kMDItemFinderComment|Finder comments for this file. A string.|
 |kMDItemHeadline|headline|com.apple.metadata:kMDItemHeadline|A publishable entry providing a synopsis of the contents of the file. A string.|
-|kMDItemKeywords|keywords|com.apple.metadata:kMDItemKeywords|Keywords associated with this file. For example, “Birthday”, “Important”, etc. This differs from Finder tags (_kMDItemUserTags) which are keywords/tags shown in the Finder and searchable in Spotlight using "tag:tag_name"An array of strings.|
-|_kMDItemUserTags|tags|com.apple.metadata:_kMDItemUserTags|Finder tags; searchable in Spotlight using "tag:tag_name".  If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords.|
-|kMDItemWhereFroms|wherefroms|com.apple.metadata:kMDItemWhereFroms|Describes where the file was obtained from (e.g. URL downloaded from). An array of strings.|
+|kMDItemKeywords|keywords|com.apple.metadata:kMDItemKeywords|Keywords associated with this file. For example, “Birthday”, “Important”, etc. This differs from Finder tags (_kMDItemUserTags) which are keywords/tags shown in the Finder and searchable in Spotlight using "tag:tag_name"A list of strings.|
+|_kMDItemUserTags|tags|com.apple.metadata:_kMDItemUserTags|Finder tags; searchable in Spotlight using "tag:tag_name".  If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords. A list of strings.|
+|kMDItemWhereFroms|wherefroms|com.apple.metadata:kMDItemWhereFroms|Describes where the file was obtained from (e.g. URL downloaded from). A list of strings.|
 
 
 ## Example uses of the package
@@ -152,8 +152,8 @@ meta = OSXMetaData(filename)
 # set description
 meta.description = "This is my document."
 
-# add "Foo" to tags but not if tags already contains "Foo"
-meta.tags.update("Foo")
+# add "Foo" to tags
+meta.tags += ["Foo"]
 
 # set authors to "John Doe" and "Jane Smith"
 meta.authors = ["John Doe","Jane Smith"]
@@ -163,6 +163,77 @@ meta.copyright = None
 
 ```
 
+If attribute is a list, most `list` methods can be used. For example:
+
+```python
+>>> import osxmetadata
+>>> md = osxmetadata.OSXMetaData("/Users/rhet/Downloads/test.jpg")
+>>> md.tags
+['Blue', 'Green', 'Foo']
+>>> md.tags.reverse()
+>>> md.tags
+['Foo', 'Green', 'Blue']
+>>> md.tags.pop(1)
+'Green'
+>>> md.tags
+['Foo', 'Blue']
+>>> md.tags.sort()
+>>> md.tags
+['Blue', 'Foo']
+>>> md.tags.append("Test")
+>>> md.tags
+['Blue', 'Foo', 'Test']
+>>> md.tags.extend(["Tag1","Tag2"])
+>>> md.tags
+['Blue', 'Foo', 'Test', 'Tag1', 'Tag2']
+>>> md.tags += ["Tag3"]
+>>> md.tags
+['Blue', 'Foo', 'Test', 'Tag1', 'Tag2', 'Tag3']
+>>> md.tags.remove('Blue')
+>>> md.tags
+['Foo', 'Test', 'Tag1', 'Tag2', 'Tag3']
+>>> # removing value that doesn't exist raises ValueError
+>>> md.tags.remove('Blue')
+Traceback (most recent call last):
+...
+ValueError: list.remove(x): x not in list
+>>> md.tags
+['Foo', 'Test', 'Tag1', 'Tag2', 'Tag3']
+>>> md.tags.count('Test')
+1
+>>> md.tags.index('Tag1')
+2
+```
+
+If attribute is a date/time stamp (e.g. kMDItemDownloadedDate), value should be a `datetime.datetime` object (or a list of `datetime.datetime` objects depending on the attribute type):
+
+```python
+>>> import osxmetadata
+>>> import datetime
+>>> md = osxmetadata.OSXMetaData("/Users/rhet/Downloads/test.jpg")
+>>> md.downloadeddate
+[datetime.datetime(2012, 2, 13, 0, 0)]
+>>> md.downloadeddate = [datetime.datetime.now()]
+>>> md.downloadeddate
+[datetime.datetime(2020, 2, 29, 8, 36, 10, 332350)]
+```
+
+If attribute is string, it can be treated as a standard python `str`:
+
+```python
+>>> import osxmetadata
+>>> md = osxmetadata.OSXMetaData("/Users/rhet/Downloads/test.jpg")
+>>> md.findercomment = "Hello world"
+>>> md.findercomment
+'Hello world'
+>>> md.findercomment += ". Goodbye"
+>>> md.findercomment
+'Hello world. Goodbye'
+>>> "world" in md.findercomment
+True
+```
+
+
 The second way to access metadata is using methods from OSXMetaData to get/set/update etc. the various attributes.  The various methods take the name of the attribute to be operated on which can be specified using either the short name, constant, or long constant from the table above. `osxmetadata` also exports constants with the same name as specified in the Apple documentation and the table above, for example, `kMDItemDescription`.
 
 ```
@@ -170,78 +241,74 @@ from osxmetadata import *
 
 fname = 'foo.txt'
 meta = OSXMetaData(fname)
+
 description = meta.get_attribute(kMDItemDescription)
+
 meta.set_attribute(kMDItemCreator,"OSXMetaData")
+
 meta.append_attribute("tags",["Blue"])
+
 meta.update_attribute("com.apple.metadata:kMDItemKeywords",["Foo"])
+
 meta.append_attribute("findercomment","Goodbye")
+
 meta.clear_attribute("tags")
 ```
 
-#### Tags
+#### The following methods are available:
 
-Accessed via OSXMetaData.tags.  Represents Finder tags (_kMDItemUserTags).
+##### `get_attribute(attribute_name)`
+Load attribute and return value or None if attribute was not set 
 
-With the exception of tags, all multi-valued attributes behave like lists.  Because it does not make sense to have duplicate Finder tags, osxmetadata enforces no duplicate tags by treating Finder tags as a set.
+- attribute_name: an osxmetadata Attribute name
 
-Behaves mostly like a set with following methods:
+##### `get_attribute_str(attribute_name)`
+Returns a string representation of attribute value.  e.g. if attribute is a datedate.datetime object, will format using datetime.isoformat()
 
-* update (sets multiple tags)
-* add (add a single tag)
-* |= update the tag set
-* remove (raises error if tag not present)
-* discard (does not raise error if tag not present)
-* clear (removes all tags)
+- attribute_name: an osxmetadata Attribute name
 
-To replace all tags with a new set of tags, use clear() then update()
+##### `set_attribute(attribute_name, value)`
+Write attribute to file with value
 
-Duplicate tags will be ignored.
+- attribute_name: an osxmetadata Attribute name
+- value: value to store in attribute
 
-The standard OS X Finder color labels are handled via tags.  For example, setting a tag name of Gray, Green, Purple, Blue, Yellow, Red, or Orange will also set the equivalent Finder color label. This is consistent with how the Finder works.  If a file has a color label, it will be returned as a tag of the corresponding color name when reading from OSXMetaData.tags
+##### `update_attribute(attribute_name, value)`
+Update attribute with union of itself and value.  This avoids adding duplicate values to attribute. 
 
-```python
->>> import osxmetadata
->>> md = osxmetadata.OSXMetaData("/Users/rhet/Downloads/wedding.jpg")
->>> md.tags
-set()
->>> md.tags = {"Foo","Bar"}
->>> md.tags
-{'Bar', 'Foo'}
->>> md.tags.add("Baz")
->>> md.tags
-{'Baz', 'Bar', 'Foo'}
->>> md.tags.update(["Hello","World"])
->>> md.tags
-{'Bar', 'Hello', 'World', 'Baz', 'Foo'}
->>> md.tags.add("PURPLE")
-# Color names are normalized as the Finder does
->>> md.tags
-{'Bar', 'Hello', 'World', 'Baz', 'Foo', 'Purple'}
->>> md.tags |= {"CustomTag"}
->>> md.tags
-{'Bar', 'Hello', 'World', 'Baz', 'Foo', 'CustomTag', 'Purple'}
->>> md.tags.remove("Hello")
->>> md.tags
-{'Bar', 'World', 'Baz', 'Foo', 'CustomTag', 'Purple'}
-# removing an item not present in the set raises error
->>> md.tags.remove("Hello")
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-  File "/Users/rhet/Dropbox/Code/osxmetadata/osxmetadata/classes.py", line 127, in remove
-    values.remove(self._normalize(value))
-KeyError: 'Hello\n0'
->>> md.tags.discard("Hello")
->>> len(md.tags)
-6
->>> md.tags.clear()
->>> md.tags
-set()
->>>
-```
+- attribute: an osxmetadata Attribute name
+- value: value to append to attribute
+
+Note: implementation simply calls `append_attribute` with `update=True`; provided for convenience.
+
+##### `append_attribute(attribute_name, value, update=False)`
+Append value to attribute.
+
+- attribute_name: an osxmetadata Attribute name
+- value: value to append to attribute
+- update: (bool) if True, update instead of append (e.g. avoid adding duplicates, default is False)
+
+##### `remove_attribute(attribute_name, value)`
+Remove a value from attribute, raise ValueError if attribute does not contain value.  Only applies to multi-valued attributes, otherwise raises TypeError.
+
+- attribute_name: name of OSXMetaData attribute
+
+##### `discard_attribute(attribute_name, value)`
+Remove a value from attribute, unlike remove, does not raise exception if attribute does not contain value.  Only applies to multi-valued attributes, otherwise raises TypeError.
+
+- attribute_name: name of OSXMetaData attribute
+
+##### `clear_attribute(attribute_name)`
+Clear anttribute (remove it from the file).
+
+- attribute_name: name of OSXMetaData attribute
+
+##### `list_metadata()`
+List the Apple metadata attributes set on the file.  e.g. those in com.apple.metadata namespace.
 
 ## Usage Notes
 
-Changes are immediately written to the file.  For example, OSXMetaData.tags.add("Foo") immediately writes the tag 'Foo' to the file.
+Changes are immediately written to the file.  For example, OSXMetaData.tags.append("Foo") immediately writes the tag 'Foo' to the file.
 
 Metadata is refreshed from disk every time a class property is accessed.
 
@@ -252,12 +319,10 @@ This will only work on file systems that support Mac OS X extended attributes.
 
 [xattr](https://github.com/xattr/xattr)
 
+[Click](https://palletsprojects.com/p/click/)
+
 ## Acknowledgements
-This module was inspired by [osx-tags]( https://github.com/scooby/osx-tags) by "Ben S / scooby".  I leveraged osx-tags to bootstrap the design of this module.  I wanted a more
-general OS X metadata library so I rolled my own.  This module is published under the same MIT license as osx-tags.
+This module was inspired by [osx-tags]( https://github.com/scooby/osx-tags) by "Ben S / scooby".  I leveraged osx-tags to bootstrap the design of this module.  I wanted a more general OS X metadata library so I rolled my own.  This module is published under the same MIT license as osx-tags.
 
 
-To set the Finder comments, I use [py-applescript]( https://github.com/rdhyee/py-applescript) by "Raymond Yee / rdhyee".  Rather than import this module, I included the entire module
-(which is published as public domain code) in a private module to prevent ambiguity with
-other applescript modules on PyPi.  py-applescript uses a native bridge via PyObjC and
-is very fast compared to the other osascript based modules.
+To set the Finder comments, I use [py-applescript]( https://github.com/rdhyee/py-applescript) by "Raymond Yee / rdhyee".  Rather than import this module, I included the entire module (which is published as public domain code) in a private module to prevent ambiguity with other applescript modules on PyPi.  py-applescript uses a native bridge via PyObjC and is very fast compared to the other osascript based modules.

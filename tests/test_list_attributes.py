@@ -101,6 +101,55 @@ def test_list_attribute_2(temp_file, attribute):
     assert meta.get_attribute(attribute) == ["Foo", "Bar"]
 
 
+def test_list_methods(temp_file):
+    """ Test various list methods """
+    from osxmetadata import OSXMetaData
+    from osxmetadata.constants import kMDItemKeywords
+
+    attribute = kMDItemKeywords
+
+    # updatekeywords 
+    meta = OSXMetaData(temp_file)
+    keywordset = ["Test", "Green", "Foo"]
+
+    meta.keywords = keywordset
+    assert meta.keywords == keywordset
+    assert meta.get_attribute(attribute) == keywordset
+
+    idx = meta.keywords.index("Green")
+    assert idx == 1
+
+    count = meta.keywords.count("Test")
+    assert count == 1
+
+    count = meta.keywords.count("Bar")
+    assert count == 0
+
+    meta.keywords.sort()
+    assert meta.keywords == ["Foo", "Green", "Test"]
+    assert meta.get_attribute(attribute) == ["Foo", "Green", "Test"]
+
+    meta.keywords.sort(reverse=True)
+    assert meta.keywords == ["Test", "Green", "Foo"]
+    assert meta.get_attribute(attribute) == ["Test", "Green", "Foo"]
+
+    # sort by key
+    meta.keywords.sort(key=lambda tag: len(tag))
+    assert meta.keywords == ["Foo", "Test", "Green"]
+    assert meta.get_attribute(attribute) == ["Foo", "Test", "Green"]
+
+    meta.keywords.reverse()
+    assert meta.keywords == ["Green", "Test", "Foo"]
+    assert meta.get_attribute(attribute) == ["Green", "Test", "Foo"]
+
+    tag_expected = "Test"
+    tag_got = meta.keywords.pop(1)
+    assert tag_got == tag_expected
+    assert meta.keywords == ["Green", "Foo"]
+    assert meta.get_attribute(attribute) == ["Green", "Foo"]
+
+
+
 # def test_description(temp_file):
 #     """ test string functions on one of the str attributes """
 #     from osxmetadata import OSXMetaData

@@ -7,7 +7,7 @@ import pytest
 from click.testing import CliRunner
 
 from osxmetadata.attributes import ATTRIBUTES
-from osxmetadata.classes import _AttributeList
+from osxmetadata.classes import _AttributeList, _AttributeTagsList
 
 # get list attribute names for string attributes for parameterized testing
 test_names_str = [
@@ -21,12 +21,14 @@ ids_str = [
 test_names_list = [
     (attr)
     for attr in sorted(list(ATTRIBUTES.keys()))
-    if ATTRIBUTES[attr].class_ == _AttributeList and ATTRIBUTES[attr].type_ == str
+    if ATTRIBUTES[attr].class_ in (_AttributeList, _AttributeTagsList)
+    and ATTRIBUTES[attr].type_ == str
 ]
 ids_list = [
     attr
     for attr in sorted(list(ATTRIBUTES.keys()))
-    if ATTRIBUTES[attr].class_ == _AttributeList and ATTRIBUTES[attr].type_ == str
+    if ATTRIBUTES[attr].class_ in (_AttributeList, _AttributeTagsList)
+    and ATTRIBUTES[attr].type_ == str
 ]
 
 
@@ -166,6 +168,24 @@ def test_list_attributes(temp_file, attribute):
     assert output[attr_short_name] == "['Foo', 'Bar']"
     meta = OSXMetaData(temp_file)
     assert meta.get_attribute(attribute) == ["Foo", "Bar"]
+
+    result = runner.invoke(
+        cli,
+        [
+            "--append",
+            attribute,
+            "Green",
+            "--remove",
+            attribute,
+            "Foo",
+            "--list",
+            temp_file,
+        ],
+    )
+    assert result.exit_code == 0
+    output = parse_cli_output(result.stdout)
+    attr_short_name = ATTRIBUTES[attribute].name
+    assert output[attr_short_name] == "['Bar', 'Green']"
 
 
 @pytest.mark.parametrize("attribute", test_names_dt, ids=ids_list_dt)

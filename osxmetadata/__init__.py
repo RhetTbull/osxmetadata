@@ -17,7 +17,7 @@ from plistlib import FMT_BINARY  # pylint: disable=E0611
 import xattr
 
 from .attributes import ATTRIBUTES, Attribute
-from .classes import _AttributeList, _AttributeTagsSet
+from .classes import _AttributeList, _AttributeTagsList 
 from .constants import (  # _DOWNLOAD_DATE,; _FINDER_COMMENT,; _TAGS,; _WHERE_FROM,
     _COLORIDS,
     _COLORNAMES,
@@ -134,7 +134,6 @@ class OSXMetaData:
         except KeyError:
             plist = None
 
-        # TODO: should I check Attribute.type_ is correct?
         if attribute.as_list and isinstance(plist, list):
             return plist[0]
         else:
@@ -161,30 +160,37 @@ class OSXMetaData:
             attribute_name: an osxmetadata Attribute name
             value: value to store in attribute """
         attribute = ATTRIBUTES[attribute_name]
-        # verify type is correct
-        if attribute.list and (type(value) == list or type(value) == set):
-            for val in value:
-                if attribute.type_ != type(val):
-                    raise ValueError(
-                        f"Expected type {attribute.type_} but value is type {type(val)}"
-                    )
-        elif not attribute.list and (type(value) == list or type(value) == set):
-            raise TypeError(f"Expected single value but got list for {attribute.type_}")
-        elif attribute.type_ != type(value):
-            raise ValueError(
-                f"Expected type {attribute.type_} but value is type {type(value)}"
-            )
 
-        if attribute.as_list and (type(value) != list and type(value) != set):
-            # some attributes like kMDItemDownloadedDate are stored in a list
-            # even though they only have only a single value
-            value = [value]
+        # user tags need special processing to normalize names
+        if attribute.name == "tags":
+            return self.tags.set_value(value)
+
+        # verify type is correct
+        value = validate_attribute_value(attribute, value)
+        
+        # if attribute.list and (type(value) == list or type(value) == set):
+        #     for val in value:
+        #         if attribute.type_ != type(val):
+        #             raise ValueError(
+        #                 f"Expected type {attribute.type_} but value is type {type(val)}"
+        #             )
+        # elif not attribute.list and (type(value) == list or type(value) == set):
+        #     raise TypeError(f"Expected single value but got list for {attribute.type_}")
+        # elif attribute.type_ != type(value):
+        #     raise ValueError(
+        #         f"Expected type {attribute.type_} but value is type {type(value)}"
+        #     )
+
+        # if attribute.as_list and (type(value) != list and type(value) != set):
+        #     # some attributes like kMDItemDownloadedDate are stored in a list
+        #     # even though they only have only a single value
+        #     value = [value]
 
         if attribute.name in _FINDER_COMMENT_NAMES:
             # Finder Comment needs special handling
             # code following will also set the attribute for Finder Comment
             set_finder_comment(self._posix_name, value)
-        elif attribute.class_ in [_AttributeList, _AttributeTagsSet]:
+        elif attribute.class_ in [_AttributeList, _AttributeTagsList]:
             getattr(self, attribute.name).set_value(value)
         else:
             # must be a normal scalar (e.g. str, float)
@@ -213,65 +219,95 @@ class OSXMetaData:
         # start with existing values
         new_value = self.get_attribute(attribute.name)
 
-        # verify type is correct
-        if attribute.list and (type(value) == list or type(value) == set):
-            # expected a list, got a list
-            for val in value:
-                # check type of each element in list
-                if attribute.type_ != type(val):
-                    raise ValueError(
-                        f"Expected type {attribute.type_} but value is type {type(val)}"
-                    )
-                else:
-                    if new_value:
-                        new_value = list(new_value)
-                        if update:
-                            # if update, only add values not already in the list
-                            # behaves like set.update
-                            for v in value:
-                                if v not in new_value:
-                                    new_value.append(v)
-                        else:
-                            # not update, add all values
-                            new_value.extend(value)
-                    else:
-                        if update:
-                            # no previous values but still need to make sure we don't have
-                            # dupblicate values: convert to set & back to list
-                            new_value = list(set(value))
-                        else:
-                            # no previous values, set new_value to whatever value is
-                            new_value = value
-        elif not attribute.list and (type(value) == list or type(value) == set):
-            raise TypeError(f"Expected single value but got list for {attribute.type_}")
-        else:
-            # got a scalar, check type is correct
-            if attribute.type_ != type(value):
-                raise ValueError(
-                    f"Expected type {attribute.type_} but value is type {type(value)}"
-                )
-            else:
-                # not a list, could be str, float, datetime.datetime
-                if update:
-                    raise AttributeError(f"Cannot use update on {attribute.type_}")
-                if new_value:
-                    new_value += value
-                else:
-                    new_value = value
+        value = validate_attribute_value(attribute,value)
 
-        if attribute.as_list:
-            # some attributes like kMDItemDownloadedDate are stored in a list
-            # even though they only have only a single value
-            new_value = [new_value]
+        if attribute.list:
+            if new_value is not None:
+                new_value = list(new_value)
+                if update:
+                    for val in value:
+                        if val not in new_value:
+                            new_value.append(val)
+                else:
+                    new_value.extend(value)
+            else:
+                # no original value
+                new_value = value
+        else:
+            # scalar value
+            if update:
+                raise AttributeError(f"Cannot use update on {attribute.type_}")
+            if new_value is not None:
+                new_value += value
+            else:
+                new_value = value            
+
+
+        # # verify type is correct
+        # if attribute.list and (type(value) == list or type(value) == set):
+        #     # expected a list, got a list
+        #     for val in value:
+        #         # check type of each element in list
+        #         if attribute.type_ != type(val):
+        #             raise ValueError(
+        #                 f"Expected type {attribute.type_} but value is type {type(val)}"
+        #             )
+        #         else:
+        #             if new_value:
+        #                 # ZZZ TODO: this will fail if new_value is False
+        #                 new_value = list(new_value)
+        #                 if update:
+        #                     # if update, only add values not already in the list
+        #                     # behaves like set.update
+        #                     for v in value:
+        #                         if v not in new_value:
+        #                             new_value.append(v)
+        #                 else:
+        #                     # not update, add all values
+        #                     new_value.extend(value)
+        #             else:
+        #                 if update:
+        #                     # no previous values but still need to make sure we don't have
+        #                     # dupblicate values: convert to set & back to list
+        #                     new_value = list(set(value))
+        #                 else:
+        #                     # no previous values, set new_value to whatever value is
+        #                     new_value = value
+        # elif not attribute.list and (type(value) == list or type(value) == set):
+        #     raise TypeError(f"Expected single value but got list for {attribute.type_}")
+        # else:
+        #     # got a scalar, check type is correct
+        #     if attribute.type_ != type(value):
+        #         raise ValueError(
+        #             f"Expected type {attribute.type_} but value is type {type(value)}"
+        #         )
+        #     else:
+        #         # not a list, could be str, float, datetime.datetime
+        #         if update:
+        #             raise AttributeError(f"Cannot use update on {attribute.type_}")
+        #         if new_value:
+        #             new_value += value
+        #         else:
+        #             new_value = value
+
+        # if attribute.as_list:
+        #     # some attributes like kMDItemDownloadedDate are stored in a list
+        #     # even though they only have only a single value
+        #     new_value = [new_value]
 
         try:
             if attribute.name in _FINDER_COMMENT_NAMES:
                 # Finder Comment needs special handling
                 # code following will also set the attribute for Finder Comment
                 set_finder_comment(self._posix_name, new_value)
-
-            plist = plistlib.dumps(new_value, fmt=FMT_BINARY)
-            self._attrs.set(attribute.constant, plist)
+                plist = plistlib.dumps(new_value, fmt=FMT_BINARY)
+                self._attrs.set(attribute.constant, plist)
+            elif attribute.class_ in [_AttributeList, _AttributeTagsList]:
+                # if tags, set_value will normalize
+                getattr(self, attribute.name).set_value(new_value)
+            else:
+                plist = plistlib.dumps(new_value, fmt=FMT_BINARY)
+                self._attrs.set(attribute.constant, plist)
         except Exception as e:
             # todo: should catch this or not?
             raise e
@@ -279,7 +315,7 @@ class OSXMetaData:
         return new_value
 
     def remove_attribute(self, attribute_name, value):
-        """ remove a value from attribute, raise exception if attribute does not contain value
+        """ remove a value from attribute, raise ValueError if attribute does not contain value
             only applies to multi-valued attributes, otherwise raises TypeError
             attribute_name: name of OSXMetaData attribute """
 
@@ -288,10 +324,14 @@ class OSXMetaData:
         if not attribute.list:
             raise TypeError("remove only applies to multi-valued attributes")
 
-        values = self.get_attribute(attribute.name)
-        values = list(values)
-        values.remove(value)
-        self.set_attribute(attribute.name, values)
+        if attribute.name == "tags":
+            # tags need special processing
+            self.tags.remove(value)
+        else:
+            values = self.get_attribute(attribute.name)
+            values = list(values)
+            values.remove(value)
+            self.set_attribute(attribute.name, values)
 
     def discard_attribute(self, attribute_name, value):
         """ remove a value from attribute, unlike remove, does not raise exception
@@ -312,7 +352,7 @@ class OSXMetaData:
             pass
 
     def clear_attribute(self, attribute_name):
-        """ clear anttribute (remove) 
+        """ clear anttribute (remove it from the file) 
             attribute_name: name of OSXMetaData attribute """
 
         attribute = ATTRIBUTES[attribute_name]
@@ -324,6 +364,7 @@ class OSXMetaData:
                 clear_finder_comment(self._posix_name)
             self._attrs.remove(attribute.constant)
         except (IOError, OSError):
+            # TODO: fix this try/except handling
             pass
 
     def _list_attributes(self):
@@ -331,7 +372,7 @@ class OSXMetaData:
         return self._attrs.list()
 
     def list_metadata(self):
-        """ list the Apple metadata attributes:
+        """ list the Apple metadata attributes set on the file:
             e.g. those in com.apple.metadata namespace """
         # also lists com.osxmetadata.test used for debugging
         mdlist = self._attrs.list()
