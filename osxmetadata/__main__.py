@@ -1,6 +1,7 @@
 # /usr/bin/env python3
 
 import datetime
+import itertools
 import json
 import logging
 import os
@@ -170,6 +171,17 @@ REMOVE_OPTION = click.option(
     multiple=True,
     required=False,
 )
+MIRROR_OPTION = click.option(
+    "--mirror",
+    metavar="ATTRIBUTE1 ATTRIBUTE2",
+    help="Mirror values between ATTRIBUTE1 and ATTRIBUTE2 so that ATTRIBUTE1 = ATTRIBUTE2; "
+    "for multi-valued attributes, merges values; for string attributes, sets ATTRIBUTE1 = ATTRIBUTE2 "
+    "overwriting any value in ATTRIBUTE1.  "
+    "For example: '--mirror keywords tags' sets tags and keywords to same values ",
+    nargs=2,
+    required=False,
+    multiple=True,
+)
 BACKUP_OPTION = click.option(
     "--backup",
     help="Backup FILE attributes.  "
@@ -209,6 +221,7 @@ VERBOSE_OPTION = click.option(
 @GET_OPTION
 @REMOVE_OPTION
 @UPDATE_OPTION
+@MIRROR_OPTION
 @BACKUP_OPTION
 @RESTORE_OPTION
 @VERBOSE_OPTION
@@ -226,6 +239,7 @@ def cli(
     get,
     remove,
     update,
+    mirror,
     backup,
     restore,
     verbose,
@@ -238,17 +252,21 @@ def cli(
     logging.debug(
         f"ctx={ctx} debug={debug} files={files} walk={walk} json={json_} "
         f"set={set_}, list={list_},clear={clear},append={append},get={get}, remove={remove} "
-        f"backup={backup}, restore={restore}"
+        f"backup={backup}, restore={restore}, mirror={mirror}"
     )
 
     if not files:
         click.echo(ctx.get_help())
         ctx.exit()
 
-    # validate values for --set, --clear, append, get, remove
-    if any([set_, append, remove, clear, get]):
+    # validate values for --set, --clear, --append, --get, --remove, --mirror
+    if any([set_, append, remove, clear, get, mirror]):
         attributes = (
-            [a[0] for a in set_] + [a[0] for a in append] + list(clear) + list(get)
+            [a[0] for a in set_]
+            + [a[0] for a in append]
+            + list(clear)
+            + list(get)
+            + list(itertools.chain(*mirror))
         )
         invalid_attr = False
         for attr in attributes:
@@ -256,23 +274,41 @@ def cli(
                 click.echo(f"Invalid attribute {attr}", err=True)
                 invalid_attr = True
         if invalid_attr:
-            click.echo("")  # add a new line before rest of help text
-            click.echo(ctx.get_help())
+            # click.echo("")  # add a new line before rest of help text
+            # click.echo(ctx.get_help())
             ctx.exit(2)
 
     # check that json_ only used with get or list_
     if json_ and not any([get, list_]):
         click.echo("--json can only be used with --get or --list", err=True)
-        click.echo("")  # add a new line before rest of help text
-        click.echo(ctx.get_help())
+        # click.echo("")  # add a new line before rest of help text
+        # click.echo(ctx.get_help())
         ctx.exit(2)
 
     # can't backup and restore at once
     if backup and restore:
         click.echo("--backup and --restore cannot be used together", err=True)
-        click.echo("")  # add a new line before rest of help text
-        click.echo(ctx.get_help())
+        # click.echo("")  # add a new line before rest of help text
+        # click.echo(ctx.get_help())
         ctx.exit(2)
+
+    # check compatible types for mirror
+    if mirror:
+        for item in mirror:
+            attr1, attr2 = item
+            attribute1 = ATTRIBUTES[attr1]
+            attribute2 = ATTRIBUTES[attr2]
+            if (
+                attribute1.list != attribute2.list
+                or attribute1.type_ != attribute2.type_
+            ):
+                # can only mirror compatible attributes
+                click.echo(
+                    f"Cannot mirror {attr1}, {attr2}: incompatible types", err=True
+                )
+                # click.echo("")  # add a new line before rest of help text
+                # click.echo(ctx.get_help())
+                ctx.exit(2)
 
     # loop through each file, process it, then do backup or restore if needed
     for filename in files:
@@ -297,7 +333,16 @@ def cli(
                     if verbose:
                         click.echo(f"  Processing file: {fpath}")
                     process_file(
-                        fpath, json_, set_, append, update, remove, clear, get, list_
+                        fpath,
+                        json_,
+                        set_,
+                        append,
+                        update,
+                        remove,
+                        clear,
+                        get,
+                        list_,
+                        mirror,
                     )
                     if backup:
                         if verbose:
@@ -330,7 +375,9 @@ def cli(
             fpath = pathlib.Path(filename).resolve()
             if verbose:
                 click.echo(f"Processing file: {fpath}")
-            process_file(fpath, json_, set_, append, update, remove, clear, get, list_)
+            process_file(
+                fpath, json_, set_, append, update, remove, clear, get, list_, mirror
+            )
             backup_file = pathlib.Path(pathlib.Path(filename).parent) / _BACKUP_FILENAME
             if backup:
                 if verbose:
@@ -363,9 +410,9 @@ def cli(
                         )
 
 
-def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
+def process_file(fpath, json_, set_, append, update, remove, clear, get, list_, mirror):
     """ process a single file to apply the options 
-        options processed in this order: set, append, remove, clear, get, list
+        options processed in this order: set, append, remove, clear, mirror, get, list
         Note: expects all attributes passed in parameters to be validated """
 
     logging.debug(f"process_file: {fpath}")
@@ -440,6 +487,26 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
             attribute = ATTRIBUTES[attr]
             logging.debug(f"clearing {attr}")
             md.clear_attribute(attribute.name)
+
+    if mirror:
+        for item in mirror:
+            # mirror value of each attribute
+            # validation that attributes are compatible
+            # will have occured prior to call to process_file
+            attr1, attr2 = item
+            click.echo(f"Mirroring {attr1} {attr2}")
+            attribute1 = ATTRIBUTES[attr1]
+
+            if attribute1.list:
+                # merge the two lists, assume attribute2 also a list due to
+                # previous validation
+                # update attr2 with any new values from attr1
+                # then set attr1 = attr2
+                attr1_values = md.get_attribute(attr1)
+                md.update_attribute(attr2, attr1_values)
+                md.set_attribute(attr1, md.get_attribute(attr2))
+            else:
+                md.set_attribute(attr1, md.get_attribute(attr2))
 
     if get:
         logging.debug(f"get: {get}")

@@ -317,3 +317,70 @@ def test_cli_backup_restore(temp_file):
     assert result.exit_code == 0
     assert meta.tags == ["Foo", "Bar"]
     assert meta.comment == "Hello World!"
+
+
+def test_cli_mirror(temp_file):
+    import datetime
+    from osxmetadata import OSXMetaData
+    from osxmetadata.__main__ import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--set",
+            "comment",
+            "Foo",
+            "--set",
+            "findercomment",
+            "Bar",
+            "--set",
+            "keywords",
+            "foo",
+            "--set",
+            "tags",
+            "bar",
+            "--list",
+            temp_file,
+        ],
+    )
+    assert result.exit_code == 0
+    meta = OSXMetaData(temp_file)
+    assert meta.tags == ["bar"]
+    assert meta.keywords == ["foo"]
+    assert meta.findercomment == "Bar"
+    assert meta.comment == "Foo"
+
+    result = runner.invoke(
+        cli,
+        [
+            "--mirror",
+            "keywords",
+            "tags",
+            "--mirror",
+            "comment",
+            "findercomment",
+            temp_file,
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert meta.keywords == ["bar", "foo"]
+    assert meta.tags == ["bar", "foo"]
+    assert meta.findercomment == "Bar"
+    assert meta.comment == "Bar"
+
+
+def test_cli_mirror_bad_args(temp_file):
+    import datetime
+    from osxmetadata import OSXMetaData
+    from osxmetadata.__main__ import cli
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--mirror", "keywords", "comment", temp_file])
+    assert result.exit_code == 2
+    assert "incompatible types" in result.output
+
+    result = runner.invoke(cli, ["--mirror", "downloadeddate", "tags", temp_file])
+    assert result.exit_code == 2
+    assert "incompatible types" in result.output
