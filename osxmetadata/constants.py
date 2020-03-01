@@ -57,6 +57,8 @@ _FINDER_COMMENT_NAMES = [
 ]
 _TAGS_NAMES = ["tags", "com.apple.metadata:_kMDItemUserTags"]
 
+_BACKUP_FILENAME = ".osxmetadata.json"
+
 __all__ = [
     "kMDItemAuthors",
     "kMDItemComment",

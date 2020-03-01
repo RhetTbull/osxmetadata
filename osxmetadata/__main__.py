@@ -15,8 +15,8 @@ import osxmetadata
 from ._version import __version__
 from .attributes import _LONG_NAME_WIDTH, _SHORT_NAME_WIDTH, ATTRIBUTES
 from .classes import _AttributeList, _AttributeTagsList
-from .constants import _TAGS_NAMES
-from .utils import validate_attribute_value
+from .constants import _BACKUP_FILENAME, _TAGS_NAMES
+from .utils import load_backup_file, validate_attribute_value, write_backup_file
 
 # TODO: add md5 option
 # TODO: how is metadata on symlink handled?
@@ -170,6 +170,30 @@ REMOVE_OPTION = click.option(
     multiple=True,
     required=False,
 )
+BACKUP_OPTION = click.option(
+    "--backup",
+    help="Backup FILE attributes.  "
+    "Backup file '.osxmetadata.json' will be created in same folder as FILE",
+    is_flag=True,
+    required=False,
+    default=False,
+)
+RESTORE_OPTION = click.option(
+    "--restore",
+    help="Restore FILE attributes from backup file.  "
+    "Restore will look for backup file '.osxmetadata.json' in same folder as FILE",
+    is_flag=True,
+    required=False,
+    default=False,
+)
+VERBOSE_OPTION = click.option(
+    "--verbose",
+    "-V",
+    help="Print verbose output",
+    is_flag=True,
+    default=False,
+    required=False,
+)
 
 
 @click.command(cls=MyClickCommand)
@@ -185,9 +209,26 @@ REMOVE_OPTION = click.option(
 @GET_OPTION
 @REMOVE_OPTION
 @UPDATE_OPTION
+@BACKUP_OPTION
+@RESTORE_OPTION
+@VERBOSE_OPTION
 @click.pass_context
 def cli(
-    ctx, debug, files, walk, json_, set_, list_, clear, append, get, remove, update
+    ctx,
+    debug,
+    files,
+    walk,
+    json_,
+    set_,
+    list_,
+    clear,
+    append,
+    get,
+    remove,
+    update,
+    backup,
+    restore,
+    verbose,
 ):
     """ Read/write metadata from file(s). """
 
@@ -196,7 +237,8 @@ def cli(
 
     logging.debug(
         f"ctx={ctx} debug={debug} files={files} walk={walk} json={json_} "
-        f"set={set_}, list={list_},clear={clear},append={append},get={get}, remove={remove}"
+        f"set={set_}, list={list_},clear={clear},append={append},get={get}, remove={remove} "
+        f"backup={backup}, restore={restore}"
     )
 
     if not files:
@@ -208,10 +250,8 @@ def cli(
         attributes = (
             [a[0] for a in set_] + [a[0] for a in append] + list(clear) + list(get)
         )
-        logging.debug(f"attributes = {attributes}")
         invalid_attr = False
         for attr in attributes:
-            logging.debug(f"attr = {attr}")
             if attr not in ATTRIBUTES:
                 click.echo(f"Invalid attribute {attr}", err=True)
                 invalid_attr = True
@@ -227,23 +267,100 @@ def cli(
         click.echo(ctx.get_help())
         ctx.exit(2)
 
-    for f in files:
-        if walk and os.path.isdir(f):
-            for root, _, filenames in os.walk(f):
-                # if verbose:
-                #     print(f"Processing {root}")
+    # can't backup and restore at once
+    if backup and restore:
+        click.echo("--backup and --restore cannot be used together", err=True)
+        click.echo("")  # add a new line before rest of help text
+        click.echo(ctx.get_help())
+        ctx.exit(2)
+
+    # loop through each file, process it, then do backup or restore if needed
+    for filename in files:
+        if walk and os.path.isdir(filename):
+            for root, _, filenames in os.walk(filename):
+                if verbose:
+                    click.echo(f"Processing directory {root}")
+                backup_file = pathlib.Path(root) / _BACKUP_FILENAME
+                if restore:
+                    try:
+                        backup_data = load_backup_file(backup_file)
+                    except FileNotFoundError:
+                        click.echo(
+                            f"Missing backup file {backup_file} for {root}, skipping restore",
+                            err=True,
+                        )
+                        backup_data = {}
+                else:
+                    backup_data = {}
                 for fname in filenames:
                     fpath = pathlib.Path(f"{root}/{fname}").resolve()
+                    if verbose:
+                        click.echo(f"  Processing file: {fpath}")
                     process_file(
                         fpath, json_, set_, append, update, remove, clear, get, list_
                     )
-        elif os.path.isdir(f):
+                    if backup:
+                        if verbose:
+                            click.echo(f"    Backing up attribute data for {fpath}")
+                        json_data = osxmetadata.OSXMetaData(fpath)._to_dict()
+                        backup_data[fpath.name] = json_data
+                    if restore and backup_data:
+                        try:
+                            attr_dict = backup_data[fname]
+                            if verbose:
+                                click.echo(f"    Restoring attribute data for {fpath}")
+                            md = osxmetadata.OSXMetaData(fpath)
+                            md._restore_attributes(attr_dict)
+                        except:
+                            if verbose:
+                                click.echo(
+                                    f"    Skipping restore for file {fpath}: not in backup file"
+                                )
+                if backup:
+                    # done walking through files in this folder, write the backup data
+                    write_backup_file(backup_file, backup_data)
+        elif os.path.isdir(filename):
             # skip directory
-            logging.debug(f"skipping directory: {f}")
+            if verbose:
+                click.echo(
+                    f"skipping directory: {filename}; use --walk to process directories"
+                )
             continue
         else:
-            fpath = pathlib.Path(f).resolve()
+            fpath = pathlib.Path(filename).resolve()
+            if verbose:
+                click.echo(f"Processing file: {fpath}")
             process_file(fpath, json_, set_, append, update, remove, clear, get, list_)
+            backup_file = pathlib.Path(pathlib.Path(filename).parent) / _BACKUP_FILENAME
+            if backup:
+                if verbose:
+                    click.echo(f"  Backing up attribute data for {fpath}")
+                # load the file if it exists, merge new data, then write out the file again
+                if backup_file.is_file():
+                    backup_data = load_backup_file(backup_file)
+                else:
+                    backup_data = {}
+                json_dict = osxmetadata.OSXMetaData(fpath)._to_dict()
+                backup_data[pathlib.Path(fpath).name] = json_dict
+                write_backup_file(backup_file, backup_data)
+            if restore:
+                try:
+                    backup_data = load_backup_file(backup_file)
+                    attr_dict = backup_data[pathlib.Path(fpath).name]
+                    if verbose:
+                        click.echo(f"  Restoring attribute data for {fpath}")
+                    md = osxmetadata.OSXMetaData(fpath)
+                    md._restore_attributes(attr_dict)
+                except FileNotFoundError:
+                    click.echo(
+                        f"Missing backup file {backup_file} for {fpath}, skipping restore",
+                        err=True,
+                    )
+                except KeyError:
+                    if verbose:
+                        click.echo(
+                            f"      Skipping restore for file {fpath}: not in backup file"
+                        )
 
 
 def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
@@ -329,7 +446,7 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
         if json_:
             data = {}
             data["_version"] = __version__
-            data["_filepath"] = str(fpath)
+            data["_filepath"] = fpath.resolve().as_posix()
             data["_filename"] = fpath.name
         for attr in get:
             attribute = ATTRIBUTES[attr]
@@ -356,54 +473,23 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_):
             click.echo(json_str)
 
     if list_:
-        attribute_list = md.list_metadata()
         if json_:
-            data = {}
-            data["_version"] = __version__
-            data["_filepath"] = str(fpath)
-            data["_filename"] = fpath.name
-        for attr in attribute_list:
-            try:
-                attribute = ATTRIBUTES[attr]
-                if json_:
-                    if attribute.type_ == datetime.datetime:
-                        # need to convert datetime.datetime to string to serialize
-                        value = md.get_attribute(attribute.name)
-                        if type(value) == list:
-                            value = [v.isoformat() for v in value]
-                        else:
-                            value = value.isoformat()
-                        data[attribute.constant] = value
-                    else:
-                        # get raw value
-                        data[attribute.constant] = md.get_attribute(attribute.name)
-                else:
+            json_str = md.to_json()
+            click.echo(json_str)
+        else:
+            attribute_list = md.list_metadata()
+            for attr in attribute_list:
+                try:
+                    attribute = ATTRIBUTES[attr]
                     value = md.get_attribute_str(attribute.name)
                     click.echo(
                         f"{attribute.name:{_SHORT_NAME_WIDTH}}{attribute.constant:{_LONG_NAME_WIDTH}} = {value}"
                     )
-            except KeyError:
-                click.echo(
-                    f"{'UNKNOWN':{_SHORT_NAME_WIDTH}}{attr:{_LONG_NAME_WIDTH}} = THIS ATTRIBUTE NOT HANDLED"
-                )
-        if json_:
-            json_str = json.dumps(data)
-            click.echo(json_str)
-
-
-# def restore_from_json(json_file, quiet=False):
-#     fp = None
-#     try:
-#         fp = open(json_file, mode="r")
-#     except:
-#         print(f"Error opening file {json_file} for reading")
-#         sys.exit(2)
-
-#     for line in fp:
-#         data = json.loads(line)
-#         if not quiet:
-#             print(f"Restoring metadata for {data['file']}")
-#         set_metadata(data, quiet)
+                except KeyError:
+                    click.echo(
+                        f"{'UNKNOWN':{_SHORT_NAME_WIDTH}}{attr:{_LONG_NAME_WIDTH}} = THIS ATTRIBUTE NOT HANDLED",
+                        err=True,
+                    )
 
 
 if __name__ == "__main__":

@@ -52,7 +52,7 @@ ATTRIBUTES = {
         True,
         False,
         _AttributeList,
-        "The author, or authors, of the contents of the file. A list of strings.",
+        "The author, or authors, of the contents of the file.  A list of strings.",
     ),
     "comment": Attribute(
         "comment",
@@ -62,8 +62,8 @@ ATTRIBUTES = {
         False,
         False,
         str,
-        "A comment related to the file. This differs from the Finder comment, "
-        + "kMDItemFinderComment. A string.",
+        "A comment related to the file.  This differs from the Finder comment, "
+        + "kMDItemFinderComment.  A string.",
     ),
     "copyright": Attribute(
         "copyright",
@@ -73,7 +73,7 @@ ATTRIBUTES = {
         False,
         False,
         str,
-        "The copyright owner of the file contents. A string.",
+        "The copyright owner of the file contents.  A string.",
     ),
     "creator": Attribute(
         "creator",
@@ -84,7 +84,7 @@ ATTRIBUTES = {
         False,
         str,
         "Application used to create the document content (for example “Word”, “Pages”, "
-        + "and so on). A string.",
+        + "and so on).  A string.",
     ),
     "description": Attribute(
         "description",
@@ -94,9 +94,9 @@ ATTRIBUTES = {
         False,
         False,
         str,
-        "A description of the content of the resource. The description may include an abstract, "
+        "A description of the content of the resource.  The description may include an abstract, "
         + "table of contents, reference to a graphical representation of content or a "
-        + "free-text account of the content. A string.",
+        + "free-text account of the content.  A string.",
     ),
     "downloadeddate": Attribute(
         "downloadeddate",
@@ -119,7 +119,7 @@ ATTRIBUTES = {
         False,
         False,
         str,
-        "Finder comments for this file. A string.",
+        "Finder comments for this file.  A string.",
     ),
     "headline": Attribute(
         "headline",
@@ -129,7 +129,7 @@ ATTRIBUTES = {
         False,
         False,
         str,
-        "A publishable entry providing a synopsis of the contents of the file. A string.",
+        "A publishable entry providing a synopsis of the contents of the file.  A string.",
     ),
     "keywords": Attribute(
         "keywords",
@@ -141,7 +141,7 @@ ATTRIBUTES = {
         _AttributeList,
         "Keywords associated with this file. For example, “Birthday”, “Important”, etc. "
         + "This differs from Finder tags (_kMDItemUserTags) which are keywords/tags shown "
-        + 'in the Finder and searchable in Spotlight using "tag:tag_name"'
+        + 'in the Finder and searchable in Spotlight using "tag:tag_name".  '
         + "A list of strings.",
     ),
     "tags": Attribute(
@@ -153,7 +153,7 @@ ATTRIBUTES = {
         False,
         _AttributeTagsList,
         'Finder tags; searchable in Spotlight using "tag:tag_name".  '
-        + "If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords. "
+        + "If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords.  "
         + "A list of strings.",
     ),
     "wherefroms": Attribute(
@@ -164,7 +164,7 @@ ATTRIBUTES = {
         True,
         False,
         _AttributeList,
-        "Describes where the file was obtained from (e.g. URL downloaded from). "
+        "Describes where the file was obtained from (e.g. URL downloaded from).  "
         + "A list of strings.",
     ),
     # "test": Attribute(

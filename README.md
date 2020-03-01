@@ -51,6 +51,13 @@ Options:
   --update ATTRIBUTE VALUE  Update ATTRIBUTE with VALUE; for multi-valued
                             attributes, this adds VALUE to the attribute if
                             not already in the list
+  --backup                  Backup FILE attributes.  Backup file
+                            '.osxmetadata.json' will be created in same folder
+                            as FILE
+  --restore                 Restore FILE attributes from backup file.  Restore
+                            will look for backup file '.osxmetadata.json' in
+                            same folder as FILE
+  -V, --verbose             Print verbose output
   --help                    Show this message and exit.
 
 Valid attributes for ATTRIBUTE: Each attribute has a short name, a constant
@@ -67,44 +74,44 @@ set keywords to ['foo', 'bar']
 
 Short Name      Description
 authors         kMDItemAuthors, com.apple.metadata:kMDItemAuthors; The
-                author, or authors, of the contents of the file. A list of
+                author, or authors, of the contents of the file.  A list of
                 strings.
 comment         kMDItemComment, com.apple.metadata:kMDItemComment; A comment
-                related to the file. This differs from the Finder comment,
-                kMDItemFinderComment. A string.
+                related to the file.  This differs from the Finder comment,
+                kMDItemFinderComment.  A string.
 copyright       kMDItemCopyright, com.apple.metadata:kMDItemCopyright; The
-                copyright owner of the file contents. A string.
+                copyright owner of the file contents.  A string.
 creator         kMDItemCreator, com.apple.metadata:kMDItemCreator;
                 Application used to create the document content (for example
-                “Word”, “Pages”, and so on). A string.
+                “Word”, “Pages”, and so on).  A string.
 description     kMDItemDescription, com.apple.metadata:kMDItemDescription; A
-                description of the content of the resource. The description
+                description of the content of the resource.  The description
                 may include an abstract, table of contents, reference to a
                 graphical representation of content or a free-text account
-                of the content. A string.
+                of the content.  A string.
 downloadeddate  kMDItemDownloadedDate,
                 com.apple.metadata:kMDItemDownloadedDate; The date the item
                 was downloaded.  A date in ISO 8601 format: e.g.
                 2000-01-12T12:00:00 or 2000-12-31 (ISO 8601 w/o time zone)
 findercomment   kMDItemFinderComment,
                 com.apple.metadata:kMDItemFinderComment; Finder comments for
-                this file. A string.
+                this file.  A string.
 headline        kMDItemHeadline, com.apple.metadata:kMDItemHeadline; A
                 publishable entry providing a synopsis of the contents of
-                the file. A string.
+                the file.  A string.
 keywords        kMDItemKeywords, com.apple.metadata:kMDItemKeywords;
                 Keywords associated with this file. For example, “Birthday”,
                 “Important”, etc. This differs from Finder tags
                 (_kMDItemUserTags) which are keywords/tags shown in the
-                Finder and searchable in Spotlight using "tag:tag_name"A
+                Finder and searchable in Spotlight using "tag:tag_name".  A
                 list of strings.
 tags            _kMDItemUserTags, com.apple.metadata:_kMDItemUserTags;
                 Finder tags; searchable in Spotlight using "tag:tag_name".
                 If you want tags/keywords visible in the Finder, use this
-                instead of kMDItemKeywords. A list of strings.
+                instead of kMDItemKeywords.  A list of strings.
 wherefroms      kMDItemWhereFroms, com.apple.metadata:kMDItemWhereFroms;
                 Describes where the file was obtained from (e.g. URL
-                downloaded from). A list of strings.
+                downloaded from).  A list of strings.
 ```
 
 
@@ -259,6 +266,11 @@ meta.clear_attribute("tags")
 
 ## Programmatic Interface:
 
+### name
+`name()`
+
+Returns POSIX path of the file OSXMetaData is operating on.
+
 ### get_attribute
 `get_attribute(attribute_name)`
 
@@ -325,6 +337,11 @@ Clear anttribute (remove it from the file).
 `list_metadata()`
 
 List the Apple metadata attributes set on the file.  e.g. those in com.apple.metadata namespace.
+
+### to_json
+`to_json()`
+
+Return dict in JSON format with all attributes for this file.  Format is the same as used by the command line --backup/--restore functions.
 
 ## Usage Notes
 

@@ -6,6 +6,7 @@
 # the same MIT license. See: https://github.com/scooby/osx-tags
 
 import datetime
+import json
 import logging
 import pathlib
 import plistlib
@@ -118,6 +119,55 @@ class OSXMetaData:
     def name(self):
         """ POSIX path of the file OSXMetaData is operating on """
         return self._fname.resolve().as_posix()
+
+    def _to_dict(self):
+        """ Return dict with all attributes for this file 
+            key of dict is filename and value is another dict with attributes """
+
+        attribute_list = self.list_metadata()
+        json_data = {}
+        json_data["_version"] = __version__
+        json_data["_filepath"] = self._posix_name
+        json_data["_filename"] = self._fname.name
+        for attr in attribute_list:
+            try:
+                attribute = ATTRIBUTES[attr]
+                if attribute.type_ == datetime.datetime:
+                    # need to convert datetime.datetime to string to serialize
+                    value = self.get_attribute(attribute.name)
+                    if type(value) == list:
+                        value = [v.isoformat() for v in value]
+                    else:
+                        value = value.isoformat()
+                    json_data[attribute.constant] = value
+                else:
+                    # get raw value
+                    json_data[attribute.constant] = self.get_attribute(attribute.name)
+            except KeyError:
+                # unknown attribute, ignore it
+                pass
+        return json_data
+
+    def to_json(self):
+        """ Returns a string in JSON format for all attributes in this file """
+        json_data = self._to_dict()
+        json_str = json.dumps(json_data)
+        return json_str
+
+    def _restore_attributes(self, attr_dict):
+        """ restore attributes from attr_dict
+            for each attribute in attr_dict, will set the attribute
+            will not clear/erase any attributes on file that are not in attr_dict
+            attr_dict: an attribute dict as produced by OSXMetaData._to_dict() """
+
+        for key, val in attr_dict.items():
+            if key.startswith("_"):
+                # skip private keys like _version and _filepath
+                continue
+            try:
+                self.set_attribute(key, val)
+            except:
+                logging.warning(f"Unable to restore attribute {attr} for {self._fname}")
 
     def get_attribute(self, attribute_name):
         """ load attribute and return value or None if attribute was not set 

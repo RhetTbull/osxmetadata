@@ -1,8 +1,10 @@
 import datetime
+import json
 import logging
 import os
 
 from . import _applescript
+from .attributes import ATTRIBUTES
 
 _DEBUG = False
 
@@ -106,7 +108,6 @@ def validate_attribute_value(attribute, value):
         else:
             iter(value)
     except TypeError:
-        # ZZZ handle passing in values as _AttributeSet, et
         value = [value]
 
     # # check for None and convert to list if needed
@@ -151,8 +152,48 @@ def validate_attribute_value(attribute, value):
         new_values.append(new_val)
 
     logging.debug(f"new_value = {new_values}")
-    
+
     if attribute.list:
         return new_values
     else:
         return new_values[0]
+
+
+def load_backup_file(backup_file):
+    """ Load attribute data from JSON in backup_file 
+        Returns: backup_data dict """
+
+    if not os.path.isfile(backup_file):
+        raise FileNotFoundError(f"Could not find backup file: {backup_file}")
+
+    backup_data = {}
+    fp = open(backup_file, mode="r")
+
+    for line in fp:
+        data = json.loads(line)
+        fname = data["_filename"]
+        if fname in backup_data:
+            logging.warning(
+                f"WARNING: duplicate filename {fname} found in {backup_file}"
+            )
+
+        backup_data[fname] = data
+
+    fp.close()
+    return backup_data
+
+
+def write_backup_file(backup_file, backup_data):
+    """ Write backup_data to backup_file as JSON
+        backup_data: dict where key is filename and value is dict of the attributes
+        as returned by json.loads(OSXMetaData.to_json()) """
+
+    fp = open(backup_file, mode="w")
+
+    for record in backup_data.values():
+        json_str = json.dumps(record)
+        fp.write(json_str)
+        fp.write("\n")
+
+    fp.close()
+

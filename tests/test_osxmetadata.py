@@ -35,6 +35,38 @@ def test_name(temp_file):
     assert meta.name == fname.resolve().as_posix()
 
 
+def test_to_json(temp_file):
+    import json
+    import pathlib
+    from osxmetadata import OSXMetaData, __version__
+
+    meta = OSXMetaData(temp_file)
+    meta.tags = ["foo", "bar"]
+    json_ = json.loads(meta.to_json())
+
+    assert json_["com.apple.metadata:_kMDItemUserTags"] == ["foo", "bar"]
+    assert json_["_version"] == __version__
+    assert json_["_filename"] == pathlib.Path(temp_file).name
+
+
+def test_restore(temp_file):
+    from osxmetadata import OSXMetaData, kMDItemComment
+
+    meta = OSXMetaData(temp_file)
+    meta.tags = ["foo", "bar"]
+    meta.set_attribute(kMDItemComment, "Hello World!")
+    attr_dict = meta._to_dict()
+    meta.tags = []
+    meta.clear_attribute(kMDItemComment)
+
+    assert meta.tags == []
+    assert meta.comment is None
+
+    meta._restore_attributes(attr_dict)
+    assert meta.tags == ["foo", "bar"]
+    assert meta.get_attribute(kMDItemComment) == "Hello World!"
+
+
 def test_file_not_exists(temp_file):
     from osxmetadata import OSXMetaData
 
