@@ -86,21 +86,39 @@ class MyClickCommand(click.Command):
             + "e.g. --set keywords 'foo' --set keywords 'bar' will set keywords to ['foo', 'bar']"
         )
         formatter.write("\n")
+        formatter.write_text(
+            "Options are executed in the following order regardless of order "
+            + "passed on the command line: "
+            + "restore, wipe, clear, set, append, update, remove, mirror, get, list, backup.  "
+            + "--backup and --restore are mutually exclusive.  "
+            + "Other options may be combined or chained together."
+        )
+        formatter.write("\n")
 
         formatter.write_dl(attr_tuples)
         help_text += formatter.getvalue()
         return help_text
 
 
-CTX_SETTINGS = dict(help_option_names=["--help", "-h"])
+# CTX_SETTINGS = dict(help_option_names=["--help", "-h"])
 FILES_ARGUMENT = click.argument(
     "files", metavar="FILE", nargs=-1, type=click.Path(exists=True)
+)
+HELP_OPTION = click.option(
+    # add this only so I can show help text via echo_via_pager
+    "--help",
+    "-h",
+    "help_",
+    help="Show this message and exit.",
+    is_flag=True,
+    default=False,
+    required=False,
 )
 WALK_OPTION = click.option(
     "--walk",
     "-w",
     is_flag=True,
-    help="Walk directory tree, processing each file in the tree",
+    help="Walk directory tree, processing each file in the tree.",
     default=False,
 )
 JSON_OPTION = click.option(
@@ -118,14 +136,14 @@ SET_OPTION = click.option(
     "--set",
     "set_",
     metavar="ATTRIBUTE VALUE",
-    help="Set ATTRIBUTE to VALUE",
+    help="Set ATTRIBUTE to VALUE.",
     nargs=2,
     multiple=True,
     required=False,
 )
 GET_OPTION = click.option(
     "--get",
-    help="Get value of ATTRIBUTE",
+    help="Get value of ATTRIBUTE.",
     metavar="ATTRIBUTE",
     nargs=1,
     multiple=True,
@@ -134,22 +152,29 @@ GET_OPTION = click.option(
 LIST_OPTION = click.option(
     "--list",
     "list_",
-    help="List all metadata attributes for FILE",
+    help="List all metadata attributes for FILE.",
     is_flag=True,
     default=False,
 )
-CLEAROPTION = click.option(
+CLEAR_OPTION = click.option(
     "--clear",
-    help="Remove attribute from FILE",
+    help="Remove attribute from FILE.",
     metavar="ATTRIBUTE",
     nargs=1,
     multiple=True,
     required=False,
 )
+WIPE_OPTION = click.option(
+    "--wipe",
+    help="Wipe all metadata attributes from FILE.",
+    is_flag=True,
+    default=False,
+    required=False,
+)
 APPEND_OPTION = click.option(
     "--append",
     metavar="ATTRIBUTE VALUE",
-    help="Append VALUE to ATTRIBUTE",
+    help="Append VALUE to ATTRIBUTE.",
     nargs=2,
     multiple=True,
     required=False,
@@ -158,7 +183,7 @@ UPDATE_OPTION = click.option(
     "--update",
     metavar="ATTRIBUTE VALUE",
     help="Update ATTRIBUTE with VALUE; for multi-valued attributes, "
-    "this adds VALUE to the attribute if not already in the list",
+    "this adds VALUE to the attribute if not already in the list.",
     nargs=2,
     multiple=True,
     required=False,
@@ -166,7 +191,7 @@ UPDATE_OPTION = click.option(
 REMOVE_OPTION = click.option(
     "--remove",
     metavar="ATTRIBUTE VALUE",
-    help="Remove VALUE from ATTRIBUTE; only applies to multi-valued attributes",
+    help="Remove VALUE from ATTRIBUTE; only applies to multi-valued attributes.",
     nargs=2,
     multiple=True,
     required=False,
@@ -177,7 +202,7 @@ MIRROR_OPTION = click.option(
     help="Mirror values between ATTRIBUTE1 and ATTRIBUTE2 so that ATTRIBUTE1 = ATTRIBUTE2; "
     "for multi-valued attributes, merges values; for string attributes, sets ATTRIBUTE1 = ATTRIBUTE2 "
     "overwriting any value in ATTRIBUTE1.  "
-    "For example: '--mirror keywords tags' sets tags and keywords to same values ",
+    "For example: '--mirror keywords tags' sets tags and keywords to same values.",
     nargs=2,
     required=False,
     multiple=True,
@@ -185,7 +210,7 @@ MIRROR_OPTION = click.option(
 BACKUP_OPTION = click.option(
     "--backup",
     help="Backup FILE attributes.  "
-    "Backup file '.osxmetadata.json' will be created in same folder as FILE",
+    "Backup file '.osxmetadata.json' will be created in same folder as FILE.",
     is_flag=True,
     required=False,
     default=False,
@@ -193,7 +218,7 @@ BACKUP_OPTION = click.option(
 RESTORE_OPTION = click.option(
     "--restore",
     help="Restore FILE attributes from backup file.  "
-    "Restore will look for backup file '.osxmetadata.json' in same folder as FILE",
+    "Restore will look for backup file '.osxmetadata.json' in same folder as FILE.",
     is_flag=True,
     required=False,
     default=False,
@@ -201,7 +226,7 @@ RESTORE_OPTION = click.option(
 VERBOSE_OPTION = click.option(
     "--verbose",
     "-V",
-    help="Print verbose output",
+    help="Print verbose output.",
     is_flag=True,
     default=False,
     required=False,
@@ -210,13 +235,15 @@ VERBOSE_OPTION = click.option(
 
 @click.command(cls=MyClickCommand)
 @click.version_option(__version__, "--version", "-v")
+@HELP_OPTION
 @DEBUG_OPTION
 @FILES_ARGUMENT
 @WALK_OPTION
 @JSON_OPTION
+@WIPE_OPTION
 @SET_OPTION
 @LIST_OPTION
-@CLEAROPTION
+@CLEAR_OPTION
 @APPEND_OPTION
 @GET_OPTION
 @REMOVE_OPTION
@@ -228,10 +255,12 @@ VERBOSE_OPTION = click.option(
 @click.pass_context
 def cli(
     ctx,
+    help_,
     debug,
     files,
     walk,
     json_,
+    wipe,
     set_,
     list_,
     clear,
@@ -245,6 +274,10 @@ def cli(
     verbose,
 ):
     """ Read/write metadata from file(s). """
+
+    if help_:
+        click.echo_via_pager(ctx.get_help())
+        ctx.exit(0)
 
     if debug:
         logging.disable(logging.NOTSET)
@@ -314,9 +347,9 @@ def cli(
     for filename in files:
         if walk and os.path.isdir(filename):
             for root, _, filenames in os.walk(filename):
+                backup_file = pathlib.Path(root) / _BACKUP_FILENAME
                 if verbose:
                     click.echo(f"Processing directory {root}")
-                backup_file = pathlib.Path(root) / _BACKUP_FILENAME
                 if restore:
                     try:
                         backup_data = load_backup_file(backup_file)
@@ -328,27 +361,9 @@ def cli(
                         backup_data = {}
                 else:
                     backup_data = {}
+
                 for fname in filenames:
                     fpath = pathlib.Path(f"{root}/{fname}").resolve()
-                    if verbose:
-                        click.echo(f"  Processing file: {fpath}")
-                    process_file(
-                        fpath,
-                        json_,
-                        set_,
-                        append,
-                        update,
-                        remove,
-                        clear,
-                        get,
-                        list_,
-                        mirror,
-                    )
-                    if backup:
-                        if verbose:
-                            click.echo(f"    Backing up attribute data for {fpath}")
-                        json_data = osxmetadata.OSXMetaData(fpath)._to_dict()
-                        backup_data[fpath.name] = json_data
                     if restore and backup_data:
                         try:
                             attr_dict = backup_data[fname]
@@ -361,6 +376,30 @@ def cli(
                                 click.echo(
                                     f"    Skipping restore for file {fpath}: not in backup file"
                                 )
+
+                    if verbose:
+                        click.echo(f"  Processing file: {fpath}")
+
+                    process_file(
+                        fpath,
+                        json_,
+                        set_,
+                        append,
+                        update,
+                        remove,
+                        clear,
+                        get,
+                        list_,
+                        mirror,
+                        wipe,
+                        verbose,
+                    )
+
+                    if backup:
+                        if verbose:
+                            click.echo(f"    Backing up attribute data for {fpath}")
+                        json_data = osxmetadata.OSXMetaData(fpath)._to_dict()
+                        backup_data[fpath.name] = json_data
                 if backup:
                     # done walking through files in this folder, write the backup data
                     write_backup_file(backup_file, backup_data)
@@ -373,23 +412,7 @@ def cli(
             continue
         else:
             fpath = pathlib.Path(filename).resolve()
-            if verbose:
-                click.echo(f"Processing file: {fpath}")
-            process_file(
-                fpath, json_, set_, append, update, remove, clear, get, list_, mirror
-            )
             backup_file = pathlib.Path(pathlib.Path(filename).parent) / _BACKUP_FILENAME
-            if backup:
-                if verbose:
-                    click.echo(f"  Backing up attribute data for {fpath}")
-                # load the file if it exists, merge new data, then write out the file again
-                if backup_file.is_file():
-                    backup_data = load_backup_file(backup_file)
-                else:
-                    backup_data = {}
-                json_dict = osxmetadata.OSXMetaData(fpath)._to_dict()
-                backup_data[pathlib.Path(fpath).name] = json_dict
-                write_backup_file(backup_file, backup_data)
             if restore:
                 try:
                     backup_data = load_backup_file(backup_file)
@@ -409,15 +432,69 @@ def cli(
                             f"      Skipping restore for file {fpath}: not in backup file"
                         )
 
+            if verbose:
+                click.echo(f"Processing file: {fpath}")
 
-def process_file(fpath, json_, set_, append, update, remove, clear, get, list_, mirror):
+            process_file(
+                fpath,
+                json_,
+                set_,
+                append,
+                update,
+                remove,
+                clear,
+                get,
+                list_,
+                mirror,
+                wipe,
+                verbose,
+            )
+
+            if backup:
+                if verbose:
+                    click.echo(f"  Backing up attribute data for {fpath}")
+                # load the file if it exists, merge new data, then write out the file again
+                if backup_file.is_file():
+                    backup_data = load_backup_file(backup_file)
+                else:
+                    backup_data = {}
+                json_dict = osxmetadata.OSXMetaData(fpath)._to_dict()
+                backup_data[pathlib.Path(fpath).name] = json_dict
+                write_backup_file(backup_file, backup_data)
+
+
+def process_file(
+    fpath, json_, set_, append, update, remove, clear, get, list_, mirror, wipe, verbose
+):
     """ process a single file to apply the options 
-        options processed in this order: set, append, remove, clear, mirror, get, list
+        options processed in this order: wipe, clear, set, append, remove, mirror, get, list
         Note: expects all attributes passed in parameters to be validated """
 
     logging.debug(f"process_file: {fpath}")
 
     md = osxmetadata.OSXMetaData(fpath)
+
+    if wipe:
+        attr_list = md.list_metadata()
+        if verbose and attr_list:
+            click.echo(f"Wiping metadata from {fpath}")
+        for attr in attr_list:
+            try:
+                attribute = ATTRIBUTES[attr]
+                if verbose:
+                    click.echo(f"  Wiping {attr} from {fpath}")
+                md.clear_attribute(attribute.name)
+            except KeyError:
+                if verbose:
+                    click.echo(
+                        f"  Unknown attribute {attr} on {fpath}, skipping", err=True
+                    )
+
+    if clear:
+        for attr in clear:
+            attribute = ATTRIBUTES[attr]
+            logging.debug(f"clearing {attr}")
+            md.clear_attribute(attribute.name)
 
     if set_:
         # set data
@@ -481,12 +558,6 @@ def process_file(fpath, json_, set_, append, update, remove, clear, get, list_, 
                 md.discard_attribute(attribute.name, val)
             except KeyError as e:
                 raise e
-
-    if clear:
-        for attr in clear:
-            attribute = ATTRIBUTES[attr]
-            logging.debug(f"clearing {attr}")
-            md.clear_attribute(attribute.name)
 
     if mirror:
         for item in mirror:

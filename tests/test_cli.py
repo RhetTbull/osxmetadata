@@ -319,6 +319,68 @@ def test_cli_backup_restore(temp_file):
     assert meta.comment == "Hello World!"
 
 
+def test_cli_backup_restore_2(temp_file):
+    # test set during restore
+    import pathlib
+    from osxmetadata import OSXMetaData, ATTRIBUTES
+    from osxmetadata.constants import _BACKUP_FILENAME
+    from osxmetadata.__main__ import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--set",
+            "tags",
+            "Foo",
+            "--set",
+            "tags",
+            "Bar",
+            "--set",
+            "comment",
+            "Hello World!",
+            "--list",
+            temp_file,
+        ],
+    )
+    assert result.exit_code == 0
+    output = parse_cli_output(result.stdout)
+    assert output["tags"] == "['Foo', 'Bar']"
+    meta = OSXMetaData(temp_file)
+    assert meta.get_attribute("tags") == ["Foo", "Bar"]
+    assert meta.get_attribute("comment") == "Hello World!"
+
+    # test creation of backup file
+    result = runner.invoke(cli, ["--backup", temp_file])
+    assert result.exit_code == 0
+    backup_file = pathlib.Path(pathlib.Path(temp_file).parent) / _BACKUP_FILENAME
+    assert backup_file.exists()
+
+    # clear the attributes to see if they can be restored
+    meta.clear_attribute("tags")
+    meta.clear_attribute("comment")
+    assert meta.tags == []
+    assert meta.comment == None
+
+    result = runner.invoke(
+        cli,
+        [
+            "--restore",
+            "--append",
+            "tags",
+            "Flooz",
+            "--set",
+            "keywords",
+            "FooBar",
+            temp_file,
+        ],
+    )
+    assert result.exit_code == 0
+    assert meta.tags == ["Foo", "Bar", "Flooz"]
+    assert meta.comment == "Hello World!"
+    assert meta.keywords == ["FooBar"]
+
+
 def test_cli_mirror(temp_file):
     import datetime
     from osxmetadata import OSXMetaData
@@ -384,3 +446,84 @@ def test_cli_mirror_bad_args(temp_file):
     result = runner.invoke(cli, ["--mirror", "downloadeddate", "tags", temp_file])
     assert result.exit_code == 2
     assert "incompatible types" in result.output
+
+
+def test_cli_wipe(temp_file):
+    from osxmetadata import OSXMetaData
+    from osxmetadata.__main__ import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--set",
+            "comment",
+            "Foo",
+            "--set",
+            "findercomment",
+            "Bar",
+            "--set",
+            "keywords",
+            "foo",
+            "--set",
+            "tags",
+            "bar",
+            "--list",
+            temp_file,
+        ],
+    )
+    assert result.exit_code == 0
+    meta = OSXMetaData(temp_file)
+    assert meta.tags == ["bar"]
+    assert meta.keywords == ["foo"]
+    assert meta.findercomment == "Bar"
+    assert meta.comment == "Foo"
+
+    result = runner.invoke(cli, ["--wipe", temp_file])
+    assert result.exit_code == 0
+    assert meta.tags == []
+    assert meta.keywords == []
+    assert meta.findercomment is None
+    assert meta.comment is None
+
+
+def test_cli_wipe_2(temp_file):
+    # test wipe then set
+    from osxmetadata import OSXMetaData
+    from osxmetadata.__main__ import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--set",
+            "comment",
+            "Foo",
+            "--set",
+            "findercomment",
+            "Bar",
+            "--set",
+            "keywords",
+            "foo",
+            "--set",
+            "tags",
+            "bar",
+            "--list",
+            temp_file,
+        ],
+    )
+    assert result.exit_code == 0
+    meta = OSXMetaData(temp_file)
+    assert meta.tags == ["bar"]
+    assert meta.keywords == ["foo"]
+    assert meta.findercomment == "Bar"
+    assert meta.comment == "Foo"
+
+    result = runner.invoke(
+        cli, ["--wipe", "--set", "comment", "Hello World!", temp_file]
+    )
+    assert result.exit_code == 0
+    assert meta.tags == []
+    assert meta.keywords == []
+    assert meta.findercomment is None
+    assert meta.comment == "Hello World!"
