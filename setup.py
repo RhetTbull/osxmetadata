@@ -36,7 +36,7 @@ setup(
     url="https://github.com/RhetTbull/osxmetadata",
     project_urls={"GitHub": "https://github.com/RhetTbull/osxmetadata"},
     download_url="https://github.com/RhetTbull/osxmetadata",
-    packages=find_packages(exclude=["tests"]),
+    packages=find_packages(exclude=["tests", "utils"]),
     license="License :: OSI Approved :: MIT License",
     classifiers=[
         "Development Status :: 4 - Beta",
