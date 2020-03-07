@@ -89,7 +89,7 @@ class MyClickCommand(click.Command):
         formatter.write_text(
             "Options are executed in the following order regardless of order "
             + "passed on the command line: "
-            + "restore, wipe, clear, set, append, update, remove, mirror, get, list, backup.  "
+            + "restore, wipe, copyfrom, clear, set, append, update, remove, mirror, get, list, backup.  "
             + "--backup and --restore are mutually exclusive.  "
             + "Other options may be combined or chained together."
         )
@@ -231,6 +231,15 @@ VERBOSE_OPTION = click.option(
     default=False,
     required=False,
 )
+COPY_FROM_OPTION = click.option(
+    "--copyfrom",
+    metavar="SOURCE_FILE",
+    help="Copy attributes from file SOURCE_FILE.",
+    type=click.Path(exists=True),
+    nargs=1,
+    multiple=False,
+    required=False,
+)
 
 
 @click.command(cls=MyClickCommand)
@@ -252,6 +261,7 @@ VERBOSE_OPTION = click.option(
 @BACKUP_OPTION
 @RESTORE_OPTION
 @VERBOSE_OPTION
+@COPY_FROM_OPTION
 @click.pass_context
 def cli(
     ctx,
@@ -272,6 +282,7 @@ def cli(
     backup,
     restore,
     verbose,
+    copyfrom,
 ):
     """ Read/write metadata from file(s). """
 
@@ -393,6 +404,7 @@ def cli(
                         mirror,
                         wipe,
                         verbose,
+                        copyfrom,
                     )
 
                     if backup:
@@ -448,6 +460,7 @@ def cli(
                 mirror,
                 wipe,
                 verbose,
+                copyfrom,
             )
 
             if backup:
@@ -464,10 +477,22 @@ def cli(
 
 
 def process_file(
-    fpath, json_, set_, append, update, remove, clear, get, list_, mirror, wipe, verbose
+    fpath,
+    json_,
+    set_,
+    append,
+    update,
+    remove,
+    clear,
+    get,
+    list_,
+    mirror,
+    wipe,
+    verbose,
+    copyfrom,
 ):
     """ process a single file to apply the options 
-        options processed in this order: wipe, clear, set, append, remove, mirror, get, list
+        options processed in this order: wipe, copyfrom, clear, set, append, remove, mirror, get, list
         Note: expects all attributes passed in parameters to be validated """
 
     logging.debug(f"process_file: {fpath}")
@@ -490,10 +515,21 @@ def process_file(
                         f"  Unknown attribute {attr} on {fpath}, skipping", err=True
                     )
 
+    if copyfrom:
+        if verbose:
+            click.echo(f"Copying attributes from {copyfrom}")
+        src_md = osxmetadata.OSXMetaData(copyfrom)
+        for attr in src_md.list_metadata():
+            if verbose:
+                click.echo(f"  Copying {attr}")
+            md.set_attribute(attr,src_md.get_attribute(attr))
+
+
     if clear:
         for attr in clear:
             attribute = ATTRIBUTES[attr]
-            logging.debug(f"clearing {attr}")
+            if verbose:
+                click.echo(f"Clearing {attr}")
             md.clear_attribute(attribute.name)
 
     if set_:
@@ -503,14 +539,14 @@ def process_file(
         for item in set_:
             attr, val = item
             attribute = ATTRIBUTES[attr]
-            logging.debug(f"setting {attr}={val}")
+            if verbose:
+                click.echo(f"Setting {attr}={val}")
             try:
                 attr_dict[attribute].append(val)
             except KeyError:
                 attr_dict[attribute] = [val]
 
         for attribute, value in attr_dict.items():
-            logging.debug(f"value: {value}")
             value = validate_attribute_value(attribute, value)
             md.set_attribute(attribute.name, value)
 
@@ -521,7 +557,8 @@ def process_file(
         for item in append:
             attr, val = item
             attribute = ATTRIBUTES[attr]
-            logging.debug(f"appending {attr}={val}")
+            if verbose:
+                click.echo(f"Appending {attr}={val}")
             try:
                 attr_dict[attribute].append(val)
             except KeyError:
@@ -538,7 +575,8 @@ def process_file(
         for item in update:
             attr, val = item
             attribute = ATTRIBUTES[attr]
-            logging.debug(f"appending {attr}={val}")
+            if verbose:
+                click.echo(f"Updating {attr}={val}")
             try:
                 attr_dict[attribute].append(val)
             except KeyError:
@@ -554,6 +592,8 @@ def process_file(
         # todo: catch errors and display help
         for attr, val in remove:
             try:
+                if verbose:
+                    click.echo(f"Removing {attr}")
                 attribute = ATTRIBUTES[attr]
                 md.discard_attribute(attribute.name, val)
             except KeyError as e:
@@ -565,7 +605,8 @@ def process_file(
             # validation that attributes are compatible
             # will have occured prior to call to process_file
             attr1, attr2 = item
-            click.echo(f"Mirroring {attr1} {attr2}")
+            if verbose:
+                click.echo(f"Mirroring {attr1} {attr2}")
             attribute1 = ATTRIBUTES[attr1]
 
             if attribute1.list:
@@ -588,7 +629,6 @@ def process_file(
             data["_filename"] = fpath.name
         for attr in get:
             attribute = ATTRIBUTES[attr]
-            logging.debug(f"getting {attr}")
             if json_:
                 if attribute.type_ == datetime.datetime:
                     # need to convert datetime.datetime to string to serialize

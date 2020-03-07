@@ -527,3 +527,73 @@ def test_cli_wipe_2(temp_file):
     assert meta.keywords == []
     assert meta.findercomment is None
     assert meta.comment == "Hello World!"
+
+
+def test_cli_copy_from(temp_file):
+    # test copy from source file
+    from osxmetadata import OSXMetaData
+    from osxmetadata.__main__ import cli
+
+    TESTDIR = None
+    source_file = NamedTemporaryFile(dir=TESTDIR)
+    source_filename = source_file.name
+
+    meta_source = OSXMetaData(source_filename)
+    meta_source.tags = ["bar"]
+    meta_source.keywords =  ["foo"]
+    meta_source.findercomment = "Bar"
+    meta_source.comment = "Foo"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--copyfrom",
+            source_filename,
+            temp_file,
+        ],
+    )
+    assert result.exit_code == 0
+    meta = OSXMetaData(temp_file)
+    assert meta.tags == ["bar"]
+    assert meta.keywords == ["foo"]
+    assert meta.findercomment == "Bar"
+    assert meta.comment == "Foo"
+
+def test_cli_copy_from_2(temp_file):
+    # test copy from source file with setting etc
+    from osxmetadata import OSXMetaData
+    from osxmetadata.__main__ import cli
+
+    TESTDIR = None
+    source_file = NamedTemporaryFile(dir=TESTDIR)
+    source_filename = source_file.name
+
+    meta_source = OSXMetaData(source_filename)
+    meta_source.tags = ["bar"]
+    meta_source.keywords =  ["foo"]
+    meta_source.findercomment = "Bar"
+    meta_source.comment = "Foo"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--copyfrom",
+            source_filename,
+            temp_file,
+            "--set",
+            "tags",
+            "FOOBAR",
+            "--append",
+            "findercomment",
+            "Foo"
+        ],
+    )
+    assert result.exit_code == 0
+    meta = OSXMetaData(temp_file)
+    assert meta.tags == ["FOOBAR"]
+    assert meta.keywords == ["foo"]
+    assert meta.findercomment == "BarFoo"
+    assert meta.comment == "Foo"
+
