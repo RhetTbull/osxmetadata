@@ -553,6 +553,8 @@ def test_cli_copy_from(temp_file):
     assert meta.findercomment == "Bar"
     assert meta.comment == "Foo"
 
+    source_file.close()
+
 
 def test_cli_copy_from_2(temp_file):
     # test copy from source file with setting etc
@@ -590,6 +592,8 @@ def test_cli_copy_from_2(temp_file):
     assert meta.keywords == ["foo"]
     assert meta.findercomment == "BarFoo"
     assert meta.comment == "Foo"
+
+    source_file.close()
 
 
 def test_cli_verbose(temp_file):
@@ -651,6 +655,8 @@ def test_cli_verbose(temp_file):
     assert "Mirroring keywords tags" in output
     assert "Backing up attribute data" in output
 
+    source_file.close()
+
 
 def test_cli_verbose_short_opts(temp_file):
     from osxmetadata import OSXMetaData
@@ -710,3 +716,19 @@ def test_cli_verbose_short_opts(temp_file):
     assert "Removing keywords" in output
     assert "Mirroring keywords tags" in output
     assert "Backing up attribute data" in output
+
+    source_file.close()
+
+
+def test_cli_version():
+    from osxmetadata import OSXMetaData, __version__
+    from osxmetadata.__main__ import cli
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["-v"])
+    assert result.exit_code == 0
+    assert f"version {__version__}" in result.output
+
+    result = runner.invoke(cli, ["--version"])
+    assert result.exit_code == 0
+    assert f"version {__version__}" in result.output
