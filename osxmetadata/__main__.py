@@ -503,6 +503,8 @@ def process_file(
         attr_list = md.list_metadata()
         if verbose and attr_list:
             click.echo(f"Wiping metadata from {fpath}")
+        elif verbose:
+            click.echo(f"No metadata to wipe from {fpath}")
         for attr in attr_list:
             try:
                 attribute = ATTRIBUTES[attr]
@@ -522,8 +524,7 @@ def process_file(
         for attr in src_md.list_metadata():
             if verbose:
                 click.echo(f"  Copying {attr}")
-            md.set_attribute(attr,src_md.get_attribute(attr))
-
+            md.set_attribute(attr, src_md.get_attribute(attr))
 
     if clear:
         for attr in clear:

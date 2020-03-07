@@ -540,25 +540,19 @@ def test_cli_copy_from(temp_file):
 
     meta_source = OSXMetaData(source_filename)
     meta_source.tags = ["bar"]
-    meta_source.keywords =  ["foo"]
+    meta_source.keywords = ["foo"]
     meta_source.findercomment = "Bar"
     meta_source.comment = "Foo"
 
     runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "--copyfrom",
-            source_filename,
-            temp_file,
-        ],
-    )
+    result = runner.invoke(cli, ["--copyfrom", source_filename, temp_file])
     assert result.exit_code == 0
     meta = OSXMetaData(temp_file)
     assert meta.tags == ["bar"]
     assert meta.keywords == ["foo"]
     assert meta.findercomment == "Bar"
     assert meta.comment == "Foo"
+
 
 def test_cli_copy_from_2(temp_file):
     # test copy from source file with setting etc
@@ -571,7 +565,7 @@ def test_cli_copy_from_2(temp_file):
 
     meta_source = OSXMetaData(source_filename)
     meta_source.tags = ["bar"]
-    meta_source.keywords =  ["foo"]
+    meta_source.keywords = ["foo"]
     meta_source.findercomment = "Bar"
     meta_source.comment = "Foo"
 
@@ -587,7 +581,7 @@ def test_cli_copy_from_2(temp_file):
             "FOOBAR",
             "--append",
             "findercomment",
-            "Foo"
+            "Foo",
         ],
     )
     assert result.exit_code == 0
@@ -597,3 +591,62 @@ def test_cli_copy_from_2(temp_file):
     assert meta.findercomment == "BarFoo"
     assert meta.comment == "Foo"
 
+
+def test_cli_verbose(temp_file):
+    from osxmetadata import OSXMetaData
+    from osxmetadata.__main__ import cli
+
+    TESTDIR = None
+    source_file = NamedTemporaryFile(dir=TESTDIR)
+    source_filename = source_file.name
+
+    meta_source = OSXMetaData(source_filename)
+    meta_source.tags = ["bar"]
+    meta_source.keywords = ["foo"]
+    meta_source.findercomment = "Bar"
+    meta_source.comment = "Foo"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--wipe",
+            "--set",
+            "keywords",
+            "test",
+            "--list",
+            "--get",
+            "keywords",
+            "--clear",
+            "keywords",
+            "--remove",
+            "keywords",
+            "test",
+            "--update",
+            "keywords",
+            "foo",
+            "--mirror",
+            "keywords",
+            "tags",
+            "--backup",
+            "--verbose",
+            "--copyfrom",
+            source_filename,
+            temp_file,
+        ],
+    )
+    assert result.exit_code == 0
+    output = result.output
+    assert "Processing file" in output
+    assert "No metadata to wipe from" in output
+    assert "Copying attributes from" in output
+    assert "Copying com.apple.metadata:_kMDItemUserTags" in output
+    assert "Copying com.apple.metadata:kMDItemComment" in output
+    assert "Copying com.apple.metadata:kMDItemKeywords" in output
+    assert "Copying com.apple.metadata:kMDItemFinderComment" in output
+    assert "Clearing keywords" in output
+    assert "Setting keywords=test" in output
+    assert "Updating keywords=foo" in output
+    assert "Removing keywords" in output
+    assert "Mirroring keywords tags" in output
+    assert "Backing up attribute data" in output
