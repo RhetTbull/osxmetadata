@@ -279,7 +279,13 @@ meta.append_attribute("findercomment","Goodbye")
 meta.clear_attribute("tags")
 ```
 
-## Programmatic Interface:
+
+## OSXMetaData methods and attributes
+
+### Create an OSXMetaData object
+`md = osxmetadata.OSXMetaData(filename)`
+
+Once created, the following methods and attributes may be used to get/set metadata attribute data
 
 ### name
 `name()`
