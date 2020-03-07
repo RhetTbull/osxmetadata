@@ -650,3 +650,63 @@ def test_cli_verbose(temp_file):
     assert "Removing keywords" in output
     assert "Mirroring keywords tags" in output
     assert "Backing up attribute data" in output
+
+
+def test_cli_verbose_short_opts(temp_file):
+    from osxmetadata import OSXMetaData
+    from osxmetadata.__main__ import cli
+
+    TESTDIR = None
+    source_file = NamedTemporaryFile(dir=TESTDIR)
+    source_filename = source_file.name
+
+    meta_source = OSXMetaData(source_filename)
+    meta_source.tags = ["bar"]
+    meta_source.keywords = ["foo"]
+    meta_source.findercomment = "Bar"
+    meta_source.comment = "Foo"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "-X",
+            "-s",
+            "keywords",
+            "test",
+            "-l",
+            "-g",
+            "keywords",
+            "-c",
+            "keywords",
+            "-r",
+            "keywords",
+            "test",
+            "-u",
+            "keywords",
+            "foo",
+            "-m",
+            "keywords",
+            "tags",
+            "-V",
+            "-B",
+            "-f",
+            source_filename,
+            temp_file,
+        ],
+    )
+    assert result.exit_code == 0
+    output = result.output
+    assert "Processing file" in output
+    assert "No metadata to wipe from" in output
+    assert "Copying attributes from" in output
+    assert "Copying com.apple.metadata:_kMDItemUserTags" in output
+    assert "Copying com.apple.metadata:kMDItemComment" in output
+    assert "Copying com.apple.metadata:kMDItemKeywords" in output
+    assert "Copying com.apple.metadata:kMDItemFinderComment" in output
+    assert "Clearing keywords" in output
+    assert "Setting keywords=test" in output
+    assert "Updating keywords=foo" in output
+    assert "Removing keywords" in output
+    assert "Mirroring keywords tags" in output
+    assert "Backing up attribute data" in output

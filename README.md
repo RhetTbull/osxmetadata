@@ -42,32 +42,33 @@ Options:
                                   the tree.
   -j, --json                      Print output in JSON format, for use with
                                   --list and --get.
-  --wipe                          Wipe all metadata attributes from FILE.
-  --set ATTRIBUTE VALUE           Set ATTRIBUTE to VALUE.
-  --list                          List all metadata attributes for FILE.
-  --clear ATTRIBUTE               Remove attribute from FILE.
-  --append ATTRIBUTE VALUE        Append VALUE to ATTRIBUTE.
-  --get ATTRIBUTE                 Get value of ATTRIBUTE.
-  --remove ATTRIBUTE VALUE        Remove VALUE from ATTRIBUTE; only applies to
+  -X, --wipe                      Wipe all metadata attributes from FILE.
+  -s, --set ATTRIBUTE VALUE       Set ATTRIBUTE to VALUE.
+  -l, --list                      List all metadata attributes for FILE.
+  -c, --clear ATTRIBUTE           Remove attribute from FILE.
+  -a, --append ATTRIBUTE VALUE    Append VALUE to ATTRIBUTE.
+  -g, --get ATTRIBUTE             Get value of ATTRIBUTE.
+  -r, --remove ATTRIBUTE VALUE    Remove VALUE from ATTRIBUTE; only applies to
                                   multi-valued attributes.
-  --update ATTRIBUTE VALUE        Update ATTRIBUTE with VALUE; for multi-
+  -u, --update ATTRIBUTE VALUE    Update ATTRIBUTE with VALUE; for multi-
                                   valued attributes, this adds VALUE to the
                                   attribute if not already in the list.
-  --mirror ATTRIBUTE1 ATTRIBUTE2  Mirror values between ATTRIBUTE1 and
+  -m, --mirror ATTRIBUTE1 ATTRIBUTE2
+                                  Mirror values between ATTRIBUTE1 and
                                   ATTRIBUTE2 so that ATTRIBUTE1 = ATTRIBUTE2;
                                   for multi-valued attributes, merges values;
                                   for string attributes, sets ATTRIBUTE1 =
                                   ATTRIBUTE2 overwriting any value in
                                   ATTRIBUTE1.  For example: '--mirror keywords
                                   tags' sets tags and keywords to same values.
-  --backup                        Backup FILE attributes.  Backup file
+  -B, --backup                    Backup FILE attributes.  Backup file
                                   '.osxmetadata.json' will be created in same
                                   folder as FILE.
-  --restore                       Restore FILE attributes from backup file.
+  -R, --restore                   Restore FILE attributes from backup file.
                                   Restore will look for backup file
                                   '.osxmetadata.json' in same folder as FILE.
   -V, --verbose                   Print verbose output.
-  --copyfrom SOURCE_FILE          Copy attributes from file SOURCE_FILE.
+  -f, --copyfrom SOURCE_FILE      Copy attributes from file SOURCE_FILE.
 
 Valid attributes for ATTRIBUTE: Each attribute has a short name, a constant
 name, and a long constant name. Any of these may be used for ATTRIBUTE

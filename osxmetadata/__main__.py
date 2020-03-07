@@ -19,7 +19,6 @@ from .classes import _AttributeList, _AttributeTagsList
 from .constants import _BACKUP_FILENAME, _TAGS_NAMES
 from .utils import load_backup_file, validate_attribute_value, write_backup_file
 
-# TODO: add md5 option
 # TODO: how is metadata on symlink handled?
 # should symlink be resolved before gathering metadata?
 # currently, symlinks are resolved before handling metadata but not sure this is the right behavior
@@ -28,8 +27,6 @@ from .utils import load_backup_file, validate_attribute_value, write_backup_file
 #   Finder aliases inherit neither
 # TODO: add selective restore (e.g only restore files matching command line path)
 #   e.g osxmetadata -r meta.json *.pdf
-
-# TODO: need special handling for --set color GREEN, etc.
 
 
 # Click CLI object & context settings
@@ -100,7 +97,7 @@ class MyClickCommand(click.Command):
         return help_text
 
 
-# CTX_SETTINGS = dict(help_option_names=["--help", "-h"])
+# All the command line options defined here
 FILES_ARGUMENT = click.argument(
     "files", metavar="FILE", nargs=-1, type=click.Path(exists=True)
 )
@@ -134,6 +131,7 @@ DEBUG_OPTION = click.option(
 )
 SET_OPTION = click.option(
     "--set",
+    "-s",
     "set_",
     metavar="ATTRIBUTE VALUE",
     help="Set ATTRIBUTE to VALUE.",
@@ -143,6 +141,7 @@ SET_OPTION = click.option(
 )
 GET_OPTION = click.option(
     "--get",
+    "-g",
     help="Get value of ATTRIBUTE.",
     metavar="ATTRIBUTE",
     nargs=1,
@@ -151,6 +150,7 @@ GET_OPTION = click.option(
 )
 LIST_OPTION = click.option(
     "--list",
+    "-l",
     "list_",
     help="List all metadata attributes for FILE.",
     is_flag=True,
@@ -158,6 +158,7 @@ LIST_OPTION = click.option(
 )
 CLEAR_OPTION = click.option(
     "--clear",
+    "-c",
     help="Remove attribute from FILE.",
     metavar="ATTRIBUTE",
     nargs=1,
@@ -166,6 +167,7 @@ CLEAR_OPTION = click.option(
 )
 WIPE_OPTION = click.option(
     "--wipe",
+    "-X",
     help="Wipe all metadata attributes from FILE.",
     is_flag=True,
     default=False,
@@ -173,6 +175,7 @@ WIPE_OPTION = click.option(
 )
 APPEND_OPTION = click.option(
     "--append",
+    "-a",
     metavar="ATTRIBUTE VALUE",
     help="Append VALUE to ATTRIBUTE.",
     nargs=2,
@@ -181,6 +184,7 @@ APPEND_OPTION = click.option(
 )
 UPDATE_OPTION = click.option(
     "--update",
+    "-u",
     metavar="ATTRIBUTE VALUE",
     help="Update ATTRIBUTE with VALUE; for multi-valued attributes, "
     "this adds VALUE to the attribute if not already in the list.",
@@ -190,6 +194,7 @@ UPDATE_OPTION = click.option(
 )
 REMOVE_OPTION = click.option(
     "--remove",
+    "-r",
     metavar="ATTRIBUTE VALUE",
     help="Remove VALUE from ATTRIBUTE; only applies to multi-valued attributes.",
     nargs=2,
@@ -198,6 +203,7 @@ REMOVE_OPTION = click.option(
 )
 MIRROR_OPTION = click.option(
     "--mirror",
+    "-m",
     metavar="ATTRIBUTE1 ATTRIBUTE2",
     help="Mirror values between ATTRIBUTE1 and ATTRIBUTE2 so that ATTRIBUTE1 = ATTRIBUTE2; "
     "for multi-valued attributes, merges values; for string attributes, sets ATTRIBUTE1 = ATTRIBUTE2 "
@@ -209,6 +215,7 @@ MIRROR_OPTION = click.option(
 )
 BACKUP_OPTION = click.option(
     "--backup",
+    "-B",
     help="Backup FILE attributes.  "
     "Backup file '.osxmetadata.json' will be created in same folder as FILE.",
     is_flag=True,
@@ -217,6 +224,7 @@ BACKUP_OPTION = click.option(
 )
 RESTORE_OPTION = click.option(
     "--restore",
+    "-R",
     help="Restore FILE attributes from backup file.  "
     "Restore will look for backup file '.osxmetadata.json' in same folder as FILE.",
     is_flag=True,
@@ -233,6 +241,7 @@ VERBOSE_OPTION = click.option(
 )
 COPY_FROM_OPTION = click.option(
     "--copyfrom",
+    "-f",
     metavar="SOURCE_FILE",
     help="Copy attributes from file SOURCE_FILE.",
     type=click.Path(exists=True),
