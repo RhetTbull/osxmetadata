@@ -74,7 +74,7 @@ Valid attributes for ATTRIBUTE: Each attribute has a short name, a constant
 name, and a long constant name. Any of these may be used for ATTRIBUTE
 
 For example: --set findercomment "Hello world"
-or:          --set kMDFinderComment "Hello world"
+or:          --set kMDItemFinderComment "Hello world"
 or:          --set com.apple.metadata:kMDItemFinderComment "Hello world"
 
 Attributes that are strings can only take one value for --set; --append will
