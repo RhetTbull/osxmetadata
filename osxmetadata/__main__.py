@@ -71,7 +71,7 @@ class MyClickCommand(click.Command):
         )
         formatter.write("\n")
         formatter.write_text('For example: --set findercomment "Hello world"')
-        formatter.write_text('or:          --set kMDFinderComment "Hello world"')
+        formatter.write_text('or:          --set kMDItemFinderComment "Hello world"')
         formatter.write_text(
             'or:          --set com.apple.metadata:kMDItemFinderComment "Hello world"'
         )
