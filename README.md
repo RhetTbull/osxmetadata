@@ -14,7 +14,7 @@ Apple provides rich support for file metadata through various metadata extended 
 
 ## Supported operating systems
 
-Only works on MacOS.  Requires Python 3.6+. 
+Only works on MacOS.  Requires Python 3.7+. 
 
 ## Installation instructions
 
