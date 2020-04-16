@@ -13,4 +13,5 @@ for attribute in sorted(
     ]
 ):
     attr = osxmetadata.ATTRIBUTES[attribute]
-    print(f"|{attr.short_constant}|{attr.name}|{attr.constant}|{attr.help}|")
+    help_ = attr.api_help if attr.api_help is not None else attr.help
+    print(f"|{attr.short_constant}|{attr.name}|{attr.constant}|{help_}|")

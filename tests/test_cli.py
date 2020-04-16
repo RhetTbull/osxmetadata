@@ -732,3 +732,31 @@ def test_cli_version():
     result = runner.invoke(cli, ["--version"])
     assert result.exit_code == 0
     assert f"version {__version__}" in result.output
+
+
+def test_cli_downloadeddate(temp_file):
+    # pass ISO 8601 format with timezone, get back naive local time
+    import datetime
+    from osxmetadata import OSXMetaData, kMDItemDownloadedDate
+    from osxmetadata.utils import (
+        datetime_naive_to_utc,
+        datetime_utc_to_local,
+        datetime_remove_tz,
+    )
+    from osxmetadata.__main__ import cli
+
+    runner = CliRunner()
+    dt = "2020-02-23:00:00:00+00:00"  # UTC time
+    utc_time = datetime.datetime.fromisoformat(dt)
+    local_time = datetime_remove_tz(datetime_utc_to_local(utc_time))
+
+    result = runner.invoke(cli, ["--set", "downloadeddate", dt, "--list", temp_file])
+    assert result.exit_code == 0
+
+    output = parse_cli_output(result.stdout)
+    assert output["downloadeddate"] == f"['{local_time.isoformat()}']"
+
+    meta = OSXMetaData(temp_file)
+    meta.tz_aware = True
+    assert meta.get_attribute(kMDItemDownloadedDate) == [utc_time]
+    assert meta.downloadeddate == [utc_time]

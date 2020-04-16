@@ -4,9 +4,9 @@ from setuptools import setup, find_packages
 import sys
 import os.path
 
-# uses f-strings so check for python >= 3.6
-if sys.version_info < (3, 6, 0):
-    sys.stderr.write("ERROR: You need Python 3.6 or later to use osxmetadata.\n")
+# uses datetime.datetime.fromisoformat so requires >= 3.7
+if sys.version_info < (3, 7, 0):
+    sys.stderr.write("ERROR: You need Python 3.7 or later to use osxmetadata.\n")
     exit(1)
 
 # we'll import stuff from the source tree, let's ensure is on the sys path
@@ -44,10 +44,10 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: MacOS :: MacOS X",
-        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     install_requires=["xattr", "pyobjc>=6.0.1", "click>=7.0"],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     entry_points={"console_scripts": ["osxmetadata=osxmetadata.__main__:cli"]},
 )

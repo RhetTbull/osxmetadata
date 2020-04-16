@@ -17,7 +17,7 @@ from ._version import __version__
 from .attributes import _LONG_NAME_WIDTH, _SHORT_NAME_WIDTH, ATTRIBUTES
 from .classes import _AttributeList, _AttributeTagsList
 from .constants import _BACKUP_FILENAME, _TAGS_NAMES
-from .utils import load_backup_file, validate_attribute_value, write_backup_file
+from .utils import load_backup_file, write_backup_file
 
 # TODO: how is metadata on symlink handled?
 # should symlink be resolved before gathering metadata?
@@ -502,7 +502,7 @@ def process_file(
 ):
     """ process a single file to apply the options 
         options processed in this order: wipe, copyfrom, clear, set, append, remove, mirror, get, list
-        Note: expects all attributes passed in parameters to be validated """
+        Note: expects all attributes passed in parameters to be validated as valid attributes """
 
     logging.debug(f"process_file: {fpath}")
 
@@ -557,7 +557,6 @@ def process_file(
                 attr_dict[attribute] = [val]
 
         for attribute, value in attr_dict.items():
-            value = validate_attribute_value(attribute, value)
             md.set_attribute(attribute.name, value)
 
     if append:
@@ -575,7 +574,6 @@ def process_file(
                 attr_dict[attribute] = [val]
 
         for attribute, value in attr_dict.items():
-            value = validate_attribute_value(attribute, value)
             md.append_attribute(attribute.name, value)
 
     if update:
@@ -593,7 +591,6 @@ def process_file(
                 attr_dict[attribute] = [val]
 
         for attribute, value in attr_dict.items():
-            value = validate_attribute_value(attribute, value)
             md.update_attribute(attribute.name, value)
 
     if remove:

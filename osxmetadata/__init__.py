@@ -1,4 +1,4 @@
-""" Python module to read and write various Mac OS X metadata 
+""" Python package to read and write various Mac OS X metadata 
     such as tags/keywords and Finder comments from files """
 
 
@@ -17,15 +17,17 @@ from plistlib import FMT_BINARY  # pylint: disable=E0611
 
 import xattr
 
-from .attributes import ATTRIBUTES, Attribute
+from ._version import __version__
+from .attributes import ATTRIBUTES, Attribute, validate_attribute_value
 from .classes import _AttributeList, _AttributeTagsList
-from .constants import (  # _DOWNLOAD_DATE,; _FINDER_COMMENT,; _TAGS,; _WHERE_FROM,
+from .constants import (
     _COLORIDS,
     _COLORNAMES,
     _FINDER_COMMENT_NAMES,
     _MAX_FINDERCOMMENT,
     _MAX_WHEREFROM,
     _VALID_COLORIDS,
+    _kMDItemUserTags,
     kMDItemAuthors,
     kMDItemComment,
     kMDItemCopyright,
@@ -36,18 +38,18 @@ from .constants import (  # _DOWNLOAD_DATE,; _FINDER_COMMENT,; _TAGS,; _WHERE_FR
     kMDItemHeadline,
     kMDItemKeywords,
     kMDItemUserTags,
-    _kMDItemUserTags,
     kMDItemWhereFroms,
 )
 from .utils import (
     _debug,
     _get_logger,
     _set_debug,
-    set_finder_comment,
     clear_finder_comment,
-    validate_attribute_value,
+    datetime_naive_to_utc,
+    datetime_remove_tz,
+    datetime_utc_to_local,
+    set_finder_comment,
 )
-from ._version import __version__
 
 __all__ = [
     "OSXMetaData",
@@ -80,6 +82,7 @@ class OSXMetaData:
         "_fname",
         "_posix_name",
         "_attrs",
+        "_tz_aware",
         "__init",
         "authors",
         "comment",
@@ -94,10 +97,15 @@ class OSXMetaData:
         "wherefroms",
     ]
 
-    def __init__(self, fname):
-        """Create an OSXMetaData object to access file metadata"""
+    def __init__(self, fname, tz_aware=False):
+        """Create an OSXMetaData object to access file metadata
+            fname: filename to operate on
+            timezone_aware: bool; if True, date/time attributes will return 
+                      timezone aware datetime.dateime attributes; if False (default)
+                      date/time attributes will return timezone naive objects """
         self._fname = pathlib.Path(fname)
         self._posix_name = self._fname.resolve().as_posix()
+        self._tz_aware = tz_aware
 
         if not self._fname.exists():
             raise FileNotFoundError("file does not exist: ", fname)
@@ -110,7 +118,9 @@ class OSXMetaData:
         for name in set([attribute.name for attribute in ATTRIBUTES.values()]):
             attribute = ATTRIBUTES[name]
             if attribute.class_ not in [str, float, datetime.datetime]:
-                super().__setattr__(name, attribute.class_(attribute, self._attrs))
+                super().__setattr__(
+                    name, attribute.class_(attribute, self._attrs, self)
+                )
 
         # Done with initialization
         self.__init = True
@@ -119,6 +129,17 @@ class OSXMetaData:
     def name(self):
         """ POSIX path of the file OSXMetaData is operating on """
         return self._fname.resolve().as_posix()
+
+    @property
+    def tz_aware(self):
+        """ returns the timezone aware flag """
+        return self._tz_aware
+
+    @tz_aware.setter
+    def tz_aware(self, tz_flag):
+        """ sets the timezone aware flag
+            tz_flag: bool """
+        self._tz_aware = tz_flag
 
     def _to_dict(self):
         """ Return dict with all attributes for this file 
@@ -187,6 +208,24 @@ class OSXMetaData:
         except KeyError:
             plist = None
 
+        # add UTC to any datetime.datetime objects because that's how MacOS stores them
+        # In the plist associated with extended metadata attributes, times are stored as:
+        # <date>2020-04-14T14:49:22Z</date>
+        if plist and isinstance(plist, list):
+            if isinstance(plist[0], datetime.datetime):
+                plist = [datetime_naive_to_utc(d) for d in plist]
+                if not self._tz_aware:
+                    # want datetimes in naive format
+                    plist = [
+                        datetime_remove_tz(d_local)
+                        for d_local in [datetime_utc_to_local(d_utc) for d_utc in plist]
+                    ]
+        elif isinstance(plist, datetime.datetime):
+            plist = datetime_naive_to_utc(plist)
+            if not self._tz_aware:
+                # want datetimes in naive format
+                plist = datetime_remove_tz(datetime_utc_to_local(plist))
+
         if attribute.as_list and isinstance(plist, list):
             return plist[0]
         else:
@@ -220,24 +259,6 @@ class OSXMetaData:
 
         # verify type is correct
         value = validate_attribute_value(attribute, value)
-
-        # if attribute.list and (type(value) == list or type(value) == set):
-        #     for val in value:
-        #         if attribute.type_ != type(val):
-        #             raise ValueError(
-        #                 f"Expected type {attribute.type_} but value is type {type(val)}"
-        #             )
-        # elif not attribute.list and (type(value) == list or type(value) == set):
-        #     raise TypeError(f"Expected single value but got list for {attribute.type_}")
-        # elif attribute.type_ != type(value):
-        #     raise ValueError(
-        #         f"Expected type {attribute.type_} but value is type {type(value)}"
-        #     )
-
-        # if attribute.as_list and (type(value) != list and type(value) != set):
-        #     # some attributes like kMDItemDownloadedDate are stored in a list
-        #     # even though they only have only a single value
-        #     value = [value]
 
         if attribute.name in _FINDER_COMMENT_NAMES:
             # Finder Comment needs special handling
@@ -294,58 +315,6 @@ class OSXMetaData:
                 new_value += value
             else:
                 new_value = value
-
-        # # verify type is correct
-        # if attribute.list and (type(value) == list or type(value) == set):
-        #     # expected a list, got a list
-        #     for val in value:
-        #         # check type of each element in list
-        #         if attribute.type_ != type(val):
-        #             raise ValueError(
-        #                 f"Expected type {attribute.type_} but value is type {type(val)}"
-        #             )
-        #         else:
-        #             if new_value:
-        #                 # ZZZ TODO: this will fail if new_value is False
-        #                 new_value = list(new_value)
-        #                 if update:
-        #                     # if update, only add values not already in the list
-        #                     # behaves like set.update
-        #                     for v in value:
-        #                         if v not in new_value:
-        #                             new_value.append(v)
-        #                 else:
-        #                     # not update, add all values
-        #                     new_value.extend(value)
-        #             else:
-        #                 if update:
-        #                     # no previous values but still need to make sure we don't have
-        #                     # dupblicate values: convert to set & back to list
-        #                     new_value = list(set(value))
-        #                 else:
-        #                     # no previous values, set new_value to whatever value is
-        #                     new_value = value
-        # elif not attribute.list and (type(value) == list or type(value) == set):
-        #     raise TypeError(f"Expected single value but got list for {attribute.type_}")
-        # else:
-        #     # got a scalar, check type is correct
-        #     if attribute.type_ != type(value):
-        #         raise ValueError(
-        #             f"Expected type {attribute.type_} but value is type {type(value)}"
-        #         )
-        #     else:
-        #         # not a list, could be str, float, datetime.datetime
-        #         if update:
-        #             raise AttributeError(f"Cannot use update on {attribute.type_}")
-        #         if new_value:
-        #             new_value += value
-        #         else:
-        #             new_value = value
-
-        # if attribute.as_list:
-        #     # some attributes like kMDItemDownloadedDate are stored in a list
-        #     # even though they only have only a single value
-        #     new_value = [new_value]
 
         try:
             if attribute.name in _FINDER_COMMENT_NAMES:
@@ -452,7 +421,6 @@ class OSXMetaData:
             if self.__init:
                 # already initialized
                 attribute = ATTRIBUTES[name]
-                value = validate_attribute_value(attribute, value)
                 if value is None:
                     self.clear_attribute(attribute.name)
                 else:

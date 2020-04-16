@@ -1,4 +1,4 @@
-""" constants and definitions used by osxmetadata """
+""" Constants and definitions used by osxmetadata """
 
 # color labels
 _COLORNAMES = {

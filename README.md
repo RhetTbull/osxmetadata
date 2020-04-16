@@ -106,8 +106,12 @@ description     kMDItemDescription, com.apple.metadata:kMDItemDescription; A
                 of the content.  A string.
 downloadeddate  kMDItemDownloadedDate,
                 com.apple.metadata:kMDItemDownloadedDate; The date the item
-                was downloaded.  A date in ISO 8601 format: e.g.
-                2000-01-12T12:00:00 or 2000-12-31 (ISO 8601 w/o time zone)
+                was downloaded.  A date in ISO 8601 format, time and
+                timezone offset are optional: e.g. 2020-04-14T12:00:00 (ISO
+                8601 w/o timezone), 2020-04-14 (ISO 8601 w/o time and time
+                zone), or 2020-04-14T12:00:00-07:00 (ISO 8601 with timezone
+                offset). Times without timezone offset are assumed to be in
+                local timezone.
 findercomment   kMDItemFinderComment,
                 com.apple.metadata:kMDItemFinderComment; Finder comments for
                 this file.  A string.
@@ -138,17 +142,17 @@ Information about commonly used MacOS metadata attributes is available from [App
 
 | Constant | Short Name | Long Constant | Description |
 |---------------|----------|---------|-----------|
-|kMDItemAuthors|authors|com.apple.metadata:kMDItemAuthors|The author, or authors, of the contents of the file. A list of strings.|
-|kMDItemComment|comment|com.apple.metadata:kMDItemComment|A comment related to the file. This differs from the Finder comment, kMDItemFinderComment. A string.|
-|kMDItemCopyright|copyright|com.apple.metadata:kMDItemCopyright|The copyright owner of the file contents. A string.|
-|kMDItemCreator|creator|com.apple.metadata:kMDItemCreator|Application used to create the document content (for example “Word”, “Pages”, and so on). A string.|
-|kMDItemDescription|description|com.apple.metadata:kMDItemDescription|A description of the content of the resource. The description may include an abstract, table of contents, reference to a graphical representation of content or a free-text account of the content. A string.|
-|kMDItemDownloadedDate|downloadeddate|com.apple.metadata:kMDItemDownloadedDate|The date the item was downloaded.  A date in ISO 8601 format: e.g. 2000-01-12T12:00:00 or 2000-12-31 (ISO 8601 w/o time zone)|
-|kMDItemFinderComment|findercomment|com.apple.metadata:kMDItemFinderComment|Finder comments for this file. A string.|
-|kMDItemHeadline|headline|com.apple.metadata:kMDItemHeadline|A publishable entry providing a synopsis of the contents of the file. A string.|
-|kMDItemKeywords|keywords|com.apple.metadata:kMDItemKeywords|Keywords associated with this file. For example, “Birthday”, “Important”, etc. This differs from Finder tags (_kMDItemUserTags) which are keywords/tags shown in the Finder and searchable in Spotlight using "tag:tag_name"A list of strings.|
-|_kMDItemUserTags|tags|com.apple.metadata:_kMDItemUserTags|Finder tags; searchable in Spotlight using "tag:tag_name".  If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords. A list of strings.|
-|kMDItemWhereFroms|wherefroms|com.apple.metadata:kMDItemWhereFroms|Describes where the file was obtained from (e.g. URL downloaded from). A list of strings.|
+|kMDItemAuthors|authors|com.apple.metadata:kMDItemAuthors|The author, or authors, of the contents of the file.  A list of strings.|
+|kMDItemComment|comment|com.apple.metadata:kMDItemComment|A comment related to the file.  This differs from the Finder comment, kMDItemFinderComment.  A string.|
+|kMDItemCopyright|copyright|com.apple.metadata:kMDItemCopyright|The copyright owner of the file contents.  A string.|
+|kMDItemCreator|creator|com.apple.metadata:kMDItemCreator|Application used to create the document content (for example “Word”, “Pages”, and so on).  A string.|
+|kMDItemDescription|description|com.apple.metadata:kMDItemDescription|A description of the content of the resource.  The description may include an abstract, table of contents, reference to a graphical representation of content or a free-text account of the content.  A string.|
+|kMDItemDownloadedDate|downloadeddate|com.apple.metadata:kMDItemDownloadedDate|The date the item was downloaded.  A datetime.datetime object.  If datetime.datetime object lacks tzinfo (i.e. it is timezone naive), it will be assumed to be in local timezone.|
+|kMDItemFinderComment|findercomment|com.apple.metadata:kMDItemFinderComment|Finder comments for this file.  A string.|
+|kMDItemHeadline|headline|com.apple.metadata:kMDItemHeadline|A publishable entry providing a synopsis of the contents of the file.  A string.|
+|kMDItemKeywords|keywords|com.apple.metadata:kMDItemKeywords|Keywords associated with this file. For example, “Birthday”, “Important”, etc. This differs from Finder tags (_kMDItemUserTags) which are keywords/tags shown in the Finder and searchable in Spotlight using "tag:tag_name".  A list of strings.|
+|_kMDItemUserTags|tags|com.apple.metadata:_kMDItemUserTags|Finder tags; searchable in Spotlight using "tag:tag_name".  If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords.  A list of strings.|
+|kMDItemWhereFroms|wherefroms|com.apple.metadata:kMDItemWhereFroms|Describes where the file was obtained from (e.g. URL downloaded from).  A list of strings.|
 
 
 ## Example uses of the package
@@ -229,17 +233,19 @@ ValueError: list.remove(x): x not in list
 2
 ```
 
-If attribute is a date/time stamp (e.g. kMDItemDownloadedDate), value should be a `datetime.datetime` object (or a list of `datetime.datetime` objects depending on the attribute type):
+If attribute is a date/time stamp (e.g. kMDItemDownloadedDate), value should be a `datetime.datetime` object (or a list of `datetime.datetime` objects depending on the attribute type).  
+
+**Note**:  `datetime.datetime` objects may be naive (lack timezone info, e.g. `tzinfo=None`) or timezone aware (have an associated timezone). If `datetime.datetime` object lacks timezone info, it will be assumed to be local time.  MacOS stores date values in extended attributes as UTC timestamps so all `datetime.datetime` objects will undergo appropriate conversion prior to writing to the extended attribute. See also [tz_aware](#tz_aware).
 
 ```python
 >>> import osxmetadata
->>> import datetime
->>> md = osxmetadata.OSXMetaData("/Users/rhet/Downloads/test.jpg")
+>>> md = osxmetadata.OSXMetaData("/Users/rhet/Downloads/test.zip")
 >>> md.downloadeddate
-[datetime.datetime(2012, 2, 13, 0, 0)]
->>> md.downloadeddate = [datetime.datetime.now()]
+[datetime.datetime(2020, 4, 14, 17, 51, 59, 40504)]
+>>> now = datetime.datetime.now()
+>>> md.downloadeddate = now
 >>> md.downloadeddate
-[datetime.datetime(2020, 2, 29, 8, 36, 10, 332350)]
+[datetime.datetime(2020, 4, 15, 22, 17, 0, 558471)]
 ```
 
 If attribute is string, it can be treated as a standard python `str`:
@@ -283,7 +289,10 @@ meta.clear_attribute("tags")
 ## OSXMetaData methods and attributes
 
 ### Create an OSXMetaData object
-`md = osxmetadata.OSXMetaData(filename)`
+`md = osxmetadata.OSXMetaData(filename, tz_aware = False)`
+
+- filename: filename to operate on
+- tz_aware: (boolean, optional); if True, attributes which return datetime.datetime objects such as kMDItemDownloadedDate will return timezone aware datetime.datetime objects with timezone set to UTC; if False (default), will return timezone naive objects in user's local timezone.  See also [tz_aware](#tz_aware).
 
 Once created, the following methods and attributes may be used to get/set metadata attribute data
 
@@ -363,6 +372,42 @@ List the Apple metadata attributes set on the file.  e.g. those in com.apple.met
 `to_json()`
 
 Return dict in JSON format with all attributes for this file.  Format is the same as used by the command line --backup/--restore functions.
+
+### tz_aware
+`tz_aware`
+
+Property (boolean, default = False).  If True, any attribute that returns a datetime.datetime object will return a timezone aware object.  If False, datetime.datetime attributes will return timezone naive objects.
+
+For example:
+
+
+```python
+>>> import osxmetadata
+>>> import datetime
+>>> md = osxmetadata.OSXMetaData("/Users/rhet/Downloads/test.zip")
+>>> md.downloadeddate
+[datetime.datetime(2020, 4, 14, 17, 51, 59, 40504)]
+>>> now = datetime.datetime.now()
+>>> md.downloadeddate = now
+>>> md.downloadeddate
+[datetime.datetime(2020, 4, 15, 22, 17, 0, 558471)]
+>>> md.tz_aware = True
+>>> md.downloadeddate
+[datetime.datetime(2020, 4, 16, 5, 17, 0, 558471, tzinfo=datetime.timezone.utc)]
+>>> utc = datetime.datetime.utcnow()
+>>> utc
+datetime.datetime(2020, 4, 16, 5, 25, 10, 635417)
+>>> utc = utc.replace(tzinfo=datetime.timezone.utc)
+>>> utc
+datetime.datetime(2020, 4, 16, 5, 25, 10, 635417, tzinfo=datetime.timezone.utc)
+>>> md.downloadeddate = utc
+>>> md.downloadeddate
+[datetime.datetime(2020, 4, 16, 5, 25, 10, 635417, tzinfo=datetime.timezone.utc)]
+>>> md.tz_aware = False
+>>> md.downloadeddate
+[datetime.datetime(2020, 4, 15, 22, 25, 10, 635417)]
+```
+
 
 ## Usage Notes
 

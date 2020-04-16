@@ -4,7 +4,6 @@ import logging
 import os
 
 from . import _applescript
-from .attributes import ATTRIBUTES
 
 _DEBUG = False
 
@@ -83,82 +82,6 @@ def clear_finder_comment(filename):
     _scpt_clear_finder_comment.run(filename)
 
 
-def validate_attribute_value(attribute, value):
-    """ validate that value is compatible with attribute.type_ 
-        and convert value to correct type
-        returns value as type attribute.type_ 
-        value may be a single value or a list depending on what attribute expects 
-        if value contains None, returns None """
-
-    logging.debug(
-        f"validate_attribute_value: attribute: {attribute}, value: {value}, type: {type(value)}"
-    )
-
-    # check to see if we got None
-    try:
-        if None in value:
-            return None
-    except TypeError:
-        if value is None:
-            return None
-
-    try:
-        if isinstance(value, str):
-            value = [value]
-        else:
-            iter(value)
-    except TypeError:
-        value = [value]
-
-    # # check for None and convert to list if needed
-    # if not isinstance(value, list):
-    #     if value is None:
-    #         return None
-    #     value = [value]
-    # elif None in value:
-    #     return None
-
-    if not attribute.list and len(value) > 1:
-        # got a list but didn't expect one
-        raise ValueError(
-            f"{attribute.name} expects only one value but list of {len(value)} provided"
-        )
-
-    new_values = []
-    for val in value:
-        new_val = None
-        if attribute.type_ == str:
-            new_val = str(val)
-        elif attribute.type_ == float:
-            try:
-                new_val = float(val)
-            except:
-                raise TypeError(
-                    f"{val} cannot be converted to expected type {attribute.type_}"
-                )
-        elif attribute.type_ == datetime.datetime:
-            if not isinstance(val, datetime.datetime):
-                # if not already a datetime.datetime, try to convert it
-                try:
-                    new_val = datetime.datetime.fromisoformat(val)
-                except:
-                    raise TypeError(
-                        f"{val} cannot be converted to expected type {attribute.type_}"
-                    )
-            else:
-                new_val = val
-        else:
-            raise TypeError(f"Unknown type: {type(val)}")
-        new_values.append(new_val)
-
-    logging.debug(f"new_value = {new_values}")
-
-    if attribute.list:
-        return new_values
-    else:
-        return new_values[0]
-
-
 def load_backup_file(backup_file):
     """ Load attribute data from JSON in backup_file 
         Returns: backup_data dict """
@@ -197,3 +120,111 @@ def write_backup_file(backup_file, backup_data):
 
     fp.close()
 
+
+# datetime.datetime helper functions for converting to/from UTC
+
+
+def get_local_tz():
+    """ return local timezone as datetime.timezone tzinfo """
+    local_tz = (
+        datetime.datetime.now(datetime.timezone(datetime.timedelta(0)))
+        .astimezone()
+        .tzinfo
+    )
+    return local_tz
+
+
+def datetime_has_tz(dt):
+    """ return True if datetime dt has tzinfo else False
+        dt: datetime.datetime
+        returns True if dt is timezone aware, else False """
+
+    if type(dt) != datetime.datetime:
+        raise TypeError(f"dt must be type datetime.datetime, not {type(dt)}")
+
+    if dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None:
+        return True
+    return False
+
+
+def datetime_tz_to_utc(dt):
+    """ convert datetime.datetime object with timezone to UTC timezone 
+        dt: datetime.datetime object
+        returns: datetime.datetime in UTC timezone """
+
+    if type(dt) != datetime.datetime:
+        raise TypeError(f"dt must be type datetime.datetime, not {type(dt)}")
+
+    local_tz = get_local_tz()
+    if dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None:
+        dt_utc = dt.replace(tzinfo=dt.tzinfo).astimezone(tz=datetime.timezone.utc)
+        return dt_utc
+    else:
+        raise ValueError(f"dt does not have timezone info")
+
+
+def datetime_remove_tz(dt):
+    """ remove timezone from a datetime.datetime object
+        dt: datetime.datetime object with tzinfo
+        returns: dt without any timezone info (naive datetime object) """
+
+    if type(dt) != datetime.datetime:
+        raise TypeError(f"dt must be type datetime.datetime, not {type(dt)}")
+
+    dt_new = dt.replace(tzinfo=None)
+    return dt_new
+
+
+def datetime_naive_to_utc(dt):
+    """ convert naive (timezone unaware) datetime.datetime
+        to aware timezone in UTC timezone
+        dt: datetime.datetime without timezone
+        returns: datetime.datetime with UTC timezone """
+
+    if type(dt) != datetime.datetime:
+        raise TypeError(f"dt must be type datetime.datetime, not {type(dt)}")
+
+    if dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None:
+        # has timezone info
+        raise ValueError(
+            "dt must be naive/timezone unaware: "
+            f"{dt} has tzinfo {dt.tzinfo} and offset {dt.tzinfo.utcoffset(dt)}"
+        )
+
+    dt_utc = dt.replace(tzinfo=datetime.timezone.utc)
+    return dt_utc
+
+
+def datetime_naive_to_local(dt):
+    """ convert naive (timezone unaware) datetime.datetime
+        to aware timezone in local timezone
+        dt: datetime.datetime without timezone
+        returns: datetime.datetime with local timezone """
+
+    if type(dt) != datetime.datetime:
+        raise TypeError(f"dt must be type datetime.datetime, not {type(dt)}")
+
+    if dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None:
+        # has timezone info
+        raise ValueError(
+            "dt must be naive/timezone unaware: "
+            f"{dt} has tzinfo {dt.tzinfo} and offset {dt.tizinfo.utcoffset(dt)}"
+        )
+
+    dt_local = dt.replace(tzinfo=get_local_tz())
+    return dt_local
+
+
+def datetime_utc_to_local(dt):
+    """ convert datetime.datetime object in UTC timezone to local timezone 
+        dt: datetime.datetime object
+        returns: datetime.datetime in local timezone """
+
+    if type(dt) != datetime.datetime:
+        raise TypeError(f"dt must be type datetime.datetime, not {type(dt)}")
+
+    if dt.tzinfo is not datetime.timezone.utc:
+        raise ValueError(f"{dt} must be in UTC timezone: timezone = {dt.tzinfo}")
+
+    dt_local = dt.replace(tzinfo=datetime.timezone.utc).astimezone(tz=get_local_tz())
+    return dt_local
