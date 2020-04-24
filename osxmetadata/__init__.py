@@ -40,16 +40,13 @@ from .constants import (
     kMDItemUserTags,
     kMDItemWhereFroms,
 )
-from .utils import (
-    _debug,
-    _get_logger,
-    _set_debug,
-    clear_finder_comment,
+from .datetime_utils import (
     datetime_naive_to_utc,
     datetime_remove_tz,
     datetime_utc_to_local,
-    set_finder_comment,
 )
+from .debug import _debug, _get_logger, _set_debug
+from .findercomments import clear_finder_comment, set_finder_comment
 
 __all__ = [
     "OSXMetaData",

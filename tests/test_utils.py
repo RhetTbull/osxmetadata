@@ -21,7 +21,7 @@ def test_debug_enable():
     import logging
 
     osxmetadata._set_debug(True)
-    logger = osxmetadata.utils._get_logger()
+    logger = osxmetadata.debug._get_logger()
     assert logger.isEnabledFor(logging.DEBUG)
 
 
@@ -30,14 +30,14 @@ def test_debug_disable():
     import logging
 
     osxmetadata._set_debug(False)
-    logger = osxmetadata.utils._get_logger()
+    logger = osxmetadata.debug._get_logger()
     assert not logger.isEnabledFor(logging.DEBUG)
 
 
 def test_backup_files(temp_file):
     import pathlib
     import osxmetadata
-    from osxmetadata.utils import load_backup_file, write_backup_file
+    from osxmetadata.backup import load_backup_file, write_backup_file
 
     meta = osxmetadata.OSXMetaData(temp_file)
     meta.comment = "Hello World!"
@@ -59,4 +59,3 @@ def test_backup_files(temp_file):
         "bar",
     ]
     assert backup_data2[filename]["com.apple.metadata:kMDItemComment"] == "Hello World!"
-

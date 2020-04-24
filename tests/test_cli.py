@@ -738,7 +738,7 @@ def test_cli_downloadeddate(temp_file):
     # pass ISO 8601 format with timezone, get back naive local time
     import datetime
     from osxmetadata import OSXMetaData, kMDItemDownloadedDate
-    from osxmetadata.utils import (
+    from osxmetadata.datetime_utils import (
         datetime_naive_to_utc,
         datetime_utc_to_local,
         datetime_remove_tz,

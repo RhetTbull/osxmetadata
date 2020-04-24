@@ -6,7 +6,7 @@ from collections import namedtuple
 
 from .classes import _AttributeList, _AttributeTagsList
 from .constants import *
-from .utils import (
+from .datetime_utils import (
     datetime_has_tz,
     datetime_naive_to_local,
     datetime_remove_tz,

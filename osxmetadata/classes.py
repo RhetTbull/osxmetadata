@@ -7,7 +7,11 @@ from plistlib import FMT_BINARY  # pylint: disable=E0611
 import sys
 
 from .constants import _COLORNAMES, _VALID_COLORIDS
-from .utils import datetime_naive_to_utc, datetime_utc_to_local, datetime_remove_tz
+from .datetime_utils import (
+    datetime_naive_to_utc,
+    datetime_utc_to_local,
+    datetime_remove_tz,
+)
 
 
 class _AttributeList(collections.abc.MutableSequence):

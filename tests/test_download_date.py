@@ -33,7 +33,7 @@ def test_download_date(temp_file):
 def test_download_date_tz_1A(temp_file):
     """ set naive time but return tz_aware """
     from osxmetadata import OSXMetaData
-    from osxmetadata.utils import datetime_naive_to_local
+    from osxmetadata.datetime_utils import datetime_naive_to_local
     import datetime
 
     meta = OSXMetaData(temp_file, tz_aware=True)
@@ -47,7 +47,7 @@ def test_download_date_tz_1A(temp_file):
 def test_download_date_tz_1B(temp_file):
     """ set naive time but return tz_aware """
     from osxmetadata import OSXMetaData
-    from osxmetadata.utils import datetime_naive_to_local
+    from osxmetadata.datetime_utils import datetime_naive_to_local
     import datetime
 
     meta = OSXMetaData(temp_file, tz_aware=True)
@@ -61,7 +61,7 @@ def test_download_date_tz_1B(temp_file):
 def test_download_date_tz_2(temp_file):
     """ set tz_aware and return tz_aware """
     from osxmetadata import OSXMetaData
-    from osxmetadata.utils import datetime_naive_to_local
+    from osxmetadata.datetime_utils import datetime_naive_to_local
     import datetime
 
     meta = OSXMetaData(temp_file, tz_aware=True)
@@ -75,7 +75,7 @@ def test_download_date_tz_2(temp_file):
 def test_download_date_tz_3(temp_file):
     """ set tz_aware and return naive """
     from osxmetadata import OSXMetaData
-    from osxmetadata.utils import datetime_naive_to_local
+    from osxmetadata.datetime_utils import datetime_naive_to_local
     import datetime
 
     meta = OSXMetaData(temp_file, tz_aware=False)
@@ -89,7 +89,7 @@ def test_download_date_tz_3(temp_file):
 def test_download_date_tz_4(temp_file):
     """ test tz_aware property """
     from osxmetadata import OSXMetaData
-    from osxmetadata.utils import datetime_naive_to_local
+    from osxmetadata.datetime_utils import datetime_naive_to_local
     import datetime
 
     meta = OSXMetaData(temp_file)

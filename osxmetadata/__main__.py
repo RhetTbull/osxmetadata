@@ -17,7 +17,7 @@ from ._version import __version__
 from .attributes import _LONG_NAME_WIDTH, _SHORT_NAME_WIDTH, ATTRIBUTES
 from .classes import _AttributeList, _AttributeTagsList
 from .constants import _BACKUP_FILENAME, _TAGS_NAMES
-from .utils import load_backup_file, write_backup_file
+from .backup import load_backup_file, write_backup_file
 
 # TODO: how is metadata on symlink handled?
 # should symlink be resolved before gathering metadata?

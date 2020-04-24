@@ -108,7 +108,7 @@ def test_list_methods(temp_file):
 
     attribute = kMDItemKeywords
 
-    # updatekeywords 
+    # updatekeywords
     meta = OSXMetaData(temp_file)
     keywordset = ["Test", "Green", "Foo"]
 
@@ -149,7 +149,6 @@ def test_list_methods(temp_file):
     assert meta.get_attribute(attribute) == ["Green", "Foo"]
 
 
-
 # def test_description(temp_file):
 #     """ test string functions on one of the str attributes """
 #     from osxmetadata import OSXMetaData
@@ -170,4 +169,3 @@ def test_list_methods(temp_file):
 #     meta.description = "Foo"
 #     assert meta.description == "Foo"
 #     assert meta.get_attribute("description") == "Foo"
-
