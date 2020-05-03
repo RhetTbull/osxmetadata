@@ -181,13 +181,13 @@ class _AttributeTagsList(_AttributeList):
         else:
             self.data = []
 
-        if not self._isdir:
-            # check color tag stored in com.apple.FinderInfo
-            color = get_finderinfo_color(str(self._md._fname))
-            # logging.debug(f"color = {color}")
-            if color and (self._tags is None or color not in self._tags.values()):
-                # have a FinderInfo color that's not in _kMDItemUserTag
-                self.data.append(Tag(_COLORIDS[color], color))
+        # if not self._isdir:
+        # check color tag stored in com.apple.FinderInfo
+        color = get_finderinfo_color(str(self._md._fname))
+        # logging.debug(f"color = {color}")
+        if color and (self._tags is None or color not in self._tags.values()):
+            # have a FinderInfo color that's not in _kMDItemUserTag
+            self.data.append(Tag(_COLORIDS[color], color))
 
     def _write_data(self):
         # Overwrites the existing attribute values with the iterable of values provided.
@@ -204,22 +204,22 @@ class _AttributeTagsList(_AttributeList):
         # also write FinderInfo if required
         # if findercolor in tag set being written, do nothing
         # if findercolor not in tag set being written, overwrite findercolor with first color tag
-        if not self._isdir:
-            finder_color = get_finderinfo_color(str(self._md._fname))
-            tag_colors = [tag.color for tag in self.data]
-            logging.debug(f"write_data: finder {finder_color}, tag: {tag_colors}")
-            if finder_color not in tag_colors:
-                # overwrite FinderInfo color with new color
-                # get first non-zero color in tag if there is one
-                try:
-                    color = tag_colors[
-                        tag_colors.index(
-                            next(filter(lambda x: x != FINDER_COLOR_NONE, tag_colors))
-                        )
-                    ]
-                except StopIteration:
-                    color = FINDER_COLOR_NONE
-                set_finderinfo_color(str(self._md._fname), color)
+        # if not self._isdir:
+        finder_color = get_finderinfo_color(str(self._md._fname))
+        tag_colors = [tag.color for tag in self.data]
+        logging.debug(f"write_data: finder {finder_color}, tag: {tag_colors}")
+        if finder_color not in tag_colors:
+            # overwrite FinderInfo color with new color
+            # get first non-zero color in tag if there is one
+            try:
+                color = tag_colors[
+                    tag_colors.index(
+                        next(filter(lambda x: x != FINDER_COLOR_NONE, tag_colors))
+                    )
+                ]
+            except StopIteration:
+                color = FINDER_COLOR_NONE
+            set_finderinfo_color(str(self._md._fname), color)
 
 
 class _AttributeFinderInfo:

@@ -265,3 +265,6 @@ def test_tag_on_directory():
     md = OSXMetaData(tempdir.name)
     md.tags = [Tag("Red")]
     assert md.get_attribute("tags") == [Tag("Red")]
+
+    md.tags.remove(Tag("Red"))
+    assert md.get_attribute("tags") == []

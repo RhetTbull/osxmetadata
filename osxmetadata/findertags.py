@@ -30,7 +30,7 @@ def set_finderinfo_color(filename, colorid):
         colorid: ID of tag color in range 0 to 7
     """
 
-    if not os.path.isfile(filename):
+    if not os.path.exists(filename):
         raise FileNotFoundError(f"filename {filename} not found")
 
     if not _MIN_FINDER_COLOR <= colorid <= _MAX_FINDER_COLOR:
@@ -58,7 +58,7 @@ def get_finderinfo_color(filename):
         returns: color id as int, 0 if no color 
                  or None if com.apple.FinderInfo not set """
 
-    if not os.path.isfile(filename):
+    if not os.path.exists(filename):
         raise FileNotFoundError(f"filename {filename} not found")
 
     attr = xattr.xattr(filename)
