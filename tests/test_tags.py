@@ -254,3 +254,14 @@ def test_tag_factory():
     tag_ = tag_factory("green")
     assert isinstance(tag_, Tag)
     assert tag_ == Tag("Green", FINDER_COLOR_GREEN)
+
+
+def test_tag_on_directory():
+    import tempfile
+    from osxmetadata import OSXMetaData, Tag
+
+    tempdir = tempfile.TemporaryDirectory(prefix="osxmetadata")
+
+    md = OSXMetaData(tempdir.name)
+    md.tags = [Tag("Red")]
+    assert md.get_attribute("tags") == [Tag("Red")]
