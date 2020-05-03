@@ -470,8 +470,13 @@ This will only work on file systems that support Mac OS X extended attributes.
 
 [Click](https://palletsprojects.com/p/click/)
 
+## Related Projects
+
+- [tag](https://github.com/jdberry/tag) A command line tool to manipulate tags on Mac OS X files, and to query for files with those tags.
+- [osx-tags](https://github.com/scooby/osx-tags) Python module to manipulate Finder tags in OS X.
+
 ## Acknowledgements
-This module was inspired by [osx-tags]( https://github.com/scooby/osx-tags) by "Ben S / scooby".  I leveraged osx-tags to bootstrap the design of this module.  I wanted a more general OS X metadata library so I rolled my own.  This module is published under the same MIT license as osx-tags.
+This module was inspired by [osx-tags](https://github.com/scooby/osx-tags) by "Ben S / scooby".  I leveraged osx-tags to bootstrap the design of this module.  I wanted a more general OS X metadata library so I rolled my own.  This module is published under the same MIT license as osx-tags.
 
 
-To set the Finder comments, I use [py-applescript]( https://github.com/rdhyee/py-applescript) by "Raymond Yee / rdhyee".  Rather than import this module, I included the entire module (which is published as public domain code) in a private module to prevent ambiguity with other applescript modules on PyPi.  py-applescript uses a native bridge via PyObjC and is very fast compared to the other osascript based modules.
+To set the Finder comments, I use [py-applescript](https://github.com/rdhyee/py-applescript) by "Raymond Yee / rdhyee".  Rather than import this module, I included the entire module (which is published as public domain code) in a private module to prevent ambiguity with other applescript modules on PyPi.  py-applescript uses a native bridge via PyObjC and is very fast compared to the other osascript based modules.
