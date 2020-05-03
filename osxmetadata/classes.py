@@ -2,16 +2,26 @@
 
 import collections.abc
 import datetime
+import logging
 import plistlib
-from plistlib import FMT_BINARY  # pylint: disable=E0611
 import sys
+from plistlib import FMT_BINARY  # pylint: disable=E0611
 
-from .constants import _COLORNAMES, _VALID_COLORIDS
+from .constants import (
+    _COLORIDS,
+    _COLORNAMES,
+    _MAX_FINDER_COLOR,
+    _MIN_FINDER_COLOR,
+    _VALID_COLORIDS,
+    FINDER_COLOR_NONE,
+)
 from .datetime_utils import (
     datetime_naive_to_utc,
-    datetime_utc_to_local,
     datetime_remove_tz,
+    datetime_utc_to_local,
 )
+from .debug import _debug
+from .findertags import Tag, get_finder_tags, get_finderinfo_color, set_finderinfo_color
 
 
 class _AttributeList(collections.abc.MutableSequence):
@@ -123,6 +133,21 @@ class _AttributeList(collections.abc.MutableSequence):
 class _AttributeTagsList(_AttributeList):
     """ represents a _kMDItemUserTag attribute list """
 
+    def set_value(self, value):
+        if isinstance(value, list):
+            # a list of tag objects
+            for val in value:
+                if not isinstance(val, Tag):
+                    raise TypeError(f"values must be type Tag, not {type(val)}")
+            self.data = value
+        elif isinstance(value, _AttributeTagsList):
+            # another _AttributeTagsList object
+            self.data = value.data
+        else:
+            raise TypeError(f"value must be list of Tag objects not {type(value)}")
+
+        self._write_data()
+
     def _tag_split(self, tag):
         # Extracts the color information from a Finder tag.
 
@@ -136,243 +161,124 @@ class _AttributeTagsList(_AttributeList):
         else:
             return parts[0], int(parts[1])
 
-    def _normalize(self, tag):
-        """
-        Ensures a color is set if not none.
-        :param tag: a possibly non-normal tag.
-        :return: A colorized tag.
-        """
-        tag, color = self._tag_split(tag)
-        if tag.title() in _COLORNAMES:
-            # ignore the color passed and set proper color name
-            return self._tag_colored(tag.title(), _COLORNAMES[tag.title()])
-        else:
-            return self._tag_colored(tag, color)
-
-    def _tag_nocolor(self, tag):
-        """
-        Removes the color information from a Finder tag.
-        """
-        return tag.rsplit("\n", 1)[0]
-
-    def _tag_colored(self, tag, color):
-        """
-        Sets the color of a tag.
-
-        Parameters:
-        tag(str): a tag name
-        color(int): an integer from 1 through 7
-
-        Return:
-        (str) the tag with encoded color.
-        """
-        return f"{self._tag_nocolor(tag)}\n{color}"
-
     def _load_data(self):
         self._tags = {}
         try:
-            self._tagvalues = self._attrs[self._constant]
+            tag_constant = self._attrs[self._constant]
             # load the binary plist value
-            self._tagvalues = plistlib.loads(self._tagvalues)
+            self._tagvalues = plistlib.loads(tag_constant)
             for x in self._tagvalues:
                 (tag, color) = self._tag_split(x)
                 self._tags[tag] = color
         except KeyError:
             self._tags = None
         if self._tags:
-            # ZZZ --> keys drops duplicate tags
-            # self.data = list(self._tags.keys())
-            # separate the tag from the color id
-            self.data = [self._tag_split(value)[0] for value in self._tagvalues]
+            self.data = [Tag(name, color) for name, color in self._tags.items()]
         else:
             self.data = []
 
+        # check color tag stored in com.apple.FinderInfo
+        color = get_finderinfo_color(str(self._md._fname))
+        # logging.debug(f"color = {color}")
+        if color and (self._tags is None or color not in self._tags.values()):
+            # have a FinderInfo color that's not in _kMDItemUserTag
+            self.data.append(Tag(_COLORIDS[color], color))
+
     def _write_data(self):
         # Overwrites the existing attribute values with the iterable of values provided.
-        self._tagvalues = list(map(self._normalize, self.data))
+        # TODO: _write_data can get called multiple times
+        # e.g. md.tags += [Tag("foo", 0)] will result in
+        # append --> insert --> __setattr__ --> set_attribute --> set_value
+        # which results in _write_data being called twice in a row
+        logging.debug(f"_write_data: {self.data}")
+        self._tagvalues = [tag._format() for tag in self.data]
+        logging.debug(f"_write: {self._tagvalues}")
         plist = plistlib.dumps(self._tagvalues, fmt=FMT_BINARY)
         self._attrs.set(self._constant, plist)
 
-
-# class _AttributeSet:
-#     """ represents a multi-valued OSXMetaData attribute set """
-
-#     def __init__(self, attribute, xattr_, osxmetadata_obj):
-#         """ initialize object
-#             attribute: an OSXMetaData Attributes namedtuple
-#             xattr_: an instance of xattr.xattr """
-#             osxmetadata_obj: instance of OSXMetaData that created this class instance """
-#         self._attribute = attribute
-#         self._attrs = xattr_
-#         self._md = osxmetadata_obj
-#         self._constant = attribute.constant
-
-#         # initialize
-#         self.data = set()
-#         self._load_data()
-
-#     def set_value(self, values):
-#         """ set value to values """
-#         self.data = set(map(self._normalize, values))
-#         self._write_data()
-
-#     def add(self, value):
-#         """ add a value"""
-#         # TODO: should check to see if value is a non-list, set, etc. (single value)
-#         self._load_data()
-#         self.data.add(self._normalize(value))
-#         self._write_data()
-
-#     def update(self, *others):
-#         """ update data adding any new values in *others
-#             each item passed in *others must be an iterable """
-#         self._load_data()
-#         old_values = set(map(self._normalize, self.data))
-#         new_values = old_values
-#         for item in others:
-#             new_values = new_values.union(set(map(self._normalize, item)))
-#         self.data = new_values
-#         self._write_data()
-
-#     def clear(self):
-#         """ clear attribute (removes all values) """
-#         try:
-#             self._attrs.remove(self._constant)
-#         except (IOError, OSError):
-#             pass
-
-#     def remove(self, value):
-#         """ remove a value, raise ValueError exception if value does not exist in data set """
-#         self._load_data()
-#         if value not in self.data:
-#             raise ValueError("list.remove(x): x not in list")
-#         values = set(map(self._normalize, self.data))
-#         values.remove(self._normalize(value))
-#         self.data = values
-#         self._write_data()
-
-#     def discard(self, value):
-#         """ remove a value, does not raise exception if value does not exist """
-#         self._load_data()
-#         values = set(map(self._normalize, self.data))
-#         values.discard(self._normalize(value))
-#         self.data = values
-#         self._write_data()
-
-#     def _load_data(self):
-#         self._values = []
-#         try:
-#             # load the binary plist value
-#             self._values = plistlib.loads(self._attrs[self._constant])
-#             if self._values:
-#                 try:
-#                     self.data = set(self._values)
-#                 except TypeError:
-#                     self.data = set([self._values])
-#             else:
-#                 self.data = set()
-#         except KeyError:
-#             self.data = set()
-
-#     def _write_data(self):
-#         # Overwrites the existing tags with the iterable of tags provided.
-#         plist = plistlib.dumps(list(map(self._normalize, self.data)), fmt=FMT_BINARY)
-#         self._attrs.set(self._constant, plist)
-
-#     def _normalize(self, value):
-#         """ processes a value to normalize/transform the value if needed
-#             override in sublcass if desired (e.g. used _TagsSet) """
-#         return value
-
-#     def __iter__(self):
-#         self._load_data()
-#         for value in self.data:
-#             yield value
-
-#     def __len__(self):
-#         self._load_data()
-#         return len(self.data)
-
-#     def __repr__(self):
-#         self._load_data()
-#         return repr(self.data)
-
-#     def __str__(self):
-#         self._load_data()
-#         if self._attribute.type_ == datetime.datetime:
-#             values = [d.isoformat() for d in self.data]
-#         else:
-#             values = self.data
-#         return str(list(values))
-
-#     def __ior__(self, values):
-#         if type(values) != set:
-#             raise TypeError
-#         self.update(values)
-#         return self
+        # also write FinderInfo if required
+        # if findercolor in tag set being written, do nothing
+        # if findercolor not in tag set being written, overwrite findercolor with first color tag
+        finder_color = get_finderinfo_color(str(self._md._fname))
+        tag_colors = [tag.color for tag in self.data]
+        logging.debug(f"write_data: finder {finder_color}, tag: {tag_colors}")
+        if finder_color not in tag_colors:
+            # overwrite FinderInfo color with new color
+            # get first non-zero color in tag if there is one
+            try:
+                color = tag_colors[
+                    tag_colors.index(
+                        next(filter(lambda x: x != FINDER_COLOR_NONE, tag_colors))
+                    )
+                ]
+            except StopIteration:
+                color = FINDER_COLOR_NONE
+            set_finderinfo_color(str(self._md._fname), color)
 
 
-# deprecated
-# class _AttributeTagsSet(_AttributeSet):
-#     """ represents a _kMDItemUserTag attribute set """
+class _AttributeFinderInfo:
+    """ represents a com.apple.FinderInfo color tag """
 
-#     def _tag_split(self, tag):
-#         # Extracts the color information from a Finder tag.
+    def __init__(self, attribute, xattr_, osxmetadata_obj):
+        """ initialize object
+            attribute: an OSXMetaData Attributes namedtuple 
+            xattr_: an instance of xattr.xattr
+            osxmetadata_obj: instance of OSXMetaData that created this class instance """
+        self._attribute = attribute
+        self._attrs = xattr_
+        self._md = osxmetadata_obj
 
-#         parts = tag.rsplit("\n", 1)
-#         if len(parts) == 1:
-#             return parts[0], 0
-#         elif (
-#             len(parts[1]) != 1 or parts[1] not in _VALID_COLORIDS
-#         ):  # Not a color number
-#             return tag, 0
-#         else:
-#             return parts[0], int(parts[1])
+        self._constant = attribute.constant
 
-#     def _normalize(self, tag):
-#         """
-#         Ensures a color is set if not none.
-#         :param tag: a possibly non-normal tag.
-#         :return: A colorized tag.
-#         """
-#         tag, color = self._tag_split(tag)
-#         if tag.title() in _COLORNAMES:
-#             # ignore the color passed and set proper color name
-#             return self._tag_colored(tag.title(), _COLORNAMES[tag.title()])
-#         else:
-#             return self._tag_colored(tag, color)
+        self.data = None
+        self._load_data()
 
-#     def _tag_nocolor(self, tag):
-#         """
-#         Removes the color information from a Finder tag.
-#         """
-#         return tag.rsplit("\n", 1)[0]
+    def set_value(self, value):
+        if isinstance(value, Tag):
+            self.data = value
+        elif isinstance(value, _AttributeFinderInfo):
+            self.data = value.data
+        else:
+            raise TypeError(f"value must be type Tag, not {type(value)}")
 
-#     def _tag_colored(self, tag, color):
-#         """
-#         Sets the color of a tag.
+        self._write_data()
 
-#         Parameters:
-#         tag(str): a tag name
-#         color(int): an integer from 1 through 7
+    def _load_data(self):
+        self._tags = {}
+        # check color tag stored in com.apple.FinderInfo
+        color = get_finderinfo_color(str(self._md._fname))
+        logging.debug(f"AttributeFinderInfo: color = {color}")
+        if color is not None:
+            # have a FinderInfo color
+            self.data = Tag(_COLORIDS[color], color)
+            logging.debug(self.data)
+        else:
+            self.data = None
 
-#         Return:
-#         (str) the tag with encoded color.
-#         """
-#         return f"{self._tag_nocolor(tag)}\n{color}"
+    def _write_data(self):
+        # Overwrites the existing attribute values with the iterable of values provided.
+        # TODO: _write_data can get called multiple times
+        # e.g. md.tags += [Tag("foo", 0)] will result in
+        # append --> insert --> __setattr__ --> set_attribute --> set_value
+        # which results in _write_data being called twice in a row
+        if self.data is None:
+            # nothing to do
+            logging.debug(f"No data to write")
+            return
 
-#     def _load_data(self):
-#         self._tags = {}
-#         try:
-#             self._tagvalues = self._attrs[self._constant]
-#             # load the binary plist value
-#             self._tagvalues = plistlib.loads(self._tagvalues)
-#             for x in self._tagvalues:
-#                 (tag, color) = self._tag_split(x)
-#                 self._tags[tag] = color
-#         except KeyError:
-#             self._tags = None
-#         if self._tags:
-#             self.data = set(self._tags.keys())
-#         else:
-#             self.data = set()
+        colorid = self.data.color
+        if not (_MIN_FINDER_COLOR <= colorid <= _MAX_FINDER_COLOR):
+            raise ValueError(f"Invalid color id: {colorid}")
+        set_finderinfo_color(str(self._md._fname), colorid)
+
+    def __repr__(self):
+        self._load_data()
+        return repr(self.data)
+
+    def __str__(self):
+        self._load_data()
+        return f"'{self.data},{self.data}'"
+
+    def __eq__(self, other):
+        self._load_data()
+        return self.data == other

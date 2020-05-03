@@ -12,6 +12,17 @@ _COLORNAMES = {
     "Orange": 7,
 }
 
+_COLORNAMES_LOWER = {
+    "none": 0,
+    "gray": 1,
+    "green": 2,
+    "purple": 3,
+    "blue": 4,
+    "yellow": 5,
+    "red": 6,
+    "orange": 7,
+}
+
 _COLORIDS = {
     0: "None",
     1: "Gray",
@@ -32,6 +43,7 @@ FINDER_COLOR_YELLOW = 5
 FINDER_COLOR_RED = 6
 FINDER_COLOR_ORANGE = 7
 
+_MIN_FINDER_COLOR = 0
 _MAX_FINDER_COLOR = 7
 
 _VALID_COLORIDS = "01234567"
@@ -58,6 +70,7 @@ kMDItemKeywords = "com.apple.metadata:kMDItemKeywords"
 _kMDItemUserTags = "com.apple.metadata:_kMDItemUserTags"
 kMDItemUserTags = "com.apple.metadata:_kMDItemUserTags"
 kMDItemWhereFroms = "com.apple.metadata:kMDItemWhereFroms"
+FinderInfo = "com.apple.FinderInfo"
 
 
 # Special handling for Finder comments
@@ -66,7 +79,8 @@ _FINDER_COMMENT_NAMES = [
     "kMDItemFinderComment",
     "com.apple.metadata:kMDItemFinderComment",
 ]
-_TAGS_NAMES = ["tags", "com.apple.metadata:_kMDItemUserTags"]
+_TAGS_NAMES = ["tags", "_kMDItemUserTags", "com.apple.metadata:_kMDItemUserTags"]
+_FINDERINFO_NAMES = ["finderinfo", "com.apple.FinderInfo"]
 
 _BACKUP_FILENAME = ".osxmetadata.json"
 
@@ -83,4 +97,5 @@ __all__ = [
     "kMDItemUserTags",
     "_kMDItemUserTags",
     "kMDItemWhereFroms",
+    "FinderInfo",
 ]

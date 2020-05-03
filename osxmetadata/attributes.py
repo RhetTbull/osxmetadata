@@ -2,9 +2,9 @@
 
 import datetime
 import logging
-from collections import namedtuple
+from collections import namedtuple  # pylint: disable=syntax-error
 
-from .classes import _AttributeList, _AttributeTagsList
+from .classes import _AttributeList, _AttributeTagsList, _AttributeFinderInfo
 from .constants import *
 from .datetime_utils import (
     datetime_has_tz,
@@ -32,7 +32,9 @@ from .datetime_utils import (
 # list: (boolean) True if attribute is a list (e.g. a CFArray)
 # as_list: (boolean) True if attribute is a single value but stored in a list
 #   Note: the only attribute I've seen this on is com.apple.metadata:kMDItemDownloadedDate
-# class: the attribute class to use, e.g. _AttributeList or str
+# class_: the attribute class to use, e.g. _AttributeList or str
+# append: the attribute can be operated on with append
+# update: the attribute can be operated on with update
 # help: help text for the attribute (for use in command line interface)
 # api_help: help text for use in documentation for the programmer who will use the library
 #           if None, will use same text as help
@@ -50,6 +52,8 @@ Attribute = namedtuple(
         "list",
         "as_list",
         "class_",
+        "append",
+        "update",
         "help",
         "api_help",
     ],
@@ -64,6 +68,8 @@ ATTRIBUTES = {
         True,
         False,
         _AttributeList,
+        True,
+        True,
         "The author, or authors, of the contents of the file.  A list of strings.",
         None,
     ),
@@ -75,6 +81,8 @@ ATTRIBUTES = {
         False,
         False,
         str,
+        True,
+        False,
         "A comment related to the file.  This differs from the Finder comment, "
         + "kMDItemFinderComment.  A string.",
         None,
@@ -87,6 +95,8 @@ ATTRIBUTES = {
         False,
         False,
         str,
+        True,
+        False,
         "The copyright owner of the file contents.  A string.",
         None,
     ),
@@ -98,6 +108,8 @@ ATTRIBUTES = {
         False,
         False,
         str,
+        True,
+        False,
         "Application used to create the document content (for example “Word”, “Pages”, "
         + "and so on).  A string.",
         None,
@@ -110,6 +122,8 @@ ATTRIBUTES = {
         False,
         False,
         str,
+        True,
+        False,
         "A description of the content of the resource.  The description may include an abstract, "
         + "table of contents, reference to a graphical representation of content or a "
         + "free-text account of the content.  A string.",
@@ -125,6 +139,8 @@ ATTRIBUTES = {
         # True,
         False,
         _AttributeList,
+        False,
+        False,
         "The date the item was downloaded.  A date in ISO 8601 format, "
         "time and timezone offset are optional: e.g. "
         + "2020-04-14T12:00:00 (ISO 8601 w/o timezone), "
@@ -143,6 +159,8 @@ ATTRIBUTES = {
         False,
         False,
         str,
+        True,
+        False,
         "Finder comments for this file.  A string.",
         None,
     ),
@@ -154,6 +172,8 @@ ATTRIBUTES = {
         False,
         False,
         str,
+        True,
+        False,
         "A publishable entry providing a synopsis of the contents of the file.  A string.",
         None,
     ),
@@ -165,6 +185,8 @@ ATTRIBUTES = {
         True,
         False,
         _AttributeList,
+        True,
+        True,
         "Keywords associated with this file. For example, “Birthday”, “Important”, etc. "
         + "This differs from Finder tags (_kMDItemUserTags) which are keywords/tags shown "
         + 'in the Finder and searchable in Spotlight using "tag:tag_name".  '
@@ -179,9 +201,11 @@ ATTRIBUTES = {
         True,
         False,
         _AttributeTagsList,
+        True,
+        True,
         'Finder tags; searchable in Spotlight using "tag:tag_name".  '
         + "If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords.  "
-        + "A list of strings.",
+        + "A list of Tag objects.",
         None,
     ),
     "wherefroms": Attribute(
@@ -192,10 +216,28 @@ ATTRIBUTES = {
         True,
         False,
         _AttributeList,
+        True,
+        True,
         "Describes where the file was obtained from (e.g. URL downloaded from).  "
         + "A list of strings.",
         None,
     ),
+    "finderinfo": Attribute(
+        "finderinfo",
+        "FinderInfo",
+        FinderInfo,
+        str,
+        False,
+        False,
+        _AttributeFinderInfo,
+        False,
+        False,
+        "Color tag set by the Finder.  Colors can also be set by _kMDItemUserTags.  "
+        + "This is controlled by the Finder and it's recommended you don't directly access this attribute.  "
+        + "If you set or remove a color tag via _kMDItemUserTag, osxmetadata will automatically handle "
+        + "processing of FinderInfo color tag.",
+        None,
+    )
     # "test": Attribute(
     #     "test",
     #     "com.osxmetadata.test:DontTryThisAtHomeKids",

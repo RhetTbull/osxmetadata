@@ -15,9 +15,16 @@ import osxmetadata
 
 from ._version import __version__
 from .attributes import _LONG_NAME_WIDTH, _SHORT_NAME_WIDTH, ATTRIBUTES
-from .classes import _AttributeList, _AttributeTagsList
-from .constants import _BACKUP_FILENAME, _TAGS_NAMES
 from .backup import load_backup_file, write_backup_file
+from .classes import _AttributeList, _AttributeTagsList
+from .constants import (
+    _BACKUP_FILENAME,
+    _COLORNAMES_LOWER,
+    _FINDERINFO_NAMES,
+    _TAGS_NAMES,
+    FINDER_COLOR_NONE,
+)
+from .findertags import Tag, tag_factory
 
 # TODO: how is metadata on symlink handled?
 # should symlink be resolved before gathering metadata?
@@ -34,7 +41,7 @@ class CLI_Obj:
     def __init__(self, debug=False, files=None):
         self.debug = debug
         if debug:
-            osxmetadata._set_debug(True)
+            osxmetadata.debug._set_debug(True)
 
         self.files = files
 
@@ -89,6 +96,16 @@ class MyClickCommand(click.Command):
             + "restore, wipe, copyfrom, clear, set, append, update, remove, mirror, get, list, backup.  "
             + "--backup and --restore are mutually exclusive.  "
             + "Other options may be combined or chained together."
+        )
+        formatter.write("\n")
+        formatter.write_text(
+            "Finder tags (tags attribute) contain both a name and an optional color. "
+            + "To specify the color, append comma + color name (e.g. 'red') after the "
+            + "tag name.  For example --set tags Foo,red. "
+            + "Valid color names are: "
+            + f"{', '.join([color for color, colorid in _COLORNAMES_LOWER.items() if colorid != FINDER_COLOR_NONE])}. "
+            + "If color is not specified but a tag of the same name has already been assigned a color "
+            + "in the Finder, the same color will automatically be assigned. "
         )
         formatter.write("\n")
 
@@ -351,6 +368,17 @@ def cli(
             attr1, attr2 = item
             attribute1 = ATTRIBUTES[attr1]
             attribute2 = ATTRIBUTES[attr2]
+
+            # avoid self mirroring
+            if attribute1 == attribute2:
+                click.echo(
+                    f"cannot mirror the same attribute: {attribute1.name} {attribute2.name}",
+                    err=True,
+                )
+                ctx.get_help()
+                ctx.exit(2)
+
+            # check type compatibility
             if (
                 attribute1.list != attribute2.list
                 or attribute1.type_ != attribute2.type_
@@ -401,6 +429,7 @@ def cli(
                         click.echo(f"  Processing file: {fpath}")
 
                     process_file(
+                        ctx,
                         fpath,
                         json_,
                         set_,
@@ -457,6 +486,7 @@ def cli(
                 click.echo(f"Processing file: {fpath}")
 
             process_file(
+                ctx,
                 fpath,
                 json_,
                 set_,
@@ -486,6 +516,7 @@ def cli(
 
 
 def process_file(
+    ctx,
     fpath,
     json_,
     set_,
@@ -541,6 +572,8 @@ def process_file(
             if verbose:
                 click.echo(f"Clearing {attr}")
             md.clear_attribute(attribute.name)
+            if attr == "tags":
+                pass
 
     if set_:
         # set data
@@ -549,6 +582,9 @@ def process_file(
         for item in set_:
             attr, val = item
             attribute = ATTRIBUTES[attr]
+
+            if attr in [*_TAGS_NAMES, *_FINDERINFO_NAMES]:
+                val = tag_factory(val)
             if verbose:
                 click.echo(f"Setting {attr}={val}")
             try:
@@ -557,7 +593,20 @@ def process_file(
                 attr_dict[attribute] = [val]
 
         for attribute, value in attr_dict.items():
-            md.set_attribute(attribute.name, value)
+            if attribute.list:
+                # attribute expects a list so pass value (which is a list)
+                md.set_attribute(attribute.name, value)
+            else:
+                if len(value) == 1:
+                    # expected one and got one
+                    md.set_attribute(attribute.name, value[0])
+                else:
+                    click.echo(
+                        f"attribute {attribute.name} expects only a single value but {len(value)} provided",
+                        err=True,
+                    )
+                    ctx.get_help()
+                    ctx.exit(2)
 
     if append:
         # append data
@@ -566,6 +615,18 @@ def process_file(
         for item in append:
             attr, val = item
             attribute = ATTRIBUTES[attr]
+
+            if not attribute.append:
+                click.echo(
+                    f"append is not a valid operation for attribute {attribute.name}",
+                    err=True,
+                )
+                ctx.get_help()
+                ctx.exit(2)
+
+            if attr in [*_TAGS_NAMES, *_FINDERINFO_NAMES]:
+                val = tag_factory(val)
+
             if verbose:
                 click.echo(f"Appending {attr}={val}")
             try:
@@ -583,6 +644,18 @@ def process_file(
         for item in update:
             attr, val = item
             attribute = ATTRIBUTES[attr]
+
+            if not attribute.update:
+                click.echo(
+                    f"update is not a valid operation for attribute {attribute.name}",
+                    err=True,
+                )
+                ctx.get_help()
+                ctx.exit(2)
+
+            if attr in [*_TAGS_NAMES, *_FINDERINFO_NAMES]:
+                val = tag_factory(val)
+
             if verbose:
                 click.echo(f"Updating {attr}={val}")
             try:
@@ -596,12 +669,21 @@ def process_file(
     if remove:
         # remove value from attribute
         # actually implemented with discard so no error raised if not present
-        # todo: catch errors and display help
         for attr, val in remove:
+            attribute = ATTRIBUTES[attr]
+            if not attribute.list:
+                click.echo(
+                    f"remove is not a valid operation for single-value attributes",
+                    err=True,
+                )
+                ctx.get_help()
+                ctx.exit(2)
+
+            if attr in [*_TAGS_NAMES, *_FINDERINFO_NAMES]:
+                val = tag_factory(val)
+            if verbose:
+                click.echo(f"Removing {attr}")
             try:
-                if verbose:
-                    click.echo(f"Removing {attr}")
-                attribute = ATTRIBUTES[attr]
                 md.discard_attribute(attribute.name, val)
             except KeyError as e:
                 raise e
@@ -614,9 +696,22 @@ def process_file(
             attr1, attr2 = item
             if verbose:
                 click.echo(f"Mirroring {attr1} {attr2}")
-            attribute1 = ATTRIBUTES[attr1]
 
-            if attribute1.list:
+            attribute1 = ATTRIBUTES[attr1]
+            attribute2 = ATTRIBUTES[attr2]
+
+            if attribute1.name == "tags":
+                tags = md.get_attribute(attr1)
+                attr1_values = [tag.name for tag in tags]
+                md.update_attribute(attr2, attr1_values)
+                md.set_attribute(attr1, [Tag(val) for val in md.get_attribute(attr2)])
+            elif attribute2.name == "tags":
+                attr1_values = md.get_attribute(attr1)
+                md.update_attribute(attr2, [Tag(val) for val in attr1_values])
+                tags = md.get_attribute(attr2)
+                attr2_values = [tag.name for tag in tags]
+                md.set_attribute(attr1, attr2_values)
+            elif attribute1.list:
                 # merge the two lists, assume attribute2 also a list due to
                 # previous validation
                 # update attr2 with any new values from attr1
@@ -637,17 +732,29 @@ def process_file(
         for attr in get:
             attribute = ATTRIBUTES[attr]
             if json_:
-                if attribute.type_ == datetime.datetime:
-                    # need to convert datetime.datetime to string to serialize
-                    value = md.get_attribute(attribute.name)
-                    if type(value) == list:
-                        value = [v.isoformat() for v in value]
+                try:
+                    if attribute.name == "tags":
+                        tags = md.get_attribute(attribute.name)
+                        value = [[tag.name, tag.color] for tag in tags]
+                        data[attribute.constant] = value
+                    elif attribute.name == "finderinfo":
+                        finderinfo = md.get_attribute(attribute.name)
+                        value = [finderinfo.name, finderinfo.color]
+                        data[attribute.constant] = value
+                    elif attribute.type_ == datetime.datetime:
+                        # need to convert datetime.datetime to string to serialize
+                        value = md.get_attribute(attribute.name)
+                        if type(value) == list:
+                            value = [v.isoformat() for v in value]
+                        else:
+                            value = value.isoformat()
+                        data[attribute.constant] = value
                     else:
-                        value = value.isoformat()
-                    data[attribute.constant] = value
-                else:
-                    # get raw value
-                    data[attribute.constant] = md.get_attribute(attribute.name)
+                        # get raw value
+                        data[attribute.constant] = md.get_attribute(attribute.name)
+                except KeyError:
+                    # unknown attribute, ignore it
+                    pass
             else:
                 value = md.get_attribute_str(attribute.name)
                 click.echo(

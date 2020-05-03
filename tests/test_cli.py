@@ -155,7 +155,8 @@ def test_str_attributes(temp_file, attribute):
 
 @pytest.mark.parametrize("attribute", test_names_list, ids=ids_list)
 def test_list_attributes(temp_file, attribute):
-    from osxmetadata import OSXMetaData, ATTRIBUTES
+    from osxmetadata import OSXMetaData, ATTRIBUTES, Tag
+    from osxmetadata.constants import _TAGS_NAMES
     from osxmetadata.__main__ import cli
 
     runner = CliRunner()
@@ -167,7 +168,10 @@ def test_list_attributes(temp_file, attribute):
     attr_short_name = ATTRIBUTES[attribute].name
     assert output[attr_short_name] == "['Foo', 'Bar']"
     meta = OSXMetaData(temp_file)
-    assert meta.get_attribute(attribute) == ["Foo", "Bar"]
+    if attribute in [*_TAGS_NAMES]:
+        assert meta.get_attribute(attribute) == [Tag("Foo"), Tag("Bar")]
+    else:
+        assert meta.get_attribute(attribute) == ["Foo", "Bar"]
 
     result = runner.invoke(
         cli,
@@ -185,7 +189,10 @@ def test_list_attributes(temp_file, attribute):
     assert result.exit_code == 0
     output = parse_cli_output(result.stdout)
     attr_short_name = ATTRIBUTES[attribute].name
-    assert output[attr_short_name] == "['Bar', 'Green']"
+    if attr_short_name == "tags":
+        assert output[attr_short_name] == "['Bar', 'Green,Green']"
+    else:
+        assert output[attr_short_name] == "['Bar', 'Green']"
 
 
 @pytest.mark.parametrize("attribute", test_names_dt, ids=ids_list_dt)
@@ -219,7 +226,7 @@ def test_get_json(temp_file):
     result = runner.invoke(cli, ["--get", "tags", "--json", temp_file])
     assert result.exit_code == 0
     json_ = json.loads(result.stdout)
-    assert json_["com.apple.metadata:_kMDItemUserTags"] == ["foo", "bar"]
+    assert json_["com.apple.metadata:_kMDItemUserTags"] == [["foo", 0], ["bar", 0]]
     assert json_["_version"] == __version__
     assert json_["_filename"] == pathlib.Path(temp_file).name
 
@@ -237,7 +244,7 @@ def test_list_json(temp_file):
     result = runner.invoke(cli, ["--list", "--json", temp_file])
     assert result.exit_code == 0
     json_ = json.loads(result.stdout)
-    assert json_["com.apple.metadata:_kMDItemUserTags"] == ["foo", "bar"]
+    assert json_["com.apple.metadata:_kMDItemUserTags"] == [["foo", 0], ["bar", 0]]
     assert json_["_version"] == __version__
     assert json_["_filename"] == pathlib.Path(temp_file).name
 
@@ -273,7 +280,7 @@ def test_cli_error(temp_file):
 
 def test_cli_backup_restore(temp_file):
     import pathlib
-    from osxmetadata import OSXMetaData, ATTRIBUTES
+    from osxmetadata import OSXMetaData, ATTRIBUTES, Tag
     from osxmetadata.constants import _BACKUP_FILENAME
     from osxmetadata.__main__ import cli
 
@@ -298,7 +305,7 @@ def test_cli_backup_restore(temp_file):
     output = parse_cli_output(result.stdout)
     assert output["tags"] == "['Foo', 'Bar']"
     meta = OSXMetaData(temp_file)
-    assert meta.get_attribute("tags") == ["Foo", "Bar"]
+    assert meta.get_attribute("tags") == [Tag("Foo"), Tag("Bar")]
     assert meta.get_attribute("comment") == "Hello World!"
 
     # test creation of backup file
@@ -315,14 +322,14 @@ def test_cli_backup_restore(temp_file):
 
     result = runner.invoke(cli, ["--restore", temp_file])
     assert result.exit_code == 0
-    assert meta.tags == ["Foo", "Bar"]
+    assert meta.tags == [Tag("Foo"), Tag("Bar")]
     assert meta.comment == "Hello World!"
 
 
 def test_cli_backup_restore_2(temp_file):
     # test set during restore
     import pathlib
-    from osxmetadata import OSXMetaData, ATTRIBUTES
+    from osxmetadata import OSXMetaData, ATTRIBUTES, Tag
     from osxmetadata.constants import _BACKUP_FILENAME
     from osxmetadata.__main__ import cli
 
@@ -347,7 +354,7 @@ def test_cli_backup_restore_2(temp_file):
     output = parse_cli_output(result.stdout)
     assert output["tags"] == "['Foo', 'Bar']"
     meta = OSXMetaData(temp_file)
-    assert meta.get_attribute("tags") == ["Foo", "Bar"]
+    assert meta.get_attribute("tags") == [Tag("Foo"), Tag("Bar")]
     assert meta.get_attribute("comment") == "Hello World!"
 
     # test creation of backup file
@@ -376,14 +383,14 @@ def test_cli_backup_restore_2(temp_file):
         ],
     )
     assert result.exit_code == 0
-    assert meta.tags == ["Foo", "Bar", "Flooz"]
+    assert meta.tags == [Tag("Foo"), Tag("Bar"), Tag("Flooz")]
     assert meta.comment == "Hello World!"
     assert meta.keywords == ["FooBar"]
 
 
 def test_cli_mirror(temp_file):
     import datetime
-    from osxmetadata import OSXMetaData
+    from osxmetadata import OSXMetaData, Tag
     from osxmetadata.__main__ import cli
 
     runner = CliRunner()
@@ -408,7 +415,7 @@ def test_cli_mirror(temp_file):
     )
     assert result.exit_code == 0
     meta = OSXMetaData(temp_file)
-    assert meta.tags == ["bar"]
+    assert meta.tags == [Tag("bar")]
     assert meta.keywords == ["foo"]
     assert meta.findercomment == "Bar"
     assert meta.comment == "Foo"
@@ -428,7 +435,7 @@ def test_cli_mirror(temp_file):
 
     assert result.exit_code == 0
     assert meta.keywords == ["bar", "foo"]
-    assert meta.tags == ["bar", "foo"]
+    assert meta.tags == [Tag("bar"), Tag("foo")]
     assert meta.findercomment == "Bar"
     assert meta.comment == "Bar"
 
@@ -449,7 +456,7 @@ def test_cli_mirror_bad_args(temp_file):
 
 
 def test_cli_wipe(temp_file):
-    from osxmetadata import OSXMetaData
+    from osxmetadata import OSXMetaData, Tag
     from osxmetadata.__main__ import cli
 
     runner = CliRunner()
@@ -474,7 +481,7 @@ def test_cli_wipe(temp_file):
     )
     assert result.exit_code == 0
     meta = OSXMetaData(temp_file)
-    assert meta.tags == ["bar"]
+    assert meta.tags == [Tag("bar")]
     assert meta.keywords == ["foo"]
     assert meta.findercomment == "Bar"
     assert meta.comment == "Foo"
@@ -489,7 +496,7 @@ def test_cli_wipe(temp_file):
 
 def test_cli_wipe_2(temp_file):
     # test wipe then set
-    from osxmetadata import OSXMetaData
+    from osxmetadata import OSXMetaData, Tag
     from osxmetadata.__main__ import cli
 
     runner = CliRunner()
@@ -514,7 +521,7 @@ def test_cli_wipe_2(temp_file):
     )
     assert result.exit_code == 0
     meta = OSXMetaData(temp_file)
-    assert meta.tags == ["bar"]
+    assert meta.tags == [Tag("bar")]
     assert meta.keywords == ["foo"]
     assert meta.findercomment == "Bar"
     assert meta.comment == "Foo"
@@ -531,7 +538,7 @@ def test_cli_wipe_2(temp_file):
 
 def test_cli_copy_from(temp_file):
     # test copy from source file
-    from osxmetadata import OSXMetaData
+    from osxmetadata import OSXMetaData, Tag
     from osxmetadata.__main__ import cli
 
     TESTDIR = None
@@ -539,7 +546,7 @@ def test_cli_copy_from(temp_file):
     source_filename = source_file.name
 
     meta_source = OSXMetaData(source_filename)
-    meta_source.tags = ["bar"]
+    meta_source.tags = [Tag("bar")]
     meta_source.keywords = ["foo"]
     meta_source.findercomment = "Bar"
     meta_source.comment = "Foo"
@@ -548,7 +555,7 @@ def test_cli_copy_from(temp_file):
     result = runner.invoke(cli, ["--copyfrom", source_filename, temp_file])
     assert result.exit_code == 0
     meta = OSXMetaData(temp_file)
-    assert meta.tags == ["bar"]
+    assert meta.tags == [Tag("bar")]
     assert meta.keywords == ["foo"]
     assert meta.findercomment == "Bar"
     assert meta.comment == "Foo"
@@ -558,7 +565,7 @@ def test_cli_copy_from(temp_file):
 
 def test_cli_copy_from_2(temp_file):
     # test copy from source file with setting etc
-    from osxmetadata import OSXMetaData
+    from osxmetadata import OSXMetaData, Tag
     from osxmetadata.__main__ import cli
 
     TESTDIR = None
@@ -566,7 +573,7 @@ def test_cli_copy_from_2(temp_file):
     source_filename = source_file.name
 
     meta_source = OSXMetaData(source_filename)
-    meta_source.tags = ["bar"]
+    meta_source.tags = [Tag("bar")]
     meta_source.keywords = ["foo"]
     meta_source.findercomment = "Bar"
     meta_source.comment = "Foo"
@@ -588,7 +595,7 @@ def test_cli_copy_from_2(temp_file):
     )
     assert result.exit_code == 0
     meta = OSXMetaData(temp_file)
-    assert meta.tags == ["FOOBAR"]
+    assert meta.tags == [Tag("FOOBAR")]
     assert meta.keywords == ["foo"]
     assert meta.findercomment == "BarFoo"
     assert meta.comment == "Foo"
@@ -597,7 +604,7 @@ def test_cli_copy_from_2(temp_file):
 
 
 def test_cli_verbose(temp_file):
-    from osxmetadata import OSXMetaData
+    from osxmetadata import OSXMetaData, Tag
     from osxmetadata.__main__ import cli
 
     TESTDIR = None
@@ -605,7 +612,7 @@ def test_cli_verbose(temp_file):
     source_filename = source_file.name
 
     meta_source = OSXMetaData(source_filename)
-    meta_source.tags = ["bar"]
+    meta_source.tags = [Tag("bar")]
     meta_source.keywords = ["foo"]
     meta_source.findercomment = "Bar"
     meta_source.comment = "Foo"
@@ -659,7 +666,7 @@ def test_cli_verbose(temp_file):
 
 
 def test_cli_verbose_short_opts(temp_file):
-    from osxmetadata import OSXMetaData
+    from osxmetadata import OSXMetaData, Tag
     from osxmetadata.__main__ import cli
 
     TESTDIR = None
@@ -667,7 +674,7 @@ def test_cli_verbose_short_opts(temp_file):
     source_filename = source_file.name
 
     meta_source = OSXMetaData(source_filename)
-    meta_source.tags = ["bar"]
+    meta_source.tags = [Tag("bar")]
     meta_source.keywords = ["foo"]
     meta_source.findercomment = "Bar"
     meta_source.comment = "Foo"

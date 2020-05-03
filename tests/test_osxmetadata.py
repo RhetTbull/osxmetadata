@@ -38,22 +38,26 @@ def test_name(temp_file):
 def test_to_json(temp_file):
     import json
     import pathlib
-    from osxmetadata import OSXMetaData, __version__
+    from osxmetadata import OSXMetaData, Tag, __version__
+    from osxmetadata.constants import FINDER_COLOR_NONE
 
     meta = OSXMetaData(temp_file)
-    meta.tags = ["foo", "bar"]
+    meta.tags = [Tag("foo"), Tag("bar")]
     json_ = json.loads(meta.to_json())
 
-    assert json_["com.apple.metadata:_kMDItemUserTags"] == ["foo", "bar"]
+    assert json_["com.apple.metadata:_kMDItemUserTags"] == [
+        ["foo", FINDER_COLOR_NONE],
+        ["bar", FINDER_COLOR_NONE],
+    ]
     assert json_["_version"] == __version__
     assert json_["_filename"] == pathlib.Path(temp_file).name
 
 
 def test_restore(temp_file):
-    from osxmetadata import OSXMetaData, kMDItemComment
+    from osxmetadata import OSXMetaData, Tag, kMDItemComment
 
     meta = OSXMetaData(temp_file)
-    meta.tags = ["foo", "bar"]
+    meta.tags = [Tag("foo"), Tag("bar")]
     meta.set_attribute(kMDItemComment, "Hello World!")
     attr_dict = meta._to_dict()
     meta.tags = []
@@ -63,7 +67,7 @@ def test_restore(temp_file):
     assert meta.comment is None
 
     meta._restore_attributes(attr_dict)
-    assert meta.tags == ["foo", "bar"]
+    assert meta.tags == [Tag("foo"), Tag("bar")]
     assert meta.get_attribute(kMDItemComment) == "Hello World!"
 
 

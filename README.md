@@ -32,6 +32,7 @@ The command line tool can also be run via `python -m osxmetadata`.  Running it w
 
 ```
 Usage: osxmetadata [OPTIONS] FILE
+Usage: __main__.py [OPTIONS] FILE
 
   Read/write metadata from file(s).
 
@@ -87,6 +88,13 @@ command line: restore, wipe, copyfrom, clear, set, append, update, remove,
 mirror, get, list, backup.  --backup and --restore are mutually exclusive.
 Other options may be combined or chained together.
 
+Finder tags (tags attribute) contain both a name and an optional color. To
+specify the color, append comma + color name (e.g. 'red') after the tag name.
+For example --set tags Foo,red. Valid color names are: gray, green, purple,
+blue, yellow, red, orange. If color is not specified but a tag of the same
+name has already been assigned a color in the Finder, the same color will
+automatically be assigned.
+
 Short Name      Description
 authors         kMDItemAuthors, com.apple.metadata:kMDItemAuthors; The
                 author, or authors, of the contents of the file.  A list of
@@ -115,6 +123,12 @@ downloadeddate  kMDItemDownloadedDate,
 findercomment   kMDItemFinderComment,
                 com.apple.metadata:kMDItemFinderComment; Finder comments for
                 this file.  A string.
+finderinfo      FinderInfo, com.apple.FinderInfo; Color tag set by the
+                Finder.  Colors can also be set by _kMDItemUserTags.  This
+                is controlled by the Finder and it's recommended you don't
+                directly access this attribute.  If you set or remove a
+                color tag via _kMDItemUserTag, osxmetadata will
+                automatically handle processing of FinderInfo color tag.
 headline        kMDItemHeadline, com.apple.metadata:kMDItemHeadline; A
                 publishable entry providing a synopsis of the contents of
                 the file.  A string.
@@ -127,7 +141,7 @@ keywords        kMDItemKeywords, com.apple.metadata:kMDItemKeywords;
 tags            _kMDItemUserTags, com.apple.metadata:_kMDItemUserTags;
                 Finder tags; searchable in Spotlight using "tag:tag_name".
                 If you want tags/keywords visible in the Finder, use this
-                instead of kMDItemKeywords.  A list of strings.
+                instead of kMDItemKeywords.  A list of Tag objects.
 wherefroms      kMDItemWhereFroms, com.apple.metadata:kMDItemWhereFroms;
                 Describes where the file was obtained from (e.g. URL
                 downloaded from).  A list of strings.
@@ -149,9 +163,10 @@ Information about commonly used MacOS metadata attributes is available from [App
 |kMDItemDescription|description|com.apple.metadata:kMDItemDescription|A description of the content of the resource.  The description may include an abstract, table of contents, reference to a graphical representation of content or a free-text account of the content.  A string.|
 |kMDItemDownloadedDate|downloadeddate|com.apple.metadata:kMDItemDownloadedDate|The date the item was downloaded.  A datetime.datetime object.  If datetime.datetime object lacks tzinfo (i.e. it is timezone naive), it will be assumed to be in local timezone.|
 |kMDItemFinderComment|findercomment|com.apple.metadata:kMDItemFinderComment|Finder comments for this file.  A string.|
+|FinderInfo|finderinfo|com.apple.FinderInfo|Color tag set by the Finder.  Colors can also be set by _kMDItemUserTags.  This is controlled by the Finder and it's recommended you don't directly access this attribute.  If you set or remove a color tag via _kMDItemUserTag, osxmetadata will automatically handle processing of FinderInfo color tag.|
 |kMDItemHeadline|headline|com.apple.metadata:kMDItemHeadline|A publishable entry providing a synopsis of the contents of the file.  A string.|
 |kMDItemKeywords|keywords|com.apple.metadata:kMDItemKeywords|Keywords associated with this file. For example, “Birthday”, “Important”, etc. This differs from Finder tags (_kMDItemUserTags) which are keywords/tags shown in the Finder and searchable in Spotlight using "tag:tag_name".  A list of strings.|
-|_kMDItemUserTags|tags|com.apple.metadata:_kMDItemUserTags|Finder tags; searchable in Spotlight using "tag:tag_name".  If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords.  A list of strings.|
+|_kMDItemUserTags|tags|com.apple.metadata:_kMDItemUserTags|Finder tags; searchable in Spotlight using "tag:tag_name".  If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords.  A list of [Tag](#tag-object) objects.|
 |kMDItemWhereFroms|wherefroms|com.apple.metadata:kMDItemWhereFroms|Describes where the file was obtained from (e.g. URL downloaded from).  A list of strings.|
 
 
@@ -163,6 +178,10 @@ Set Finder tags to Test, append "John Doe" to list of authors, clear (delete) de
 
 `osxmetadata --set tags Test --append authors "John Doe" --clear description --set findercomment "Hello World" ~/Downloads/test.jpg`
 
+Set Finder tag Foo with color green:
+
+`osxmetadata --set tags Foo,green test.txt`
+
 Walk a directory tree and add the Finder tag "test" to every file:
 
 `osxmetadata --append tags "Test" --walk ~/Downloads`
@@ -172,7 +191,7 @@ Walk a directory tree and add the Finder tag "test" to every file:
 There are two ways to access metadata using the programmatic interface.  First, an OSXMetaData object will create properties for each supported attribute using the "Short name" in table above.  For example:
 
 ```python
-from osxmetadata import OSXMetaData
+from osxmetadata import OSXMetaData, Tag
 
 filename = 'foo.txt'
 meta = OSXMetaData(filename)
@@ -181,7 +200,7 @@ meta = OSXMetaData(filename)
 meta.description = "This is my document."
 
 # add "Foo" to tags
-meta.tags += ["Foo"]
+meta.tags += [Tag("Foo")]
 
 # set authors to "John Doe" and "Jane Smith"
 meta.authors = ["John Doe","Jane Smith"]
@@ -191,46 +210,44 @@ meta.copyright = None
 
 ```
 
+For additional details on using Finder tags, see [Tag object](#tag-object).
+
 If attribute is a list, most `list` methods can be used. For example:
 
 ```python
->>> import osxmetadata
->>> md = osxmetadata.OSXMetaData("/Users/rhet/Downloads/test.jpg")
+>>> from osxmetadata import OSXMetaData, Tag
+>>> md = OSXMetaData("test.txt")
 >>> md.tags
-['Blue', 'Green', 'Foo']
->>> md.tags.reverse()
->>> md.tags
-['Foo', 'Green', 'Blue']
+[Tag('Blue', 4), Tag('Green', 2), Tag('Foo', 0)]
 >>> md.tags.pop(1)
-'Green'
+Tag('Green', 2)
 >>> md.tags
-['Foo', 'Blue']
+[Tag('Blue', 4), Tag('Foo', 0)]
 >>> md.tags.sort()
 >>> md.tags
-['Blue', 'Foo']
->>> md.tags.append("Test")
+[Tag('Blue', 4), Tag('Foo', 0)]
+>>> md.tags.append(Tag("Test"))
 >>> md.tags
-['Blue', 'Foo', 'Test']
->>> md.tags.extend(["Tag1","Tag2"])
+[Tag('Blue', 4), Tag('Foo', 0), Tag('Test', 0)]
+>>> md.tags.extend([Tag("Test1"),Tag("Test2")])
 >>> md.tags
-['Blue', 'Foo', 'Test', 'Tag1', 'Tag2']
->>> md.tags += ["Tag3"]
+[Tag('Blue', 4), Tag('Foo', 0), Tag('Test', 0), Tag('Test1', 0), Tag('Test2', 0)]
+>>> md.tags.remove(Tag("Blue", 4))
 >>> md.tags
-['Blue', 'Foo', 'Test', 'Tag1', 'Tag2', 'Tag3']
->>> md.tags.remove('Blue')
->>> md.tags
-['Foo', 'Test', 'Tag1', 'Tag2', 'Tag3']
->>> # removing value that doesn't exist raises ValueError
->>> md.tags.remove('Blue')
+[Tag('Foo', 0), Tag('Test', 0), Tag('Test1', 0), Tag('Test2', 0)]
+>>> md.tags.remove(Tag("Blue", 4))
+# ValueError if attempt to remove element not in list
 Traceback (most recent call last):
-...
-ValueError: list.remove(x): x not in list
->>> md.tags
-['Foo', 'Test', 'Tag1', 'Tag2', 'Tag3']
->>> md.tags.count('Test')
+  File "<stdin>", line 1, in <module>
+  File "/Users/rhet/anaconda3/envs/osxmeta/lib/python3.8/_collections_abc.py", line 997, in remove
+    del self[self.index(value)]
+  File "/Users/rhet/anaconda3/envs/osxmeta/lib/python3.8/_collections_abc.py", line 911, in index
+    raise ValueError
+ValueError
+>>> md.tags.count(Tag("Test"))
 1
->>> md.tags.index('Tag1')
-2
+>>> md.tags.index(Tag("Test"))
+1
 ```
 
 If attribute is a date/time stamp (e.g. kMDItemDownloadedDate), value should be a `datetime.datetime` object (or a list of `datetime.datetime` objects depending on the attribute type).  
@@ -276,7 +293,7 @@ description = meta.get_attribute(kMDItemDescription)
 
 meta.set_attribute(kMDItemCreator,"OSXMetaData")
 
-meta.append_attribute("tags",["Blue"])
+meta.append_attribute("tags", [Tag("Blue")])
 
 meta.update_attribute("com.apple.metadata:kMDItemKeywords",["Foo"])
 
@@ -408,6 +425,35 @@ datetime.datetime(2020, 4, 16, 5, 25, 10, 635417, tzinfo=datetime.timezone.utc)
 [datetime.datetime(2020, 4, 15, 22, 25, 10, 635417)]
 ```
 
+## Tag object
+
+Unlike other attributes, Finder tags (`_kMDItemUserTags`) have two components: a name (str) and a color ID (unsigned int in range 0 to 7) represting a color tag in the Finder.  Reading tags returns a list of `Tag` objects and setting tags requires a list of `Tag` objects.  
+
+### Create a Tag object
+
+`Tag(name,color)`
+- `name`: tag name (str)
+- `color`: optional; color ID for Finder color label associated with tag (int) 
+
+If color is not provided, `Tag` will see if the user has already assigned a color to a tag of the same name via the Finder (Finder | Preferences | Tags) and if so, assign the same color.  If a match is not found, the tag will be created with no color (`osxmetadata.FINDER_COLOR_NONE`)
+
+Valid color constants (exported by osxmetadata):
+
+- `FINDER_COLOR_GRAY` = 1
+- `FINDER_COLOR_GREEN` = 2
+- `FINDER_COLOR_PURPLE` = 3
+- `FINDER_COLOR_BLUE` = 4
+- `FINDER_COLOR_YELLOW` = 5
+- `FINDER_COLOR_RED` = 6
+- `FINDER_COLOR_ORANGE` = 7
+
+
+```python
+from osxmetadata import OSXMetaData, Tag, FINDER_COLOR_GREEN
+md = OSXMetaData("test.txt")
+md.tags = [Tag("Foo")]
+md.tags += [Tag("Test",FINDER_COLOR_GREEN)]
+```
 
 ## Usage Notes
 
