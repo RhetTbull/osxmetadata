@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
 import platform
@@ -81,6 +81,24 @@ def test_finder_comments_2(temp_file):
     assert meta.get_attribute(attribute) == "bar"
 
 
+def test_finder_comments_dir():
+    """ test get/set attribute but on a directory, not on a file"""
+
+    from osxmetadata import OSXMetaData
+    from osxmetadata.constants import kMDItemFinderComment
+
+    with TemporaryDirectory() as temp_dir:
+        attribute = kMDItemFinderComment
+
+        meta = OSXMetaData(temp_dir)
+        fc = "This is my new comment"
+        meta.set_attribute(attribute, fc)
+        assert meta.findercomment == fc
+        meta.findercomment += ", foo"
+        fc += ", foo"
+        assert meta.findercomment == fc
+
+
 # @pytest.mark.skipif(
 #     int(platform.mac_ver()[0].split(".")[1]) >= 15,
 #     reason="limit on finder comment length seems to be gone on 10.15+",
@@ -91,4 +109,3 @@ def test_finder_comments_2(temp_file):
 #     meta = OSXMetaData(temp_file)
 #     with pytest.raises(ValueError):
 #         meta.findercomment = "x" * _MAX_FINDERCOMMENT + "x"
-
