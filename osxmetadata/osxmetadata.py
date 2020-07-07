@@ -14,7 +14,6 @@ from plistlib import FMT_BINARY  # pylint: disable=E0611
 
 import xattr
 
-
 from ._version import __version__
 from .attributes import ATTRIBUTES, Attribute, validate_attribute_value
 from .classes import _AttributeList, _AttributeTagsList
@@ -26,6 +25,7 @@ from .constants import (
     _MAX_WHEREFROM,
     _VALID_COLORIDS,
     FINDER_COLOR_NONE,
+    FinderInfo,
     _kMDItemUserTags,
     kMDItemAuthors,
     kMDItemComment,
@@ -38,7 +38,6 @@ from .constants import (
     kMDItemKeywords,
     kMDItemUserTags,
     kMDItemWhereFroms,
-    FinderInfo,
 )
 from .datetime_utils import (
     datetime_naive_to_utc,
@@ -114,7 +113,7 @@ class OSXMetaData:
         # create property classes for the multi-valued attributes
         # tags get special handling due to color labels
         # ATTRIBUTES contains both long and short names, want only the short names (attribute.name)
-        for name in set([attribute.name for attribute in ATTRIBUTES.values()]):
+        for name in {attribute.name for attribute in ATTRIBUTES.values()}:
             attribute = ATTRIBUTES[name]
             if attribute.class_ not in [str, float, datetime.datetime]:
                 super().__setattr__(
@@ -145,10 +144,12 @@ class OSXMetaData:
             key of dict is filename and value is another dict with attributes """
 
         attribute_list = self.list_metadata()
-        json_data = {}
-        json_data["_version"] = __version__
-        json_data["_filepath"] = self._posix_name
-        json_data["_filename"] = self._fname.name
+        json_data = {
+            "_version": __version__,
+            "_filepath": self._posix_name,
+            "_filename": self._fname.name,
+        }
+
         for attr in attribute_list:
             try:
                 attribute = ATTRIBUTES[attr]
@@ -179,8 +180,7 @@ class OSXMetaData:
     def to_json(self):
         """ Returns a string in JSON format for all attributes in this file """
         json_data = self._to_dict()
-        json_str = json.dumps(json_data)
-        return json_str
+        return json.dumps(json_data)
 
     def _restore_attributes(self, attr_dict):
         """ restore attributes from attr_dict
@@ -224,8 +224,7 @@ class OSXMetaData:
         if attribute.name == "tags":
             self.tags._load_data()
             return self.tags.data
-
-        if attribute.name == "finderinfo":
+        elif attribute.name == "finderinfo":
             self.finderinfo._load_data()
             return self.finderinfo.data
 
@@ -264,18 +263,19 @@ class OSXMetaData:
             format using datetime.isoformat()
             attribute_name: name of attribute """
         value = self.get_attribute(attribute_name)
-        if type(value) == list or type(value) == set:
-            if value and type(value[0]) == datetime.datetime:
-                new_value = [v.isoformat() for v in value]
-                return str(new_value)
-            elif value and isinstance(value[0], Tag):
-                new_value = [
-                    f"{tag.name},{get_tag_color_name(tag.color)}"
-                    if tag.color
-                    else f"{tag.name}"
-                    for tag in value
-                ]
-                return str(new_value)
+        if type(value) in [list, set]:
+            if value:
+                if type(value[0]) == datetime.datetime:
+                    new_value = [v.isoformat() for v in value]
+                    return str(new_value)
+                elif isinstance(value[0], Tag):
+                    new_value = [
+                        f"{tag.name},{get_tag_color_name(tag.color)}"
+                        if tag.color
+                        else f"{tag.name}"
+                        for tag in value
+                    ]
+                    return str(new_value)
             return [str(val) for val in value]
         else:
             if type(value) == datetime.datetime:
@@ -482,8 +482,7 @@ class OSXMetaData:
     def __getattr__(self, name):
         """ if attribute name is in ATTRIBUTE dict, return the value
             otherwise raise KeyError """
-        value = self.get_attribute(name)
-        return value
+        return self.get_attribute(name)
 
     def __setattr__(self, name, value):
         """ if object is initialized and name is an attribute in ATTRIBUTES, 
