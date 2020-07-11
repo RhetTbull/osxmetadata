@@ -198,6 +198,10 @@ Walk a directory tree and add the Finder tag "test" to every file:
 
 `osxmetadata --append tags "Test" --walk ~/Downloads`
 
+Walk a directory tree and add the Finder tag "project" to all .jpg and .pdf files:
+
+`osxmetadata --append tags "project" --walk projectdir --pattern "*.pdf" --pattern "*.jpg"`
+
 ### Using the programmatic interface
 
 There are two ways to access metadata using the programmatic interface.  First, an OSXMetaData object will create properties for each supported attribute using the "Short name" in table above.  For example:

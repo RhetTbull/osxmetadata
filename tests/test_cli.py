@@ -873,6 +873,51 @@ def test_cli_walk_pattern(temp_dir):
     assert not md.tags
 
 
+def test_cli_walk_pattern_2(temp_dir):
+    """ test --walk with more than one --pattern """
+    import os
+    import pathlib
+    from osxmetadata import OSXMetaData, Tag
+    from osxmetadata.__main__ import cli
+
+    dirname = pathlib.Path(temp_dir)
+    os.makedirs(dirname / "temp" / "subfolder1")
+    os.makedirs(dirname / "temp" / "subfolder2")
+    create_file(dirname / "temp" / "temp1.txt")
+    create_file(dirname / "temp" / "subfolder1" / "sub1.txt")
+    create_file(dirname / "temp" / "subfolder1" / "sub1.pdf")
+    create_file(dirname / "temp" / "subfolder2" / "sub2.jpg")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--set",
+            "tags",
+            "FOO",
+            "--walk",
+            "--pattern",
+            "*.pdf",
+            "--pattern",
+            "*.jpg",
+            temp_dir,
+        ],
+    )
+    assert result.exit_code == 0
+
+    md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.pdf")
+    assert md.tags == [Tag("FOO")]
+
+    md = OSXMetaData(dirname / "temp" / "subfolder2" / "sub2.jpg")
+    assert md.tags == [Tag("FOO")]
+
+    md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.txt")
+    assert not md.tags
+
+    md = OSXMetaData(dirname / "temp" / "subfolder2")
+    assert not md.tags
+
+
 def test_cli_files_only(temp_dir):
     """ test --files-only without --walk """
     import glob
