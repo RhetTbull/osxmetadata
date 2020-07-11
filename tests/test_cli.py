@@ -47,6 +47,12 @@ ids_list_dt = [
 ]
 
 
+def create_file(filepath):
+    """ create an empty file at filepath """
+    fd = open(filepath, "w+")
+    fd.close()
+
+
 @pytest.fixture(params=["file", "dir"])
 def temp_file(request):
 
@@ -64,6 +70,18 @@ def temp_file(request):
         tempdirname = tempdir.name
         yield tempdirname
         tempdir.cleanup()
+
+
+@pytest.fixture
+def temp_dir():
+    # TESTDIR for temporary files usually defaults to "/tmp",
+    # which may not have XATTR support (e.g. tmpfs);
+    # manual override here.
+    TESTDIR = None
+    tempdir = TemporaryDirectory(dir=TESTDIR)
+    tempdirname = tempdir.name
+    yield tempdirname
+    tempdir.cleanup()
 
 
 def parse_cli_output(output):
@@ -773,3 +791,83 @@ def test_cli_downloadeddate(temp_file):
     meta.tz_aware = True
     assert meta.get_attribute(kMDItemDownloadedDate) == [utc_time]
     assert meta.downloadeddate == [utc_time]
+
+
+def test_cli_walk(temp_dir):
+    """ test --walk """
+    import os
+    import pathlib
+    from osxmetadata import OSXMetaData, Tag
+    from osxmetadata.__main__ import cli
+
+    dirname = pathlib.Path(temp_dir)
+    os.makedirs(dirname / "temp" / "subfolder1")
+    os.makedirs(dirname / "temp" / "subfolder2")
+    create_file(dirname / "temp" / "temp1.txt")
+    create_file(dirname / "temp" / "subfolder1" / "sub1.txt")
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--set", "tags", "FOO", "--walk", temp_dir])
+    assert result.exit_code == 0
+
+    md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.txt")
+    assert md.tags == [Tag("FOO")]
+
+    md = OSXMetaData(dirname / "temp" / "subfolder2")
+    assert md.tags == [Tag("FOO")]
+
+
+def test_cli_walk_files_only(temp_dir):
+    """ test --walk with --files-only """
+    import os
+    import pathlib
+    from osxmetadata import OSXMetaData, Tag
+    from osxmetadata.__main__ import cli
+
+    dirname = pathlib.Path(temp_dir)
+    os.makedirs(dirname / "temp" / "subfolder1")
+    os.makedirs(dirname / "temp" / "subfolder2")
+    create_file(dirname / "temp" / "temp1.txt")
+    create_file(dirname / "temp" / "subfolder1" / "sub1.txt")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["--set", "tags", "FOO", "--walk", "--files-only", temp_dir]
+    )
+    assert result.exit_code == 0
+
+    md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.txt")
+    assert md.tags == [Tag("FOO")]
+
+    md = OSXMetaData(dirname / "temp" / "subfolder2")
+    assert not md.tags
+
+
+def test_cli_files_only(temp_dir):
+    """ test --files-only without --walk """
+    import glob
+    import os
+    import pathlib
+    from osxmetadata import OSXMetaData, Tag
+    from osxmetadata.__main__ import cli
+
+    dirname = pathlib.Path(temp_dir)
+    os.makedirs(dirname / "temp" / "subfolder1")
+    os.makedirs(dirname / "temp" / "subfolder2")
+    create_file(dirname / "temp" / "temp1.txt")
+    create_file(dirname / "temp" / "subfolder1" / "sub1.txt")
+
+    files = glob.glob(str(dirname / "temp" / "*"))
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--set", "tags", "FOO", "--files-only", *files])
+    assert result.exit_code == 0
+
+    md = OSXMetaData(dirname / "temp" / "temp1.txt")
+    assert md.tags == [Tag("FOO")]
+
+    md = OSXMetaData(dirname / "temp" / "subfolder1")
+    assert not md.tags
+
+    md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.txt")
+    assert not md.tags

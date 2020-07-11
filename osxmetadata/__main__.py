@@ -267,6 +267,13 @@ COPY_FROM_OPTION = click.option(
     multiple=False,
     required=False,
 )
+FILES_ONLY_OPTION = click.option(
+    "--files-only",
+    help="Do not apply metadata commands to directories themselves, only files in a directory.",
+    is_flag=True,
+    default=False,
+    required=False,
+)
 
 
 @click.command(cls=MyClickCommand)
@@ -289,6 +296,7 @@ COPY_FROM_OPTION = click.option(
 @RESTORE_OPTION
 @VERBOSE_OPTION
 @COPY_FROM_OPTION
+@FILES_ONLY_OPTION
 @click.pass_context
 def cli(
     ctx,
@@ -310,6 +318,7 @@ def cli(
     restore,
     verbose,
     copyfrom,
+    files_only,
 ):
     """ Read/write metadata from file(s). """
 
@@ -412,6 +421,7 @@ def cli(
             backup,
             restore,
             walk,
+            files_only,
         )
 
         if walk and os.path.isdir(filename):
@@ -434,7 +444,8 @@ def cli(
                     copyfrom,
                     backup,
                     restore,
-                    walk
+                    walk,
+                    files_only,
                 )
 
 
@@ -456,6 +467,7 @@ def process_files(
     backup,
     restore,
     walk,
+    files_only,
 ):
     """ process list of files, calls process_single_file to process each file
         options processed in this order: wipe, copyfrom, clear, set, append, remove, mirror, get, list
@@ -465,6 +477,11 @@ def process_files(
         fpath = pathlib.Path(filename).resolve()
         backup_file = pathlib.Path(pathlib.Path(filename).parent) / _BACKUP_FILENAME
 
+        if files_only and fpath.is_dir():
+            if verbose:
+                click.echo(f"Skipping directory: {fpath}")
+            continue
+        
         if verbose:
             click.echo(f"Processing file: {fpath}")
 
