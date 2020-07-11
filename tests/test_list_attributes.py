@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
 import platform
@@ -9,17 +9,23 @@ from osxmetadata.attributes import ATTRIBUTES
 from osxmetadata.classes import _AttributeList
 
 
-@pytest.fixture
-def temp_file():
+@pytest.fixture(params=["file", "dir"])
+def temp_file(request):
 
     # TESTDIR for temporary files usually defaults to "/tmp",
     # which may not have XATTR support (e.g. tmpfs);
     # manual override here.
     TESTDIR = None
-    tempfile = NamedTemporaryFile(dir=TESTDIR)
-    tempfilename = tempfile.name
-    yield tempfilename
-    tempfile.close()
+    if request.param == "file":
+        tempfile = NamedTemporaryFile(dir=TESTDIR)
+        tempfilename = tempfile.name
+        yield tempfilename
+        tempfile.close()
+    else:
+        tempdir = TemporaryDirectory(dir=TESTDIR)
+        tempdirname = tempdir.name
+        yield tempdirname
+        tempdir.cleanup()
 
 
 test_data = [
@@ -81,7 +87,7 @@ def test_list_attribute(temp_file, attribute):
     assert meta.get_attribute(attribute) == expected
 
     meta.clear_attribute(attribute)
-    assert meta.get_attribute(attribute) == None
+    assert meta.get_attribute(attribute) is None
 
     expected = ["Foo"]
     meta.set_attribute(attribute, expected)
@@ -163,8 +169,8 @@ def test_list_methods(temp_file):
 #     assert meta.get_attribute("description") == "Foo Bar"
 
 #     meta.description = None
-#     assert meta.description == None
-#     assert meta.get_attribute("description") == None
+#     assert meta.description is None
+#     assert meta.get_attribute("description") is None
 
 #     meta.description = "Foo"
 #     assert meta.description == "Foo"

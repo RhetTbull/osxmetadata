@@ -37,9 +37,6 @@ class _AttributeList(collections.abc.MutableSequence):
         self._attrs = xattr_
         self._md = osxmetadata_obj
 
-        # some attributes don't work on directories
-        self._isdir = os.path.isdir(self._md._fname)
-
         self._constant = attribute.constant
 
         self.data = []
@@ -181,10 +178,8 @@ class _AttributeTagsList(_AttributeList):
         else:
             self.data = []
 
-        # if not self._isdir:
         # check color tag stored in com.apple.FinderInfo
         color = get_finderinfo_color(str(self._md._fname))
-        # logging.debug(f"color = {color}")
         if color and (self._tags is None or color not in self._tags.values()):
             # have a FinderInfo color that's not in _kMDItemUserTag
             self.data.append(Tag(_COLORIDS[color], color))
@@ -204,7 +199,6 @@ class _AttributeTagsList(_AttributeList):
         # also write FinderInfo if required
         # if findercolor in tag set being written, do nothing
         # if findercolor not in tag set being written, overwrite findercolor with first color tag
-        # if not self._isdir:
         finder_color = get_finderinfo_color(str(self._md._fname))
         tag_colors = [tag.color for tag in self.data]
         logging.debug(f"write_data: finder {finder_color}, tag: {tag_colors}")
@@ -234,9 +228,6 @@ class _AttributeFinderInfo:
         self._attrs = xattr_
         self._md = osxmetadata_obj
 
-        # FinderInfo doesn't work on directories
-        self._isdir = os.path.isdir(self._md._fname)
-
         self._constant = attribute.constant
 
         self.data = None
@@ -256,10 +247,8 @@ class _AttributeFinderInfo:
         self._tags = {}
 
         # check color tag stored in com.apple.FinderInfo
-        color = None
-        if not self._isdir:
-            color = get_finderinfo_color(str(self._md._fname))
-            logging.debug(f"AttributeFinderInfo: color = {color}")
+        color = get_finderinfo_color(str(self._md._fname))
+        logging.debug(f"AttributeFinderInfo: color = {color}")
 
         if color is not None:
             # have a FinderInfo color
@@ -274,10 +263,6 @@ class _AttributeFinderInfo:
         # e.g. md.tags += [Tag("foo", 0)] will result in
         # append --> insert --> __setattr__ --> set_attribute --> set_value
         # which results in _write_data being called twice in a row
-
-        if self._isdir:
-            # can't write this attribute on a directory
-            return
 
         if self.data is None:
             # nothing to do

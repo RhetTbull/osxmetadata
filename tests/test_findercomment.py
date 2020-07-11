@@ -6,17 +6,23 @@ import pytest
 import platform
 
 
-@pytest.fixture
-def temp_file():
+@pytest.fixture(params=["file", "dir"])
+def temp_file(request):
 
     # TESTDIR for temporary files usually defaults to "/tmp",
     # which may not have XATTR support (e.g. tmpfs);
     # manual override here.
     TESTDIR = None
-    tempfile = NamedTemporaryFile(dir=TESTDIR)
-    tempfilename = tempfile.name
-    yield tempfilename
-    tempfile.close()
+    if request.param == "file":
+        tempfile = NamedTemporaryFile(dir=TESTDIR)
+        tempfilename = tempfile.name
+        yield tempfilename
+        tempfile.close()
+    else:
+        tempdir = TemporaryDirectory(dir=TESTDIR)
+        tempdirname = tempdir.name
+        yield tempdirname
+        tempdir.cleanup()
 
 
 def test_finder_comments(temp_file):
@@ -39,7 +45,7 @@ def test_finder_comments(temp_file):
 
     # set finder comment to None deletes it
     meta.findercomment = None
-    assert meta.findercomment == None
+    assert meta.findercomment is None
 
     # can we set findercomment after is was set to None?
     meta.findercomment = "bar"
@@ -74,7 +80,7 @@ def test_finder_comments_2(temp_file):
     assert meta.get_attribute(attribute) == ""
 
     meta.clear_attribute(attribute)
-    assert meta.get_attribute(attribute) == None
+    assert meta.get_attribute(attribute) is None
 
     # can we set findercomment after is was set to None?
     meta.set_attribute(attribute, "bar")

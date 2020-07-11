@@ -1,19 +1,25 @@
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
 
 
-@pytest.fixture
-def temp_file():
+@pytest.fixture(params=["file", "dir"])
+def temp_file(request):
 
     # TESTDIR for temporary files usually defaults to "/tmp",
     # which may not have XATTR support (e.g. tmpfs);
     # manual override here.
     TESTDIR = None
-    tempfile = NamedTemporaryFile(dir=TESTDIR)
-    tempfilename = tempfile.name
-    yield tempfilename
-    tempfile.close()
+    if request.param == "file":
+        tempfile = NamedTemporaryFile(dir=TESTDIR)
+        tempfilename = tempfile.name
+        yield tempfilename
+        tempfile.close()
+    else:
+        tempdir = TemporaryDirectory(dir=TESTDIR)
+        tempdirname = tempdir.name
+        yield tempdirname
+        tempdir.cleanup()
 
 
 def test_debug_enable():

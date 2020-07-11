@@ -234,7 +234,8 @@ BACKUP_OPTION = click.option(
     "--backup",
     "-B",
     help="Backup FILE attributes.  "
-    "Backup file '.osxmetadata.json' will be created in same folder as FILE.",
+    "Backup file '.osxmetadata.json' will be created in same folder as FILE. "
+    "Only backs up attributes known to osxmetadata.",
     is_flag=True,
     required=False,
     default=False,
@@ -394,7 +395,7 @@ def cli(
     # loop through each file, process it, then do backup or restore if needed
     for filename in files:
         if walk and os.path.isdir(filename):
-            for root, _, filenames in os.walk(filename):
+            for root, dirnames, filenames in os.walk(filename):
                 backup_file = pathlib.Path(root) / _BACKUP_FILENAME
                 if verbose:
                     click.echo(f"Processing directory {root}")
@@ -410,7 +411,7 @@ def cli(
                 else:
                     backup_data = {}
 
-                for fname in filenames:
+                for fname in dirnames + filenames:
                     fpath = pathlib.Path(f"{root}/{fname}").resolve()
                     if restore and backup_data:
                         try:
@@ -453,13 +454,6 @@ def cli(
                 if backup:
                     # done walking through files in this folder, write the backup data
                     write_backup_file(backup_file, backup_data)
-        elif os.path.isdir(filename):
-            # skip directory
-            if verbose:
-                click.echo(
-                    f"skipping directory: {filename}; use --walk to process directories"
-                )
-            continue
         else:
             fpath = pathlib.Path(filename).resolve()
             backup_file = pathlib.Path(pathlib.Path(filename).parent) / _BACKUP_FILENAME
@@ -769,6 +763,7 @@ def process_file(
             json_str = md.to_json()
             click.echo(json_str)
         else:
+            click.echo(f"{fpath}:")
             attribute_list = md.list_metadata()
             for attr in attribute_list:
                 try:

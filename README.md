@@ -64,7 +64,8 @@ Options:
                                   tags' sets tags and keywords to same values.
   -B, --backup                    Backup FILE attributes.  Backup file
                                   '.osxmetadata.json' will be created in same
-                                  folder as FILE.
+                                  folder as FILE. Only backs up attributes 
+                                  known to osxmetadata.
   -R, --restore                   Restore FILE attributes from backup file.
                                   Restore will look for backup file
                                   '.osxmetadata.json' in same folder as FILE.

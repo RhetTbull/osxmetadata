@@ -1,27 +1,35 @@
 #!/usr/bin/env python
 
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
 import platform
 
 
-@pytest.fixture
-def temp_file():
+@pytest.fixture(params=["file", "dir"])
+def temp_file(request):
 
     # TESTDIR for temporary files usually defaults to "/tmp",
     # which may not have XATTR support (e.g. tmpfs);
     # manual override here.
     TESTDIR = None
-    tempfile = NamedTemporaryFile(dir=TESTDIR)
-    tempfilename = tempfile.name
-    yield tempfilename
-    tempfile.close()
+    if request.param == "file":
+        tempfile = NamedTemporaryFile(dir=TESTDIR)
+        tempfilename = tempfile.name
+        yield tempfilename
+        tempfile.close()
+    else:
+        tempdir = TemporaryDirectory(dir=TESTDIR)
+        tempdirname = tempdir.name
+        yield tempdirname
+        tempdir.cleanup()
 
 
 def test_download_date(temp_file):
     from osxmetadata import OSXMetaData
     import datetime
+    import logging
+    import os
 
     meta = OSXMetaData(temp_file)
     dt = datetime.datetime.now()
@@ -115,4 +123,4 @@ def test_download_date_tz_4(temp_file):
     meta.tz_aware = False
     assert meta.downloadeddate == [dt]
     assert meta.get_attribute("downloadeddate") == [dt]
-    assert meta.downloadeddate[0].tzinfo == None
+    assert meta.downloadeddate[0].tzinfo is None

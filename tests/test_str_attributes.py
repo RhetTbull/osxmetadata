@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
 import platform
@@ -8,17 +8,23 @@ import platform
 from osxmetadata.attributes import ATTRIBUTES
 
 
-@pytest.fixture
-def temp_file():
+@pytest.fixture(params=["file", "dir"])
+def temp_file(request):
 
     # TESTDIR for temporary files usually defaults to "/tmp",
     # which may not have XATTR support (e.g. tmpfs);
     # manual override here.
     TESTDIR = None
-    tempfile = NamedTemporaryFile(dir=TESTDIR)
-    tempfilename = tempfile.name
-    yield tempfilename
-    tempfile.close()
+    if request.param == "file":
+        tempfile = NamedTemporaryFile(dir=TESTDIR)
+        tempfilename = tempfile.name
+        yield tempfilename
+        tempfile.close()
+    else:
+        tempdir = TemporaryDirectory(dir=TESTDIR)
+        tempdirname = tempdir.name
+        yield tempdirname
+        tempdir.cleanup()
 
 
 test_data = [
@@ -71,7 +77,7 @@ def test_str_attribute(temp_file, attribute):
     # this mirrors the way finder comments work in mdls
     meta.set_attribute(attribute, "")
     if attribute in _FINDER_COMMENT_NAMES:
-        assert meta.get_attribute(attribute) == None
+        assert meta.get_attribute(attribute) is None
     else:
         assert meta.get_attribute(attribute) == ""
 
@@ -111,8 +117,8 @@ def test_description(temp_file):
     assert meta.get_attribute("description") == "Foo Bar"
 
     meta.description = None
-    assert meta.description == None
-    assert meta.get_attribute("description") == None
+    assert meta.description is None
+    assert meta.get_attribute("description") is None
 
     meta.description = "Foo"
     assert meta.description == "Foo"

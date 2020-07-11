@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import datetime
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
 from click.testing import CliRunner
@@ -47,17 +47,23 @@ ids_list_dt = [
 ]
 
 
-@pytest.fixture
-def temp_file():
+@pytest.fixture(params=["file", "dir"])
+def temp_file(request):
 
     # TESTDIR for temporary files usually defaults to "/tmp",
     # which may not have XATTR support (e.g. tmpfs);
     # manual override here.
     TESTDIR = None
-    tempfile = NamedTemporaryFile(dir=TESTDIR)
-    tempfilename = tempfile.name
-    yield tempfilename
-    tempfile.close()
+    if request.param == "file":
+        tempfile = NamedTemporaryFile(dir=TESTDIR)
+        tempfilename = tempfile.name
+        yield tempfilename
+        tempfile.close()
+    else:
+        tempdir = TemporaryDirectory(dir=TESTDIR)
+        tempdirname = tempdir.name
+        yield tempdirname
+        tempdir.cleanup()
 
 
 def parse_cli_output(output):
@@ -318,7 +324,7 @@ def test_cli_backup_restore(temp_file):
     meta.clear_attribute("tags")
     meta.clear_attribute("comment")
     assert meta.tags == []
-    assert meta.comment == None
+    assert meta.comment is None
 
     result = runner.invoke(cli, ["--restore", temp_file])
     assert result.exit_code == 0
@@ -367,7 +373,7 @@ def test_cli_backup_restore_2(temp_file):
     meta.clear_attribute("tags")
     meta.clear_attribute("comment")
     assert meta.tags == []
-    assert meta.comment == None
+    assert meta.comment is None
 
     result = runner.invoke(
         cli,
