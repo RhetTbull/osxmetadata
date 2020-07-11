@@ -1,6 +1,7 @@
 # /usr/bin/env python3
 
 import datetime
+import glob
 import itertools
 import json
 import logging
@@ -274,6 +275,18 @@ FILES_ONLY_OPTION = click.option(
     default=False,
     required=False,
 )
+PATTERN_OPTION = click.option(
+    "--pattern",
+    "-p",
+    metavar="PATTERN",
+    help="Only process files matching PATTERN; only applies to --walk. "
+    "If specified, only files matching PATTERN will be processed as each directory is walked. "
+    "May be used for than once to specify multiple patterns. "
+    "For example, tag all *.pdf files in projectdir and subfolders with tag 'project': "
+    "osxmetadata --append tags 'project' --walk projectdir/ --pattern '*.pdf'",
+    multiple=True,
+    required=False,
+)
 
 
 @click.command(cls=MyClickCommand)
@@ -297,6 +310,7 @@ FILES_ONLY_OPTION = click.option(
 @VERBOSE_OPTION
 @COPY_FROM_OPTION
 @FILES_ONLY_OPTION
+@PATTERN_OPTION
 @click.pass_context
 def cli(
     ctx,
@@ -319,6 +333,7 @@ def cli(
     verbose,
     copyfrom,
     files_only,
+    pattern,
 ):
     """ Read/write metadata from file(s). """
 
@@ -403,30 +418,43 @@ def cli(
 
     # loop through each file, process it, then do backup or restore if needed
     for filename in files:
-        process_files(
-            ctx,
-            [filename],
-            json_,
-            set_,
-            append,
-            update,
-            remove,
-            clear,
-            get,
-            list_,
-            mirror,
-            wipe,
-            verbose,
-            copyfrom,
-            backup,
-            restore,
-            walk,
-            files_only,
-        )
+        if not all([os.path.isdir(filename), walk, pattern]):
+            process_files(
+                ctx,
+                [filename],
+                json_,
+                set_,
+                append,
+                update,
+                remove,
+                clear,
+                get,
+                list_,
+                mirror,
+                wipe,
+                verbose,
+                copyfrom,
+                backup,
+                restore,
+                walk,
+                files_only,
+            )
 
         if walk and os.path.isdir(filename):
             for root, dirnames, filenames in os.walk(filename):
-                filepaths = [os.path.join(root, fname) for fname in dirnames + filenames]
+                if pattern:
+                    # only process files matching pattern
+                    filepaths = []
+                    for dirname in dirnames:
+                        for matches in [
+                            glob.glob(os.path.join(os.path.join(root, dirname), pat))
+                            for pat in pattern
+                        ]:
+                            filepaths.extend(matches)
+                else:
+                    filepaths = [
+                        os.path.join(root, fname) for fname in dirnames + filenames
+                    ]
                 process_files(
                     ctx,
                     filepaths,
@@ -481,7 +509,7 @@ def process_files(
             if verbose:
                 click.echo(f"Skipping directory: {fpath}")
             continue
-        
+
         if verbose:
             click.echo(f"Processing file: {fpath}")
 

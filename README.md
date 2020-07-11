@@ -32,8 +32,7 @@ The command line tool can also be run via `python -m osxmetadata`.  Running it w
 
 ```
 Usage: osxmetadata [OPTIONS] FILE
-Usage: __main__.py [OPTIONS] FILE
-
+  
   Read/write metadata from file(s).
 
 Options:
@@ -64,13 +63,25 @@ Options:
                                   tags' sets tags and keywords to same values.
   -B, --backup                    Backup FILE attributes.  Backup file
                                   '.osxmetadata.json' will be created in same
-                                  folder as FILE. Only backs up attributes 
+                                  folder as FILE. Only backs up attributes
                                   known to osxmetadata.
   -R, --restore                   Restore FILE attributes from backup file.
                                   Restore will look for backup file
                                   '.osxmetadata.json' in same folder as FILE.
   -V, --verbose                   Print verbose output.
   -f, --copyfrom SOURCE_FILE      Copy attributes from file SOURCE_FILE.
+  --files-only                    Do not apply metadata commands to
+                                  directories themselves, only files in a
+                                  directory.
+  -p, --pattern PATTERN           Only process files matching PATTERN; only
+                                  applies to --walk. If specified, only files
+                                  matching PATTERN will be processed as each
+                                  directory is walked. May be used for than
+                                  once to specify multiple patterns. For
+                                  example, tag all *.pdf files in projectdir
+                                  and subfolders with tag 'project':
+                                  osxmetadata --append tags 'project' --walk
+                                  projectdir/ --pattern '*.pdf'
 
 Valid attributes for ATTRIBUTE: Each attribute has a short name, a constant
 name, and a long constant name. Any of these may be used for ATTRIBUTE
