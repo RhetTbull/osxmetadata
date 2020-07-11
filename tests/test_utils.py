@@ -51,9 +51,8 @@ def test_backup_files(temp_file):
 
     filename = pathlib.Path(temp_file).name
 
-    backup_data = {}
-    backup_data[filename] = meta._to_dict()
-
+    backup_data = {filename: meta.asdict()}
+    
     TESTDIR = None
     backup_file = NamedTemporaryFile(dir=TESTDIR)
 

@@ -65,7 +65,7 @@ def test_restore(temp_file):
     meta = OSXMetaData(temp_file)
     meta.tags = [Tag("foo"), Tag("bar")]
     meta.set_attribute(kMDItemComment, "Hello World!")
-    attr_dict = meta._to_dict()
+    attr_dict = meta.asdict()
     meta.tags = []
     meta.clear_attribute(kMDItemComment)
 

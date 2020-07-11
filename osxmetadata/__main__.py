@@ -394,122 +394,130 @@ def cli(
 
     # loop through each file, process it, then do backup or restore if needed
     for filename in files:
+        process_files(
+            ctx,
+            [filename],
+            json_,
+            set_,
+            append,
+            update,
+            remove,
+            clear,
+            get,
+            list_,
+            mirror,
+            wipe,
+            verbose,
+            copyfrom,
+            backup,
+            restore,
+            walk,
+        )
+
         if walk and os.path.isdir(filename):
             for root, dirnames, filenames in os.walk(filename):
-                backup_file = pathlib.Path(root) / _BACKUP_FILENAME
+                filepaths = [os.path.join(root, fname) for fname in dirnames + filenames]
+                process_files(
+                    ctx,
+                    filepaths,
+                    json_,
+                    set_,
+                    append,
+                    update,
+                    remove,
+                    clear,
+                    get,
+                    list_,
+                    mirror,
+                    wipe,
+                    verbose,
+                    copyfrom,
+                    backup,
+                    restore,
+                    walk
+                )
+
+
+def process_files(
+    ctx,
+    files,
+    json_,
+    set_,
+    append,
+    update,
+    remove,
+    clear,
+    get,
+    list_,
+    mirror,
+    wipe,
+    verbose,
+    copyfrom,
+    backup,
+    restore,
+    walk,
+):
+    """ process list of files, calls process_single_file to process each file
+        options processed in this order: wipe, copyfrom, clear, set, append, remove, mirror, get, list
+        Note: expects all attributes passed in parameters to be validated as valid attributes 
+    """
+    for filename in files:
+        fpath = pathlib.Path(filename).resolve()
+        backup_file = pathlib.Path(pathlib.Path(filename).parent) / _BACKUP_FILENAME
+
+        if verbose:
+            click.echo(f"Processing file: {fpath}")
+
+        if restore:
+            try:
+                backup_data = load_backup_file(backup_file)
+                attr_dict = backup_data[pathlib.Path(fpath).name]
                 if verbose:
-                    click.echo(f"Processing directory {root}")
-                if restore:
-                    try:
-                        backup_data = load_backup_file(backup_file)
-                    except FileNotFoundError:
-                        click.echo(
-                            f"Missing backup file {backup_file} for {root}, skipping restore",
-                            err=True,
-                        )
-                        backup_data = {}
-                else:
-                    backup_data = {}
-
-                for fname in dirnames + filenames:
-                    fpath = pathlib.Path(f"{root}/{fname}").resolve()
-                    if restore and backup_data:
-                        try:
-                            attr_dict = backup_data[fname]
-                            if verbose:
-                                click.echo(f"    Restoring attribute data for {fpath}")
-                            md = osxmetadata.OSXMetaData(fpath)
-                            md._restore_attributes(attr_dict)
-                        except:
-                            if verbose:
-                                click.echo(
-                                    f"    Skipping restore for file {fpath}: not in backup file"
-                                )
-
-                    if verbose:
-                        click.echo(f"  Processing file: {fpath}")
-
-                    process_file(
-                        ctx,
-                        fpath,
-                        json_,
-                        set_,
-                        append,
-                        update,
-                        remove,
-                        clear,
-                        get,
-                        list_,
-                        mirror,
-                        wipe,
-                        verbose,
-                        copyfrom,
-                    )
-
-                    if backup:
-                        if verbose:
-                            click.echo(f"    Backing up attribute data for {fpath}")
-                        json_data = osxmetadata.OSXMetaData(fpath)._to_dict()
-                        backup_data[fpath.name] = json_data
-                if backup:
-                    # done walking through files in this folder, write the backup data
-                    write_backup_file(backup_file, backup_data)
-        else:
-            fpath = pathlib.Path(filename).resolve()
-            backup_file = pathlib.Path(pathlib.Path(filename).parent) / _BACKUP_FILENAME
-            if restore:
-                try:
-                    backup_data = load_backup_file(backup_file)
-                    attr_dict = backup_data[pathlib.Path(fpath).name]
-                    if verbose:
-                        click.echo(f"  Restoring attribute data for {fpath}")
-                    md = osxmetadata.OSXMetaData(fpath)
-                    md._restore_attributes(attr_dict)
-                except FileNotFoundError:
+                    click.echo(f"  Restoring attribute data for {fpath}")
+                md = osxmetadata.OSXMetaData(fpath)
+                md._restore_attributes(attr_dict)
+            except FileNotFoundError:
+                click.echo(
+                    f"Missing backup file {backup_file} for {fpath}, skipping restore",
+                    err=True,
+                )
+            except KeyError:
+                if verbose:
                     click.echo(
-                        f"Missing backup file {backup_file} for {fpath}, skipping restore",
-                        err=True,
+                        f"  Skipping restore for file {fpath}: not in backup file"
                     )
-                except KeyError:
-                    if verbose:
-                        click.echo(
-                            f"      Skipping restore for file {fpath}: not in backup file"
-                        )
 
+        process_single_file(
+            ctx,
+            fpath,
+            json_,
+            set_,
+            append,
+            update,
+            remove,
+            clear,
+            get,
+            list_,
+            mirror,
+            wipe,
+            verbose,
+            copyfrom,
+        )
+
+        if backup:
             if verbose:
-                click.echo(f"Processing file: {fpath}")
-
-            process_file(
-                ctx,
-                fpath,
-                json_,
-                set_,
-                append,
-                update,
-                remove,
-                clear,
-                get,
-                list_,
-                mirror,
-                wipe,
-                verbose,
-                copyfrom,
-            )
-
-            if backup:
-                if verbose:
-                    click.echo(f"  Backing up attribute data for {fpath}")
-                # load the file if it exists, merge new data, then write out the file again
-                if backup_file.is_file():
-                    backup_data = load_backup_file(backup_file)
-                else:
-                    backup_data = {}
-                json_dict = osxmetadata.OSXMetaData(fpath)._to_dict()
-                backup_data[pathlib.Path(fpath).name] = json_dict
-                write_backup_file(backup_file, backup_data)
+                click.echo(f"  Backing up attribute data for {fpath}")
+            # load the file if it exists, merge new data, then write out the file again
+            if backup_file.is_file():
+                backup_data = load_backup_file(backup_file)
+            else:
+                backup_data = {}
+            json_dict = osxmetadata.OSXMetaData(fpath).asdict()
+            backup_data[pathlib.Path(fpath).name] = json_dict
+            write_backup_file(backup_file, backup_data)
 
 
-def process_file(
+def process_single_file(
     ctx,
     fpath,
     json_,

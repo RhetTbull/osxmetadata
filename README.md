@@ -391,6 +391,15 @@ List the Apple metadata attributes set on the file.  e.g. those in com.apple.met
 
 Return dict in JSON format with all attributes for this file.  Format is the same as used by the command line --backup/--restore functions.
 
+### asdict
+`asdict()`
+
+Returns a dictionary of attribute values for the dictionary object in form:
+
+```python
+{'_version': '0.99.6', '_filepath': '/Users/rhet/Desktop/t.txt', '_filename': 't.txt', 'com.apple.metadata:_kMDItemUserTags': [['Hello', 0]], 'com.apple.metadata:kMDItemComment': 'test', 'com.apple.metadata:kMDItemFinderComment': 'Foo'}
+```
+
 ### tz_aware
 `tz_aware`
 
