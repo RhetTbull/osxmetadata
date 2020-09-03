@@ -1,10 +1,10 @@
-
 """ datetime.datetime helper functions for converting to/from UTC """
 
 import datetime
 
+
 def get_local_tz(dt):
-    """ return local timezone as datetime.timezone tzinfo for dt
+    """ Return local timezone as datetime.timezone tzinfo for dt
     
     Args:
         dt: datetime.datetime
@@ -22,9 +22,17 @@ def get_local_tz(dt):
 
 
 def datetime_has_tz(dt):
-    """ return True if datetime dt has tzinfo else False
+    """ Return True if datetime dt has tzinfo else False
+
+    Args:
         dt: datetime.datetime
-        returns True if dt is timezone aware, else False """
+    
+    Returns:
+        True if dt is timezone aware, else False
+        
+    Raises:
+        TypeError if dt is not a datetime.datetime object
+    """
 
     if type(dt) != datetime.datetime:
         raise TypeError(f"dt must be type datetime.datetime, not {type(dt)}")
@@ -33,9 +41,18 @@ def datetime_has_tz(dt):
 
 
 def datetime_tz_to_utc(dt):
-    """ convert datetime.datetime object with timezone to UTC timezone 
+    """ Convert datetime.datetime object with timezone to UTC timezone 
+
+    Args:
         dt: datetime.datetime object
-        returns: datetime.datetime in UTC timezone """
+
+    Returns:
+        datetime.datetime in UTC timezone
+        
+    Raises: 
+        TypeError if dt is not datetime.datetime object
+        ValueError if dt does not have timeone information
+    """
 
     if type(dt) != datetime.datetime:
         raise TypeError(f"dt must be type datetime.datetime, not {type(dt)}")
@@ -47,9 +64,17 @@ def datetime_tz_to_utc(dt):
 
 
 def datetime_remove_tz(dt):
-    """ remove timezone from a datetime.datetime object
+    """ Remove timezone from a datetime.datetime object
+
+    Args:
         dt: datetime.datetime object with tzinfo
-        returns: dt without any timezone info (naive datetime object) """
+    
+    Returns:
+        dt without any timezone info (naive datetime object) 
+        
+    Raises:
+        TypeError if dt is not a datetime.datetime object
+    """
 
     if type(dt) != datetime.datetime:
         raise TypeError(f"dt must be type datetime.datetime, not {type(dt)}")
@@ -58,10 +83,19 @@ def datetime_remove_tz(dt):
 
 
 def datetime_naive_to_utc(dt):
-    """ convert naive (timezone unaware) datetime.datetime
+    """ Convert naive (timezone unaware) datetime.datetime
         to aware timezone in UTC timezone
+
+    Args:
         dt: datetime.datetime without timezone
-        returns: datetime.datetime with UTC timezone """
+    
+    Returns:
+        datetime.datetime with UTC timezone
+        
+    Raises:
+        TypeError if dt is not a datetime.datetime object
+        ValueError if dt is not a naive/timezone unaware object
+    """
 
     if type(dt) != datetime.datetime:
         raise TypeError(f"dt must be type datetime.datetime, not {type(dt)}")
@@ -77,10 +111,19 @@ def datetime_naive_to_utc(dt):
 
 
 def datetime_naive_to_local(dt):
-    """ convert naive (timezone unaware) datetime.datetime
+    """ Convert naive (timezone unaware) datetime.datetime
         to aware timezone in local timezone
+
+    Args:
         dt: datetime.datetime without timezone
-        returns: datetime.datetime with local timezone """
+    
+    Returns:
+        datetime.datetime with local timezone
+        
+    Raises:
+        TypeError if dt is not a datetime.datetime object
+        ValueError if dt is not a naive/timezone unaware object
+    """
 
     if type(dt) != datetime.datetime:
         raise TypeError(f"dt must be type datetime.datetime, not {type(dt)}")
@@ -96,9 +139,18 @@ def datetime_naive_to_local(dt):
 
 
 def datetime_utc_to_local(dt):
-    """ convert datetime.datetime object in UTC timezone to local timezone 
+    """ Convert datetime.datetime object in UTC timezone to local timezone 
+
+    Args:
         dt: datetime.datetime object
-        returns: datetime.datetime in local timezone """
+
+    Returns:
+        datetime.datetime in local timezone
+
+    Raises:
+        TypeError if dt is not a datetime.datetime object
+        ValueError if dt is not in UTC timezone
+    """
 
     if type(dt) != datetime.datetime:
         raise TypeError(f"dt must be type datetime.datetime, not {type(dt)}")
