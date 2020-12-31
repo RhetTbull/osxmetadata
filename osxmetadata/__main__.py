@@ -762,8 +762,8 @@ def process_single_file(
                 md.set_attribute(attr1, md.get_attribute(attr2))
 
     if get:
+        data = {}
         if json_:
-            data = {}
             data["_version"] = __version__
             data["_filepath"] = fpath.resolve().as_posix()
             data["_filename"] = fpath.name

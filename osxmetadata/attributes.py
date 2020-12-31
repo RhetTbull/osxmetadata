@@ -4,7 +4,7 @@ import datetime
 import logging
 from collections import namedtuple  # pylint: disable=syntax-error
 
-from .classes import _AttributeList, _AttributeTagsList, _AttributeFinderInfo
+from .classes import _AttributeFinderInfo, _AttributeList, _AttributeTagsList
 from .constants import *
 from .datetime_utils import (
     datetime_has_tz,

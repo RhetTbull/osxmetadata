@@ -36,9 +36,9 @@ def test_finder_comments(temp_file):
     fc += ", foo"
     assert meta.findercomment == fc
 
-    # set finder comment to "" results in null string but not deleted
+    # set finder comment to "" deletes it as this mirrors Finder and mdls
     meta.findercomment = ""
-    assert meta.findercomment == ""
+    assert meta.findercomment is None
 
     meta.findercomment = "foo"
     assert meta.findercomment == "foo"
@@ -68,16 +68,16 @@ def test_finder_comments_2(temp_file):
     fc += ", foo"
     assert meta.findercomment == fc
 
-    # set finder comment to "" results in null string but not deleted
+    # set finder comment to "" deletes it as this mirrors mdls and Finder
     meta.set_attribute(attribute, "")
-    assert meta.get_attribute(attribute) == ""
+    assert meta.get_attribute(attribute) is None
 
     meta.set_attribute(attribute, "foo")
     assert meta.get_attribute(attribute) == "foo"
 
     # set finder comment to None deletes it
-    meta.set_attribute(attribute, "")
-    assert meta.get_attribute(attribute) == ""
+    meta.set_attribute(attribute, None)
+    assert meta.get_attribute(attribute) is None
 
     meta.clear_attribute(attribute)
     assert meta.get_attribute(attribute) is None

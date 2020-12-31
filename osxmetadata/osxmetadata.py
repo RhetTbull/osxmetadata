@@ -5,6 +5,7 @@
 import datetime
 import json
 import logging
+import os.path
 import pathlib
 import plistlib
 import sys
@@ -14,6 +15,7 @@ from plistlib import FMT_BINARY  # pylint: disable=E0611
 
 import xattr
 
+from . import _applescript
 from ._version import __version__
 from .attributes import ATTRIBUTES, Attribute, validate_attribute_value
 from .classes import _AttributeList, _AttributeTagsList
@@ -45,7 +47,6 @@ from .datetime_utils import (
     datetime_utc_to_local,
 )
 from .debug import _debug, _get_logger, _set_debug
-from .findercomments import clear_finder_comment, set_finder_comment
 from .findertags import Tag, get_tag_color_name, set_finderinfo_color
 
 __all__ = [
@@ -70,6 +71,27 @@ __all__ = [
 # TODO: What to do about colors
 # TODO: check what happens if OSXMetaData.__init__ called with invalid file--should result in error but saw one case where it didn't
 # TODO: cleartags does not always clear colors--this is a new behavior, did Mac OS change something in implementation of colors?
+
+# AppleScript for manipulating Finder comments
+_scpt_set_finder_comment = _applescript.AppleScript(
+    """
+            on run {path, fc}
+	            set thePath to path
+	            set theComment to fc
+	            tell application "Finder" to set comment of (POSIX file thePath as alias) to theComment
+            end run
+            """
+)
+
+_scpt_clear_finder_comment = _applescript.AppleScript(
+    """
+            on run {path}
+	            set thePath to path
+	            set theComment to missing value
+	            tell application "Finder" to set comment of (POSIX file thePath as alias) to theComment
+            end run
+            """
+)
 
 
 class OSXMetaData:
@@ -305,7 +327,7 @@ class OSXMetaData:
         if attribute.name in _FINDER_COMMENT_NAMES:
             # Finder Comment needs special handling
             # code following will also set the attribute for Finder Comment
-            set_finder_comment(self._posix_name, value)
+            self.set_finder_comment(self._posix_name, value)
         elif attribute.class_ in [_AttributeList, _AttributeTagsList]:
             getattr(self, attribute.name).set_value(value)
         else:
@@ -378,10 +400,7 @@ class OSXMetaData:
         try:
             if attribute.name in _FINDER_COMMENT_NAMES:
                 # Finder Comment needs special handling
-                # code following will also set the attribute for Finder Comment
-                set_finder_comment(self._posix_name, new_value)
-                plist = plistlib.dumps(new_value, fmt=FMT_BINARY)
-                self._attrs.set(attribute.constant, plist)
+                self.set_finder_comment(self._posix_name, new_value)
             elif attribute.class_ in [_AttributeList, _AttributeTagsList]:
                 # if tags, set_value will normalize
                 getattr(self, attribute.name).set_value(new_value)
@@ -441,7 +460,7 @@ class OSXMetaData:
             if attribute.name in _FINDER_COMMENT_NAMES:
                 # Finder Comment needs special handling
                 # code following will also clear the attribute for Finder Comment
-                clear_finder_comment(self._posix_name)
+                self.clear_finder_comment(self._posix_name)
 
             if attribute.name in ["finderinfo", "tags"]:
                 # don't clear the entire FinderInfo attribute, just delete the color
@@ -471,6 +490,35 @@ class OSXMetaData:
             or md.startswith("com.osxmetadata.test")
         ]
         return mdlist
+
+    def set_finder_comment(self, path, comment):
+        """ set finder comment for object path (file or directory)
+            path: path to file or directory in posix format
+            comment: comment string
+        """
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Could not find {path}")
+
+        if comment:
+            _scpt_set_finder_comment.run(path, comment)
+            plist = plistlib.dumps(comment, fmt=FMT_BINARY)
+            self._attrs.set(ATTRIBUTES["findercomment"].constant, plist)
+        else:
+            self.clear_finder_comment(path)
+
+    def clear_finder_comment(self, path):
+        """ clear finder comment for object path (file or directory)
+            path: path to file or directory in posix format
+        """
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Could not find {path}")
+
+        _scpt_clear_finder_comment.run(path)
+        try:
+            self._attrs.remove(ATTRIBUTES["findercomment"].constant)
+        except (IOError, OSError):
+            # exception raised if attribute not found and attempt to remove it
+            pass
 
     def __getattr__(self, name):
         """ if attribute name is in ATTRIBUTE dict, return the value

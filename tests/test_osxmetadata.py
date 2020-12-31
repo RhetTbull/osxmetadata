@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
+import platform
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
-import platform
 
 
 @pytest.fixture(params=["file", "dir"])
