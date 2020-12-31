@@ -69,7 +69,6 @@ def get_finderinfo_color(filename):
         bits = finderbits[_kCOLOR_OFFSET : _kCOLOR_OFFSET + 3]
         return bits.uint
     except Exception as e:
-        logging.debug(f"get_finderinfo_color: {e}")
         return None
 
 

@@ -286,10 +286,6 @@ def validate_attribute_value(attribute, value):
         value may be a single value or a list depending on what attribute expects 
         if value contains None, returns None """
 
-    logging.debug(
-        f"validate_attribute_value: attribute: {attribute}, value: {value}, type: {type(value)}"
-    )
-
     # check to see if we got None
     try:
         if None in value:
@@ -357,8 +353,6 @@ def validate_attribute_value(attribute, value):
         else:
             raise TypeError(f"Unknown type: {type(val)}")
         new_values.append(new_val)
-
-    logging.debug(f"new_values = {new_values}")
 
     if attribute.list:
         return new_values

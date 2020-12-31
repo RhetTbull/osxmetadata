@@ -190,9 +190,7 @@ class _AttributeTagsList(_AttributeList):
         # e.g. md.tags += [Tag("foo", 0)] will result in
         # append --> insert --> __setattr__ --> set_attribute --> set_value
         # which results in _write_data being called twice in a row
-        logging.debug(f"_write_data: {self.data}")
         self._tagvalues = [tag._format() for tag in self.data]
-        logging.debug(f"_write: {self._tagvalues}")
         plist = plistlib.dumps(self._tagvalues, fmt=FMT_BINARY)
         self._attrs.set(self._constant, plist)
 
@@ -201,7 +199,6 @@ class _AttributeTagsList(_AttributeList):
         # if findercolor not in tag set being written, overwrite findercolor with first color tag
         finder_color = get_finderinfo_color(str(self._md._fname))
         tag_colors = [tag.color for tag in self.data]
-        logging.debug(f"write_data: finder {finder_color}, tag: {tag_colors}")
         if finder_color not in tag_colors:
             # overwrite FinderInfo color with new color
             # get first non-zero color in tag if there is one
@@ -248,12 +245,10 @@ class _AttributeFinderInfo:
 
         # check color tag stored in com.apple.FinderInfo
         color = get_finderinfo_color(str(self._md._fname))
-        logging.debug(f"AttributeFinderInfo: color = {color}")
 
         if color is not None:
             # have a FinderInfo color
             self.data = Tag(_COLORIDS[color], color)
-            logging.debug(self.data)
         else:
             self.data = None
 
@@ -266,7 +261,6 @@ class _AttributeFinderInfo:
 
         if self.data is None:
             # nothing to do
-            logging.debug(f"No data to write")
             return
 
         colorid = self.data.color

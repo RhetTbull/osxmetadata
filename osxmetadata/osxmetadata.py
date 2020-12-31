@@ -217,7 +217,6 @@ class OSXMetaData:
         """
 
         attribute = ATTRIBUTES[attribute_name]
-        logging.debug(f"get: {attribute}")
 
         # user tags and finderinfo need special processing
         if attribute.name == "tags":
@@ -293,8 +292,6 @@ class OSXMetaData:
             value: value to store in attribute """
         attribute = ATTRIBUTES[attribute_name]
 
-        logging.debug(f"set_attribute: {attribute_name} {attribute} {value}")
-
         # user tags need special processing to normalize names
         if attribute.name == "tags":
             return self.tags.set_value(value)
@@ -333,34 +330,35 @@ class OSXMetaData:
                     (default is False) """
 
         attribute = ATTRIBUTES[attribute_name]
-        logging.debug(f"append_attribute: {attribute} {value}")
 
         # start with existing values
         new_value = self.get_attribute(attribute.name)
 
         # user tags need special processing to normalize names
         if attribute.name == "tags":
-            if isinstance(new_value, list) and isinstance(value, list):
-                if update:
-                    # verify not already in values
-                    for val in value:
-                        if val not in new_value:
-                            new_value.append(val)
-                else:
-                    new_value.extend(value)
-                return self.tags.set_value(new_value)
-            else:
+            if not isinstance(new_value, list) or not isinstance(value, list):
                 raise TypeError(
                     f"tags expects values in list: {type(new_value)}, {type(value)}"
                 )
 
+            if update:
+                # verify not already in values
+                for val in value:
+                    if val not in new_value:
+                        new_value.append(val)
+            else:
+                new_value.extend(value)
+            return self.tags.set_value(new_value)
         if attribute.name == "finderinfo":
             raise ValueError(f"cannot append or update finderinfo")
 
         value = validate_attribute_value(attribute, value)
 
         if attribute.list:
-            if new_value is not None:
+            if new_value is None:
+                # no original value
+                new_value = value
+            else:
                 new_value = list(new_value)
                 if update:
                     for val in value:
@@ -368,18 +366,15 @@ class OSXMetaData:
                             new_value.append(val)
                 else:
                     new_value.extend(value)
-            else:
-                # no original value
-                new_value = value
         else:
             # scalar value
             if update:
                 raise AttributeError(f"Cannot use update on {attribute.type_}")
-            if new_value is not None:
-                new_value += value
-            else:
+            if new_value is None:
                 new_value = value
 
+            else:
+                new_value += value
         try:
             if attribute.name in _FINDER_COMMENT_NAMES:
                 # Finder Comment needs special handling
@@ -450,7 +445,6 @@ class OSXMetaData:
 
             if attribute.name in ["finderinfo", "tags"]:
                 # don't clear the entire FinderInfo attribute, just delete the color
-                logging.debug(f"clearing finderinfo color")
                 set_finderinfo_color(str(self._fname), FINDER_COLOR_NONE)
 
             if attribute.name != "finderinfo":
@@ -489,7 +483,6 @@ class OSXMetaData:
             if value value is None, will clear (delete) the attribute and all associated values
             if name is not a metadata attribute, assume it's a normal class attribute and pass to
             super() to handle  """
-        logging.debug(f"__setattr__: {name} {value}")
         try:
             if self.__init:
                 # already initialized

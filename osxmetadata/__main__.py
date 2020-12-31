@@ -344,12 +344,6 @@ def cli(
     if debug:
         logging.disable(logging.NOTSET)
 
-    logging.debug(
-        f"ctx={ctx} debug={debug} files={files} walk={walk} json={json_} "
-        f"set={set_}, list={list_},clear={clear},append={append},get={get}, remove={remove} "
-        f"backup={backup}, restore={restore}, mirror={mirror}"
-    )
-
     if not files:
         click.echo(ctx.get_help())
         ctx.exit()
@@ -582,8 +576,6 @@ def process_single_file(
         options processed in this order: wipe, copyfrom, clear, set, append, remove, mirror, get, list
         Note: expects all attributes passed in parameters to be validated as valid attributes """
 
-    logging.debug(f"process_file: {fpath}")
-
     md = osxmetadata.OSXMetaData(fpath)
 
     if wipe:
@@ -770,7 +762,6 @@ def process_single_file(
                 md.set_attribute(attr1, md.get_attribute(attr2))
 
     if get:
-        logging.debug(f"get: {get}")
         if json_:
             data = {}
             data["_version"] = __version__
