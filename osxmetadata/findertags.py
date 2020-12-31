@@ -97,7 +97,6 @@ def tag_factory(tag_str):
     values = tag_str.split(",")
     name = values[0]
     name = name.lstrip().rstrip()
-    logging.debug(f"values={values},name={name}")
     if len(values) > 2:
         raise ValueError(f"More than one value found after comma: {tag_str}")
     elif len(values) == 1:
@@ -106,7 +105,6 @@ def tag_factory(tag_str):
         # but I'm not sure yet how to get the non-English color names used by Finder
         try:
             colorid = _COLORNAMES_LOWER[name.lower()]
-            logging.debug(f"single: values: {values}, colorid: {colorid}")
             return Tag(_COLORIDS[colorid], colorid)
         except KeyError:
             return Tag(name)
@@ -115,14 +113,12 @@ def tag_factory(tag_str):
         color = values[1].lstrip().rstrip().lower()
         try:
             colorid = _COLORNAMES_LOWER[color]
-            logging.debug(f"values: {values}, color: {color}, colorid: {colorid}")
         except KeyError:
             colorid = int(color)
             if colorid not in range(_MAX_FINDER_COLOR + 1):
                 raise ValueError(
                     f"color must be in range 0 to {_MAX_FINDER_COLOR} inclusive: {colorid}"
                 )
-            logging.debug(f"KeyError: values: {values}, colorid: {colorid}")
         return Tag(name, colorid)
 
 
