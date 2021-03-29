@@ -19,7 +19,7 @@ pathspec==0.7.0
 pluggy==0.13.1
 py==1.8.1
 pycparser==2.19
-Pygments==2.4.2
+Pygments==2.7.4
 pylint==2.3.0
 pyobjc==6.1
 pyobjc-core==6.1
