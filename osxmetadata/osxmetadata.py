@@ -9,6 +9,7 @@ import os.path
 import pathlib
 import plistlib
 import sys
+import base64
 
 # plistlib creates constants at runtime which causes pylint to complain
 from plistlib import FMT_BINARY  # pylint: disable=E0611
@@ -161,10 +162,18 @@ class OSXMetaData:
         tz_flag: bool"""
         self._tz_aware = tz_flag
 
-    def asdict(self):
-        """Return dict with all attributes for this file"""
+    def asdict(self, all_=False, encode=True):
+        """Return dict with all attributes for this file
 
-        attribute_list = self.list_metadata()
+        Args:
+            all_: bool, if True, returns all attributes including those that osxmetadata knows nothing about
+            encode: bool, if True, encodes values for unknown attributes with base64, otherwise leaves the values as raw bytes
+
+        Returns:
+            dict with attributes for this file
+        """
+
+        attribute_list = self._list_attributes() if all_ else self.list_metadata()
         dict_data = {
             "_version": __version__,
             "_filepath": self._posix_name,
@@ -194,20 +203,37 @@ class OSXMetaData:
                     # get raw value
                     dict_data[attribute.constant] = self.get_attribute(attribute.name)
             except KeyError:
-                # unknown attribute, ignore it
-                pass
+                # an attribute osxmetadata doesn't know about
+                if all_:
+                    try:
+                        value = self._attrs[attr]
+                        # convert value to base64 encoded ascii
+                        if encode:
+                            value = base64.b64encode(value).decode("ascii")
+                        dict_data[attr] = value
+                    except KeyError as e:
+                        # value disappeared between call to _list_attributes and now
+                        pass
         return dict_data
 
-    def to_json(self):
-        """Returns a string in JSON format for all attributes in this file"""
-        dict_data = self.asdict()
+    def to_json(self, all_=False):
+        """Returns a string in JSON format for all attributes in this file
+    
+        Args:
+            all_: bool; if True, also restores attributes not known to osxmetadata (generated with asdict(all_=True, encode=True) )
+        """
+        dict_data = self.asdict(all_=all_)
         return json.dumps(dict_data)
 
-    def _restore_attributes(self, attr_dict):
+    def _restore_attributes(self, attr_dict, all_=False):
         """restore attributes from attr_dict
         for each attribute in attr_dict, will set the attribute
         will not clear/erase any attributes on file that are not in attr_dict
-        attr_dict: an attribute dict as produced by OSXMetaData.asdict()"""
+
+        Args:
+            attr_dict: an attribute dict as produced by OSXMetaData.asdict()
+            all_: bool; if True, also restores attributes not known to osxmetadata (generated with asdict(all_=True, encode=True) )
+        """
 
         for key, val in attr_dict.items():
             if key.startswith("_"):
@@ -226,8 +252,10 @@ class OSXMetaData:
                             f"expected list for attribute {key} but got {type(val)}"
                         )
                     self.set_attribute(key, Tag(val[0], val[1]))
-                else:
+                elif key in ATTRIBUTES:
                     self.set_attribute(key, val)
+                elif all_:
+                    self._attrs.set(key, base64.b64decode(val))
             except Exception as e:
                 logging.warning(
                     f"Unable to restore attribute {key} for {self._fname}: {e}"
@@ -474,14 +502,14 @@ class OSXMetaData:
             pass
 
     def _list_attributes(self):
-        """list the attributes set on the file"""
+        """list all the attributes set on the file"""
         return self._attrs.list()
 
     def list_metadata(self):
         """list the Apple metadata attributes set on the file:
         e.g. those in com.apple.metadata namespace"""
         # also lists com.osxmetadata.test used for debugging
-        mdlist = self._attrs.list()
+        mdlist = self._list_attributes()
         mdlist = [
             md
             for md in mdlist

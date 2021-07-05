@@ -48,7 +48,7 @@ class CLI_Obj:
 
 
 class MyClickCommand(click.Command):
-    """ Custom click.Command that overrides get_help() to show additional info """
+    """Custom click.Command that overrides get_help() to show additional info"""
 
     def get_help(self, ctx):
         help_text = super().get_help(ctx)
@@ -236,7 +236,7 @@ BACKUP_OPTION = click.option(
     "-B",
     help="Backup FILE attributes.  "
     "Backup file '.osxmetadata.json' will be created in same folder as FILE. "
-    "Only backs up attributes known to osxmetadata.",
+    "Only backs up attributes known to osxmetadata unless used with --all.",
     is_flag=True,
     required=False,
     default=False,
@@ -245,10 +245,19 @@ RESTORE_OPTION = click.option(
     "--restore",
     "-R",
     help="Restore FILE attributes from backup file.  "
-    "Restore will look for backup file '.osxmetadata.json' in same folder as FILE.",
+    "Restore will look for backup file '.osxmetadata.json' in same folder as FILE. "
+    "Only restores attributes known to osxmetadata unless used with --all.",
     is_flag=True,
     required=False,
     default=False,
+)
+ALL_OPTION = click.option(
+    "--all",
+    "-A",
+    "all_",
+    is_flag=True,
+    help="Process all extended attributes including those not known to osxmetadata. "
+    "Use with --backup/--restore to backup/restore all extended attributes. ",
 )
 VERBOSE_OPTION = click.option(
     "--verbose",
@@ -307,6 +316,7 @@ PATTERN_OPTION = click.option(
 @MIRROR_OPTION
 @BACKUP_OPTION
 @RESTORE_OPTION
+@ALL_OPTION
 @VERBOSE_OPTION
 @COPY_FROM_OPTION
 @FILES_ONLY_OPTION
@@ -330,12 +340,13 @@ def cli(
     mirror,
     backup,
     restore,
+    all_,
     verbose,
     copyfrom,
     files_only,
     pattern,
 ):
-    """ Read/write metadata from file(s). """
+    """Read/write metadata from file(s)."""
 
     if help_:
         click.echo_via_pager(ctx.get_help())
@@ -432,6 +443,7 @@ def cli(
                 restore,
                 walk,
                 files_only,
+                all_,
             )
 
         if walk and os.path.isdir(filename):
@@ -468,6 +480,7 @@ def cli(
                     restore,
                     walk,
                     files_only,
+                    all_,
                 )
 
 
@@ -490,10 +503,11 @@ def process_files(
     restore,
     walk,
     files_only,
+    all_,
 ):
-    """ process list of files, calls process_single_file to process each file
-        options processed in this order: wipe, copyfrom, clear, set, append, remove, mirror, get, list
-        Note: expects all attributes passed in parameters to be validated as valid attributes 
+    """process list of files, calls process_single_file to process each file
+    options processed in this order: wipe, copyfrom, clear, set, append, remove, mirror, get, list
+    Note: expects all attributes passed in parameters to be validated as valid attributes
     """
     for filename in files:
         fpath = pathlib.Path(filename).resolve()
@@ -514,7 +528,7 @@ def process_files(
                 if verbose:
                     click.echo(f"  Restoring attribute data for {fpath}")
                 md = osxmetadata.OSXMetaData(fpath)
-                md._restore_attributes(attr_dict)
+                md._restore_attributes(attr_dict, all_=all_)
             except FileNotFoundError:
                 click.echo(
                     f"Missing backup file {backup_file} for {fpath}, skipping restore",
@@ -547,12 +561,9 @@ def process_files(
             if verbose:
                 click.echo(f"  Backing up attribute data for {fpath}")
             # load the file if it exists, merge new data, then write out the file again
-            if backup_file.is_file():
-                backup_data = load_backup_file(backup_file)
-            else:
-                backup_data = {}
-            json_dict = osxmetadata.OSXMetaData(fpath).asdict()
-            backup_data[pathlib.Path(fpath).name] = json_dict
+            backup_data = load_backup_file(backup_file) if backup_file.is_file() else {}
+            backup_dict = osxmetadata.OSXMetaData(fpath).asdict(all_=all_)
+            backup_data[pathlib.Path(fpath).name] = backup_dict
             write_backup_file(backup_file, backup_data)
 
 
@@ -572,9 +583,9 @@ def process_single_file(
     verbose,
     copyfrom,
 ):
-    """ process a single file to apply the options 
-        options processed in this order: wipe, copyfrom, clear, set, append, remove, mirror, get, list
-        Note: expects all attributes passed in parameters to be validated as valid attributes """
+    """process a single file to apply the options
+    options processed in this order: wipe, copyfrom, clear, set, append, remove, mirror, get, list
+    Note: expects all attributes passed in parameters to be validated as valid attributes"""
 
     md = osxmetadata.OSXMetaData(fpath)
 

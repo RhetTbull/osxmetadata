@@ -48,7 +48,7 @@ ids_list_dt = [
 
 
 def create_file(filepath):
-    """ create an empty file at filepath """
+    """create an empty file at filepath"""
     fd = open(filepath, "w+")
     fd.close()
 
@@ -85,8 +85,8 @@ def temp_dir():
 
 
 def parse_cli_output(output):
-    """ helper for testing
-        parse the CLI --list output and return value of all set attributes as dict """
+    """helper for testing
+    parse the CLI --list output and return value of all set attributes as dict"""
     import re
 
     results = {}
@@ -410,6 +410,64 @@ def test_cli_backup_restore_2(temp_file):
     assert meta.tags == [Tag("Foo"), Tag("Bar"), Tag("Flooz")]
     assert meta.comment == "Hello World!"
     assert meta.keywords == ["FooBar"]
+
+
+def test_cli_backup_restore_all(temp_file):
+    """Test --backup/--restore with --all"""
+    import pathlib
+    from osxmetadata import OSXMetaData, ATTRIBUTES, Tag
+    from osxmetadata.constants import _BACKUP_FILENAME
+    from osxmetadata.__main__ import cli
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--set",
+            "tags",
+            "Foo",
+            "--set",
+            "tags",
+            "Bar",
+            "--set",
+            "comment",
+            "Hello World!",
+            "--list",
+            temp_file,
+        ],
+    )
+    assert result.exit_code == 0
+    meta = OSXMetaData(temp_file)
+    # set a value osxmetadata doesn't know about
+    meta._attrs.set("com.foo.bar", b"FOOBAR")
+
+    # backup
+    result = runner.invoke(cli, ["--backup", "--all", temp_file])
+    assert result.exit_code == 0
+
+    # clear the attributes to see if they can be restored
+    meta.clear_attribute("tags")
+    meta.clear_attribute("comment")
+    meta._attrs.remove("com.foo.bar")
+    assert meta.tags == []
+    assert meta.comment is None
+    assert "com.foo.bar" not in meta._list_attributes()
+
+    # first run restore without --all
+    result = runner.invoke(cli, ["--restore", temp_file])
+    assert result.exit_code == 0
+    assert meta.tags == [Tag("Foo"), Tag("Bar")]
+    assert meta.comment == "Hello World!"
+
+    with pytest.raises(KeyError):
+        assert meta._attrs["com.foo.bar"] == b"FOOBAR"
+
+    # next run restore with --all
+    result = runner.invoke(cli, ["--restore", "--all", temp_file])
+    assert result.exit_code == 0
+    assert meta.tags == [Tag("Foo"), Tag("Bar")]
+    assert meta.comment == "Hello World!"
+    assert meta._attrs["com.foo.bar"] == b"FOOBAR"
 
 
 def test_cli_mirror(temp_file):
@@ -794,7 +852,7 @@ def test_cli_downloadeddate(temp_file):
 
 
 def test_cli_walk(temp_dir):
-    """ test --walk """
+    """test --walk"""
     import os
     import pathlib
     from osxmetadata import OSXMetaData, Tag
@@ -818,7 +876,7 @@ def test_cli_walk(temp_dir):
 
 
 def test_cli_walk_files_only(temp_dir):
-    """ test --walk with --files-only """
+    """test --walk with --files-only"""
     import os
     import pathlib
     from osxmetadata import OSXMetaData, Tag
@@ -844,7 +902,7 @@ def test_cli_walk_files_only(temp_dir):
 
 
 def test_cli_walk_pattern(temp_dir):
-    """ test --walk with --pattern """
+    """test --walk with --pattern"""
     import os
     import pathlib
     from osxmetadata import OSXMetaData, Tag
@@ -874,7 +932,7 @@ def test_cli_walk_pattern(temp_dir):
 
 
 def test_cli_walk_pattern_2(temp_dir):
-    """ test --walk with more than one --pattern """
+    """test --walk with more than one --pattern"""
     import os
     import pathlib
     from osxmetadata import OSXMetaData, Tag
@@ -919,7 +977,7 @@ def test_cli_walk_pattern_2(temp_dir):
 
 
 def test_cli_files_only(temp_dir):
-    """ test --files-only without --walk """
+    """test --files-only without --walk"""
     import glob
     import os
     import pathlib

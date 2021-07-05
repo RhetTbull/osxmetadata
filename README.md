@@ -31,8 +31,8 @@ If you only care about the command line tool, I recommend installing with [pipx]
 The command line tool can also be run via `python -m osxmetadata`.  Running it with no arguments or with --help option will print a help message:
 
 ```
-Usage: osxmetadata [OPTIONS] FILE
-  
+Usage: python -m osxmetadata [OPTIONS] FILE
+
   Read/write metadata from file(s).
 
 Options:
@@ -64,10 +64,16 @@ Options:
   -B, --backup                    Backup FILE attributes.  Backup file
                                   '.osxmetadata.json' will be created in same
                                   folder as FILE. Only backs up attributes
-                                  known to osxmetadata.
+                                  known to osxmetadata unless used with --all.
   -R, --restore                   Restore FILE attributes from backup file.
                                   Restore will look for backup file
                                   '.osxmetadata.json' in same folder as FILE.
+                                  Only restores attributes known to
+                                  osxmetadata unless used with --all.
+  -A, --all                       Process all extended attributes including
+                                  those not known to osxmetadata. Use with
+                                  --backup/--restore to backup/restore all
+                                  extended attributes.
   -V, --verbose                   Print verbose output.
   -f, --copyfrom SOURCE_FILE      Copy attributes from file SOURCE_FILE.
   --files-only                    Do not apply metadata commands to
