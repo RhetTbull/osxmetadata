@@ -1,1 +1,3 @@
-__version__ = "0.99.15"
+""" osxmetadata version """
+
+__version__ = "0.99.16"

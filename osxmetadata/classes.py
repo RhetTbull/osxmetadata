@@ -246,11 +246,7 @@ class _AttributeFinderInfo:
         # check color tag stored in com.apple.FinderInfo
         color = get_finderinfo_color(str(self._md._fname))
 
-        if color is not None:
-            # have a FinderInfo color
-            self.data = Tag(_COLORIDS[color], color)
-        else:
-            self.data = None
+        self.data = Tag(_COLORIDS[color], color) if color is not None else None
 
     def _write_data(self):
         # Overwrites the existing attribute values with the iterable of values provided.

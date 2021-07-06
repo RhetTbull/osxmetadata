@@ -591,10 +591,11 @@ def process_single_file(
 
     if wipe:
         attr_list = md.list_metadata()
-        if verbose and attr_list:
-            click.echo(f"Wiping metadata from {fpath}")
-        elif verbose:
-            click.echo(f"No metadata to wipe from {fpath}")
+        if verbose:
+            if attr_list:
+                click.echo(f"Wiping metadata from {fpath}")
+            else:
+                click.echo(f"No metadata to wipe from {fpath}")
         for attr in attr_list:
             try:
                 attribute = ATTRIBUTES[attr]
@@ -622,9 +623,6 @@ def process_single_file(
             if verbose:
                 click.echo(f"Clearing {attr}")
             md.clear_attribute(attribute.name)
-            if attr == "tags":
-                pass
-
     if set_:
         # set data
         # check attribute is valid
@@ -646,17 +644,16 @@ def process_single_file(
             if attribute.list:
                 # attribute expects a list so pass value (which is a list)
                 md.set_attribute(attribute.name, value)
+            elif len(value) == 1:
+                # expected one and got one
+                md.set_attribute(attribute.name, value[0])
             else:
-                if len(value) == 1:
-                    # expected one and got one
-                    md.set_attribute(attribute.name, value[0])
-                else:
-                    click.echo(
-                        f"attribute {attribute.name} expects only a single value but {len(value)} provided",
-                        err=True,
-                    )
-                    ctx.get_help()
-                    ctx.exit(2)
+                click.echo(
+                    f"attribute {attribute.name} expects only a single value but {len(value)} provided",
+                    err=True,
+                )
+                ctx.get_help()
+                ctx.exit(2)
 
     if append:
         # append data

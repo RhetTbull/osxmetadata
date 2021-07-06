@@ -190,25 +190,19 @@ class Tag:
         self._name = name
 
         # if no color provided use color from Finder if it exists
-        if not len(color):
-            # no color provided
-            if name in self._finder_tags:
-                # use color Finder already using
-                self._colorid = self._finder_tags[name]
-            else:
-                self._colorid = FINDER_COLOR_NONE  # set to no color
-        elif len(color):
+        if len(color):
             # color was provided
-            if name in self._finder_tags:
-                # color in Finder, check to see if colors match
-                if color[0] != self._finder_tags[name]:
-                    logging.warning(
-                        f"assigning color {color[0]} to tag {name} but "
-                        f"color {self._finder_tags[name]} already assigned in Finder"
-                    )
-                self._colorid = color[0]
-            else:
-                self._colorid = color[0]
+            if name in self._finder_tags and color[0] != self._finder_tags[name]:
+                logging.warning(
+                    f"assigning color {color[0]} to tag {name} but "
+                    f"color {self._finder_tags[name]} already assigned in Finder"
+                )
+            self._colorid = color[0]
+        elif name in self._finder_tags:
+            # use color Finder already using
+            self._colorid = self._finder_tags[name]
+        else:
+            self._colorid = FINDER_COLOR_NONE  # set to no color
 
     @property
     def name(self):
