@@ -1,0 +1,24 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "bglezseoane",
+      "name": "Borja González Seoane",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24481419?v=4",
+      "profile": "http://www.borja.glezseoane.es",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "osxmetadata",
+  "projectOwner": "RhetTbull",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
