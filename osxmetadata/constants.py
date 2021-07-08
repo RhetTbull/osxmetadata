@@ -70,6 +70,7 @@ kMDItemKeywords = "com.apple.metadata:kMDItemKeywords"
 _kMDItemUserTags = "com.apple.metadata:_kMDItemUserTags"
 kMDItemUserTags = "com.apple.metadata:_kMDItemUserTags"
 kMDItemWhereFroms = "com.apple.metadata:kMDItemWhereFroms"
+kMDItemDueDate = "com.apple.metadata:kMDItemDueDate"
 FinderInfo = "com.apple.FinderInfo"
 
 
@@ -97,5 +98,6 @@ __all__ = [
     "kMDItemUserTags",
     "_kMDItemUserTags",
     "kMDItemWhereFroms",
+    "kMDItemDueDate",
     "FinderInfo",
 ]

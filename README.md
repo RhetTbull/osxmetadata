@@ -183,13 +183,13 @@ Information about commonly used MacOS metadata attributes is available from [App
 |kMDItemCreator|creator|com.apple.metadata:kMDItemCreator|Application used to create the document content (for example “Word”, “Pages”, and so on).  A string.|
 |kMDItemDescription|description|com.apple.metadata:kMDItemDescription|A description of the content of the resource.  The description may include an abstract, table of contents, reference to a graphical representation of content or a free-text account of the content.  A string.|
 |kMDItemDownloadedDate|downloadeddate|com.apple.metadata:kMDItemDownloadedDate|The date the item was downloaded.  A datetime.datetime object.  If datetime.datetime object lacks tzinfo (i.e. it is timezone naive), it will be assumed to be in local timezone.|
+|kMDItemDueDate|duedate|com.apple.metadata:kMDItemDueDate|The date the item is due.  A datetime.datetime object.  If datetime.datetime object lacks tzinfo (i.e. it is timezone naive), it will be assumed to be in local timezone.|
 |kMDItemFinderComment|findercomment|com.apple.metadata:kMDItemFinderComment|Finder comments for this file.  A string.|
 |FinderInfo|finderinfo|com.apple.FinderInfo|Color tag set by the Finder.  Colors can also be set by _kMDItemUserTags.  This is controlled by the Finder and it's recommended you don't directly access this attribute.  If you set or remove a color tag via _kMDItemUserTag, osxmetadata will automatically handle processing of FinderInfo color tag.|
 |kMDItemHeadline|headline|com.apple.metadata:kMDItemHeadline|A publishable entry providing a synopsis of the contents of the file.  A string.|
 |kMDItemKeywords|keywords|com.apple.metadata:kMDItemKeywords|Keywords associated with this file. For example, “Birthday”, “Important”, etc. This differs from Finder tags (_kMDItemUserTags) which are keywords/tags shown in the Finder and searchable in Spotlight using "tag:tag_name".  A list of strings.|
-|_kMDItemUserTags|tags|com.apple.metadata:_kMDItemUserTags|Finder tags; searchable in Spotlight using "tag:tag_name".  If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords.  A list of [Tag](#tag-object) objects.|
+|_kMDItemUserTags|tags|com.apple.metadata:_kMDItemUserTags|Finder tags; searchable in Spotlight using "tag:tag_name".  If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords.  A list of Tag objects.|
 |kMDItemWhereFroms|wherefroms|com.apple.metadata:kMDItemWhereFroms|Describes where the file was obtained from (e.g. URL downloaded from).  A list of strings.|
-
 
 ## Example uses of the package
 

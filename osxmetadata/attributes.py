@@ -134,9 +134,7 @@ ATTRIBUTES = {
         "kMDItemDownloadedDate",
         kMDItemDownloadedDate,
         datetime.datetime,
-        # False,
         True,
-        # True,
         False,
         _AttributeList,
         False,
@@ -237,7 +235,28 @@ ATTRIBUTES = {
         + "If you set or remove a color tag via _kMDItemUserTag, osxmetadata will automatically handle "
         + "processing of FinderInfo color tag.",
         None,
-    )
+    ),
+    "duedate": Attribute(
+        "duedate",
+        "kMDItemDueDate",
+        kMDItemDueDate,
+        datetime.datetime,
+        False,
+        False,
+        datetime.datetime,
+        False,
+        False,
+        "The date the item is due.  A date in ISO 8601 format, "
+        "time and timezone offset are optional: e.g. "
+        + "2020-04-14T12:00:00 (ISO 8601 w/o timezone), "
+        + "2020-04-14 (ISO 8601 w/o time and time zone), or "
+        + "2020-04-14T12:00:00-07:00 (ISO 8601 with timezone offset). "
+        + "Times without timezone offset are assumed to be in local timezone.",
+        "The date the item is due.  A datetime.datetime object.  "
+        + "If datetime.datetime object lacks tzinfo (i.e. it is timezone naive), it "
+        + "will be assumed to be in local timezone.",
+    ),
+ 
     # "test": Attribute(
     #     "test",
     #     "com.osxmetadata.test:DontTryThisAtHomeKids",
@@ -329,25 +348,23 @@ def validate_attribute_value(attribute, value):
                     f"{val} cannot be converted to expected type {attribute.type_}"
                 )
         elif attribute.type_ == datetime.datetime:
-            if not isinstance(val, datetime.datetime):
-                # if not already a datetime.datetime, try to convert it
+            if isinstance(val, datetime.datetime):
+                new_val = val
+            elif not val:
+                new_val = None
+            else:
                 try:
                     new_val = datetime.datetime.fromisoformat(val)
                 except:
                     raise TypeError(
                         f"{val} cannot be converted to expected type {attribute.type_}"
                     )
-            else:
-                new_val = val
-            # convert datetime to UTC
-            if datetime_has_tz(new_val):
+            if isinstance(new_val, datetime.datetime):
+                if not datetime_has_tz(new_val):
+                    # assume it's in local time, so add local timezone,
+                    # convert to UTC, then drop timezone
+                    new_val = datetime_naive_to_local(new_val)
                 # convert to UTC and remove timezone
-                new_val = datetime_tz_to_utc(new_val)
-                new_val = datetime_remove_tz(new_val)
-            else:
-                # assume it's in local time, so add local timezone,
-                # convert to UTC, then drop timezone
-                new_val = datetime_naive_to_local(new_val)
                 new_val = datetime_tz_to_utc(new_val)
                 new_val = datetime_remove_tz(new_val)
         else:

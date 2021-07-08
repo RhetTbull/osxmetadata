@@ -41,6 +41,7 @@ from .constants import (
     kMDItemKeywords,
     kMDItemUserTags,
     kMDItemWhereFroms,
+    kMDItemDueDate,
 )
 from .datetime_utils import (
     datetime_naive_to_utc,
@@ -66,6 +67,7 @@ __all__ = [
     "kMDItemUserTags",
     "_kMDItemUserTags",
     "kMDItemWhereFroms",
+    "kMDItemDueDate",
 ]
 
 
@@ -116,6 +118,7 @@ class OSXMetaData:
         "tags",
         "wherefroms",
         "finderinfo",
+        "duedate",
     ]
 
     def __init__(self, fname, tz_aware=False):
@@ -549,9 +552,10 @@ class OSXMetaData:
             pass
 
     def __getattr__(self, name):
-        """if attribute name is in ATTRIBUTE dict, return the value
-        otherwise raise KeyError"""
-        return self.get_attribute(name)
+        """if attribute name is in ATTRIBUTE dict, return the value """
+        if name in ATTRIBUTES:
+            return self.get_attribute(name)
+        raise AttributeError(f"{name} is not an attribute")
 
     def __setattr__(self, name, value):
         """if object is initialized and name is an attribute in ATTRIBUTES,
