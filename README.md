@@ -34,7 +34,7 @@ If you only care about the command line tool, I recommend installing with [pipx]
 The command line tool can also be run via `python -m osxmetadata`.  Running it with no arguments or with --help option will print a help message:
 
 ```
-Usage: python -m osxmetadata [OPTIONS] FILE
+Usage: osxmetadata [OPTIONS] FILE
 
   Read/write metadata from file(s).
 
@@ -141,6 +141,13 @@ downloadeddate  kMDItemDownloadedDate,
                 zone), or 2020-04-14T12:00:00-07:00 (ISO 8601 with timezone
                 offset). Times without timezone offset are assumed to be in
                 local timezone.
+duedate         kMDItemDueDate, com.apple.metadata:kMDItemDueDate; The date
+                the item is due.  A date in ISO 8601 format, time and
+                timezone offset are optional: e.g. 2020-04-14T12:00:00 (ISO
+                8601 w/o timezone), 2020-04-14 (ISO 8601 w/o time and time
+                zone), or 2020-04-14T12:00:00-07:00 (ISO 8601 with timezone
+                offset). Times without timezone offset are assumed to be in
+                local timezone.
 findercomment   kMDItemFinderComment,
                 com.apple.metadata:kMDItemFinderComment; Finder comments for
                 this file.  A string.
@@ -159,6 +166,9 @@ keywords        kMDItemKeywords, com.apple.metadata:kMDItemKeywords;
                 (_kMDItemUserTags) which are keywords/tags shown in the
                 Finder and searchable in Spotlight using "tag:tag_name".  A
                 list of strings.
+rating          kMDItemStarRating, com.apple.metadata:kMDItemStarRating;
+                User rating of this item. For example, the stars rating of
+                an iTunes track. An integer.
 tags            _kMDItemUserTags, com.apple.metadata:_kMDItemUserTags;
                 Finder tags; searchable in Spotlight using "tag:tag_name".
                 If you want tags/keywords visible in the Finder, use this

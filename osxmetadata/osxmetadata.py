@@ -8,7 +8,6 @@ import logging
 import os.path
 import pathlib
 import plistlib
-import sys
 import base64
 
 # plistlib creates constants at runtime which causes pylint to complain
@@ -42,6 +41,7 @@ from .constants import (
     kMDItemUserTags,
     kMDItemWhereFroms,
     kMDItemDueDate,
+    kMDItemStarRating,
 )
 from .datetime_utils import (
     datetime_naive_to_utc,
@@ -120,6 +120,7 @@ class OSXMetaData:
         "wherefroms",
         "finderinfo",
         "duedate",
+        "rating",
     ]
 
     def __init__(self, fname, tz_aware=False):
@@ -222,7 +223,7 @@ class OSXMetaData:
 
     def to_json(self, all_=False):
         """Returns a string in JSON format for all attributes in this file
-    
+
         Args:
             all_: bool; if True, also restores attributes not known to osxmetadata (generated with asdict(all_=True, encode=True) )
         """
@@ -553,7 +554,7 @@ class OSXMetaData:
             pass
 
     def __getattr__(self, name):
-        """if attribute name is in ATTRIBUTE dict, return the value """
+        """if attribute name is in ATTRIBUTE dict, return the value"""
         if name in ATTRIBUTES:
             return self.get_attribute(name)
         raise AttributeError(f"{name} is not an attribute")

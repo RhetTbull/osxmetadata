@@ -2,7 +2,6 @@
 
 
 import datetime
-import logging
 from collections import namedtuple  # pylint: disable=syntax-error
 
 from .classes import _AttributeFinderInfo, _AttributeList, _AttributeTagsList
@@ -268,30 +267,9 @@ ATTRIBUTES = {
         False,
         False,
         "User rating of this item. "
-        + "For example, the stars rating of an iTunes track. An int.",
+        + "For example, the stars rating of an iTunes track. An integer.",
         None,
     )
-    # "test": Attribute(
-    #     "test",
-    #     "com.osxmetadata.test:DontTryThisAtHomeKids",
-    #     "com.osxmetadata.test:DontTryThisAtHomeKids",
-    #     datetime.datetime,
-    #     False,
-    #     False,
-    #     datetime.datetime,
-    #     "Don't try this at home",
-    # ),
-    # "test_float": Attribute(
-    #     "test_float",
-    #     "com.osxmetadata.test:DontTryThisAtHomeKids",
-    #     float,
-    #     False,
-    #     False,
-    #     float,
-    # ),
-    # "test_str": Attribute(
-    #     "test_str", "com.osxmetadata.test:String", str, False, False, str
-    # ),
 }
 
 # used for formatting output of --list
@@ -333,14 +311,6 @@ def validate_attribute_value(attribute, value):
             iter(value)
     except TypeError:
         value = [value]
-
-    # # check for None and convert to list if needed
-    # if not isinstance(value, list):
-    #     if value is None:
-    #         return None
-    #     value = [value]
-    # elif None in value:
-    #     return None
 
     if not attribute.list and len(value) > 1:
         # got a list but didn't expect one
