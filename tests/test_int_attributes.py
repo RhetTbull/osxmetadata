@@ -1,9 +1,10 @@
-""" Test datetime.datetime attributes """
+""" Test int attributes """
 
-import datetime
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
+import platform
+
 from osxmetadata.attributes import ATTRIBUTES
 
 
@@ -27,14 +28,10 @@ def temp_file(request):
 
 
 test_data = [
-    (attr)
-    for attr in sorted(list(ATTRIBUTES.keys()))
-    if ATTRIBUTES[attr].class_ == datetime.datetime
+    (attr) for attr in sorted(list(ATTRIBUTES.keys())) if ATTRIBUTES[attr].class_ == int
 ]
 ids = [
-    attr
-    for attr in sorted(list(ATTRIBUTES.keys()))
-    if ATTRIBUTES[attr].class_ == datetime.datetime
+    attr for attr in sorted(list(ATTRIBUTES.keys())) if ATTRIBUTES[attr].class_ == int
 ]
 
 test_data2 = [
@@ -42,7 +39,7 @@ test_data2 = [
     for attribute_name in {
         ATTRIBUTES[attr].name
         for attr in sorted(ATTRIBUTES)
-        if ATTRIBUTES[attr].class_ == datetime.datetime
+        if ATTRIBUTES[attr].class_ == int
     }
 ]
 ids2 = [
@@ -50,7 +47,7 @@ ids2 = [
     for attribute_name in {
         ATTRIBUTES[attr].name
         for attr in sorted(ATTRIBUTES)
-        if ATTRIBUTES[attr].class_ == datetime.datetime
+        if ATTRIBUTES[attr].class_ == int
     }
 ]
 
@@ -62,17 +59,20 @@ def test_str_attribute(temp_file, attribute):
     from osxmetadata.constants import _FINDER_COMMENT_NAMES
 
     meta = OSXMetaData(temp_file)
-    expected = datetime.datetime(2021, 7, 8)
+    expected = 2
     meta.set_attribute(attribute, expected)
     got = meta.get_attribute(attribute)
     assert expected == got
 
-    meta.clear_attribute(attribute)
-    assert meta.get_attribute(attribute) == None
+    expected += 1
+    meta.append_attribute(attribute, 1)
+    assert meta.get_attribute(attribute) == expected
 
-    # test setting empty string
-    meta.set_attribute(attribute, "")
+    meta.clear_attribute(attribute)
     assert meta.get_attribute(attribute) is None
+
+    with pytest.raises(TypeError):
+        meta.set_attribute(attribute, "")
 
     with pytest.raises(TypeError):
         meta.update_attribute(attribute, "foo")
@@ -90,25 +90,29 @@ def test_str_attribute_2(temp_file, attribute):
     from osxmetadata import OSXMetaData
 
     meta = OSXMetaData(temp_file)
-    setattr(meta, attribute, datetime.datetime(2021, 7, 8))
+    setattr(meta, attribute, 3)
     test_attr = getattr(meta, attribute)
-    assert test_attr == datetime.datetime(2021, 7, 8)
-    assert meta.get_attribute(attribute) == datetime.datetime(2021, 7, 8)
+    assert test_attr == 3
+    assert meta.get_attribute(attribute) == 3
 
 
-def test_duedate(temp_file):
-    """test functions on one of the datetime attributes"""
+def test_rating(temp_file):
+    """test int functions on one of the int attributes"""
     from osxmetadata import OSXMetaData
 
     meta = OSXMetaData(temp_file)
-    meta.duedate = "2021-07-08"
-    assert meta.duedate == datetime.datetime(2021, 7, 8)
-    assert meta.get_attribute("duedate") == datetime.datetime(2021, 7, 8)
+    meta.rating = 4
+    assert meta.rating == 4
+    assert meta.get_attribute("rating") == 4
 
-    meta.duedate = None
-    assert meta.duedate is None
-    assert meta.get_attribute("duedate") is None
+    meta.rating += 1
+    assert meta.rating == 5
+    assert meta.get_attribute("rating") == 5
 
-    meta.duedate = datetime.datetime(2021, 7, 8)
-    assert meta.duedate == datetime.datetime(2021, 7, 8)
-    assert meta.get_attribute("duedate") == datetime.datetime(2021, 7, 8)
+    meta.rating = None
+    assert meta.rating is None
+    assert meta.get_attribute("rating") is None
+
+    meta.rating = 5
+    assert meta.rating == 5
+    assert meta.get_attribute("rating") == 5

@@ -256,7 +256,20 @@ ATTRIBUTES = {
         + "If datetime.datetime object lacks tzinfo (i.e. it is timezone naive), it "
         + "will be assumed to be in local timezone.",
     ),
- 
+    "rating": Attribute(
+        "rating",
+        "kMDItemStarRating",
+        kMDItemStarRating,
+        int,
+        False,
+        False,
+        int,
+        False,
+        False,
+        "User rating of this item. "
+        + "For example, the stars rating of an iTunes track. An int.",
+        None,
+    )
     # "test": Attribute(
     #     "test",
     #     "com.osxmetadata.test:DontTryThisAtHomeKids",
@@ -299,11 +312,11 @@ if _temp_attributes:
 
 
 def validate_attribute_value(attribute, value):
-    """ validate that value is compatible with attribute.type_ 
-        and convert value to correct type
-        returns value as type attribute.type_ 
-        value may be a single value or a list depending on what attribute expects 
-        if value contains None, returns None """
+    """validate that value is compatible with attribute.type_
+    and convert value to correct type
+    returns value as type attribute.type_
+    value may be a single value or a list depending on what attribute expects
+    if value contains None, returns None"""
 
     # check to see if we got None
     try:
@@ -343,10 +356,18 @@ def validate_attribute_value(attribute, value):
         elif attribute.type_ == float:
             try:
                 new_val = float(val)
-            except:
+            except ValueError:
+                # todo: should this really raise ValueError?
                 raise TypeError(
                     f"{val} cannot be converted to expected type {attribute.type_}"
                 )
+        elif attribute.type_ == int:
+            try:
+                new_val = int(val)
+            except ValueError:
+               raise TypeError(
+                   f"{val} cannot be converted to expected type {attribute.type_}" 
+               )
         elif attribute.type_ == datetime.datetime:
             if isinstance(val, datetime.datetime):
                 new_val = val
@@ -355,7 +376,7 @@ def validate_attribute_value(attribute, value):
             else:
                 try:
                     new_val = datetime.datetime.fromisoformat(val)
-                except:
+                except ValueError:
                     raise TypeError(
                         f"{val} cannot be converted to expected type {attribute.type_}"
                     )

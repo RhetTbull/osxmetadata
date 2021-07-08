@@ -68,6 +68,7 @@ __all__ = [
     "_kMDItemUserTags",
     "kMDItemWhereFroms",
     "kMDItemDueDate",
+    "kMDItemStarRating",
 ]
 
 
@@ -141,7 +142,7 @@ class OSXMetaData:
         # ATTRIBUTES contains both long and short names, want only the short names (attribute.name)
         for name in {attribute.name for attribute in ATTRIBUTES.values()}:
             attribute = ATTRIBUTES[name]
-            if attribute.class_ not in [str, float, datetime.datetime]:
+            if attribute.class_ not in [str, float, int, datetime.datetime]:
                 super().__setattr__(
                     name, attribute.class_(attribute, self._attrs, self)
                 )
@@ -478,7 +479,7 @@ class OSXMetaData:
         try:
             values.remove(value)
             self.set_attribute(attribute.name, values)
-        except:
+        except Exception:
             pass
 
     def clear_attribute(self, attribute_name):

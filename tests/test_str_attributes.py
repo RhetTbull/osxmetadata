@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+""" Test str attributes """
 
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 

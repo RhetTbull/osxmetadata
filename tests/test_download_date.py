@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+""" Test downloadeddate """
 
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 

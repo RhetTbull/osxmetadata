@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+"""Test findercomment """
 
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 

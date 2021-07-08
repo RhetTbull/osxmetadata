@@ -25,9 +25,9 @@ _kCOLOR_OFFSET = 76
 
 
 def set_finderinfo_color(filename, colorid):
-    """ set tag color of filename to colorid
-        filename: path to file
-        colorid: ID of tag color in range 0 to 7
+    """set tag color of filename to colorid
+    filename: path to file
+    colorid: ID of tag color in range 0 to 7
     """
 
     if not os.path.exists(filename):
@@ -41,7 +41,7 @@ def set_finderinfo_color(filename, colorid):
     try:
         finderinfo = attr.get("com.apple.FinderInfo")
         finderbits = bitstring.BitArray(finderinfo)
-    except:
+    except Exception:
         finderbits = bitstring.BitArray(uint=0, length=256)
 
     # color is encoded as 3 binary bits
@@ -53,10 +53,10 @@ def set_finderinfo_color(filename, colorid):
 
 
 def get_finderinfo_color(filename):
-    """ get the tag color of a file set via com.apple.FinderInfo
-        filename: path to file
-        returns: color id as int, 0 if no color 
-                 or None if com.apple.FinderInfo not set """
+    """get the tag color of a file set via com.apple.FinderInfo
+    filename: path to file
+    returns: color id as int, 0 if no color
+             or None if com.apple.FinderInfo not set"""
 
     if not os.path.exists(filename):
         raise FileNotFoundError(f"filename {filename} not found")
@@ -73,23 +73,23 @@ def get_finderinfo_color(filename):
 
 
 def get_tag_color_name(colorid):
-    """ Return name of the Finder color based on ID """
+    """Return name of the Finder color based on ID"""
     # TODO: need to figure out how to do this in locale/language name
     try:
         colorname = _COLORIDS[colorid]
-    except:
+    except KeyError:
         raise ValueError(f"Invalid colorid: {colorid}")
     return colorname
 
 
 def tag_factory(tag_str):
-    """ creates a Tag object
-        tag_str: (str) tag value in format: 'name,color' 
-        where name is the name of the tag and color specifies the color ID
-        the comma and color are optional; 
-        if not provided Tag will use color assigned in Finder or FINDER_COLOR_NONE if no color 
-        e.g. tag_factory("foo") -> Tag("foo")
-             tag_factory("test,6") -> Tag("test", 6) """
+    """creates a Tag object
+    tag_str: (str) tag value in format: 'name,color'
+    where name is the name of the tag and color specifies the color ID
+    the comma and color are optional;
+    if not provided Tag will use color assigned in Finder or FINDER_COLOR_NONE if no color
+    e.g. tag_factory("foo") -> Tag("foo")
+         tag_factory("test,6") -> Tag("test", 6)"""
 
     if not isinstance(tag_str, str):
         raise TypeError(f"tag_str must be str not {type(tag_str)}")
@@ -123,8 +123,8 @@ def tag_factory(tag_str):
 
 
 def get_finder_tags():
-    """ parses com.apple.finder.plist to get list of Finder tags and associated colors
-        returns: dict in form {tag_name: color_id} """
+    """parses com.apple.finder.plist to get list of Finder tags and associated colors
+    returns: dict in form {tag_name: color_id}"""
 
     # TODO: Is it possible to get a race condition where Finder is writing at same time
     # this code is trying to open the plist file?  If so, what happens?
@@ -158,16 +158,16 @@ def get_finder_tags():
 
 
 class Tag:
-    """ Information about Finder tags/keywords and associated color labels """
+    """Information about Finder tags/keywords and associated color labels"""
 
     def __init__(self, name, *color):
-        """ Create a new Tag object
-            name: (str) name of the tag
-            color: (int) color ID of the tag, optional
-            If color name is not provided, com.apple.finder.plist will be parsed to see if 
-            a color is already associated with 'name' and if so, that color will be assigned
-            If a color is provided and the Finder's color is different, a warning will be logged
-            but the new color ID will be used """
+        """Create a new Tag object
+        name: (str) name of the tag
+        color: (int) color ID of the tag, optional
+        If color name is not provided, com.apple.finder.plist will be parsed to see if
+        a color is already associated with 'name' and if so, that color will be assigned
+        If a color is provided and the Finder's color is different, a warning will be logged
+        but the new color ID will be used"""
 
         # input validation
         # todo: add length validation on name? Need to determine what max tag length is for Finder
@@ -213,7 +213,7 @@ class Tag:
         return self._colorid
 
     def _format(self):
-        """ formats a tag for writing to _kMDItemUserTags """
+        """formats a tag for writing to _kMDItemUserTags"""
         return f"{self.name}\n{self.color}"
 
     def __str__(self):

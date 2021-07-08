@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+""" Test osxmetadata command line interface """
 
 import datetime
 from tempfile import NamedTemporaryFile, TemporaryDirectory

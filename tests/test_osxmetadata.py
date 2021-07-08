@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+""" Test OSXMetaData class """
 import platform
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 

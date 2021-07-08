@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+"""Test list-type attributes """
 
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 

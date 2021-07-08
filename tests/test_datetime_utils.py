@@ -1,3 +1,5 @@
+""" Test datetime utils"""
+
 import os
 import datetime
 from osxmetadata import datetime_utils

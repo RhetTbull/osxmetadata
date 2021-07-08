@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+""" Test finderinfo """
 
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
