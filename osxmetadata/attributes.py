@@ -1,5 +1,6 @@
 """ Constants and validation for metadata attributes that can be set """
 
+
 import datetime
 import logging
 from collections import namedtuple  # pylint: disable=syntax-error
@@ -294,19 +295,18 @@ ATTRIBUTES = {
 }
 
 # used for formatting output of --list
-_SHORT_NAME_WIDTH = max([len(x) for x in ATTRIBUTES.keys()]) + 5
-_LONG_NAME_WIDTH = max([len(x.constant) for x in ATTRIBUTES.values()]) + 10
+_SHORT_NAME_WIDTH = max(len(x) for x in ATTRIBUTES) + 5
+_LONG_NAME_WIDTH = max(len(x.constant) for x in ATTRIBUTES.values()) + 10
 _CONSTANT_WIDTH = 21 + 5  # currently longest is kMDItemDownloadedDate
 
 # also add entries for attributes by constant and short constant
 # do this after computing widths above
 _temp_attributes = {}
 for attribute in ATTRIBUTES.values():
-    if attribute.constant not in ATTRIBUTES:
-        _temp_attributes[attribute.constant] = attribute
-        _temp_attributes[attribute.short_constant] = attribute
-    else:
+    if attribute.constant in ATTRIBUTES:
         raise ValueError(f"Duplicate attribute in ATTRIBUTES: {attribute}")
+    _temp_attributes[attribute.constant] = attribute
+    _temp_attributes[attribute.short_constant] = attribute
 if _temp_attributes:
     ATTRIBUTES.update(_temp_attributes)
 
