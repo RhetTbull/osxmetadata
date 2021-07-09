@@ -298,6 +298,19 @@ ATTRIBUTES = {
         + "A list of strings.",
         None,
     ),
+    "version": Attribute(
+        "version",
+        "kMDItemVersion",
+        kMDItemVersion,
+        str,
+        False,
+        False,
+        str,
+        True,
+        False,
+        "The version number of this file. A string.",
+        None,
+    ),
 }
 
 # used for formatting output of --list

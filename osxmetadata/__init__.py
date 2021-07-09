@@ -4,6 +4,12 @@
 from ._version import __version__
 from .attributes import ATTRIBUTES
 from .constants import (
+    _COLORIDS,
+    _COLORNAMES,
+    _FINDER_COMMENT_NAMES,
+    _MAX_FINDERCOMMENT,
+    _MAX_WHEREFROM,
+    _VALID_COLORIDS,
     FINDER_COLOR_BLUE,
     FINDER_COLOR_GRAY,
     FINDER_COLOR_GREEN,
@@ -23,7 +29,11 @@ from .constants import (
     kMDItemFinderComment,
     kMDItemHeadline,
     kMDItemKeywords,
+    kMDItemParticipants,
+    kMDItemProjects,
+    kMDItemStarRating,
     kMDItemUserTags,
+    kMDItemVersion,
     kMDItemWhereFroms,
 )
 from .debug import _debug, _set_debug

@@ -49,8 +49,8 @@ _MAX_FINDER_COLOR = 7
 _VALID_COLORIDS = "01234567"
 _MAX_FINDERCOMMENT = 750  # determined through trial & error with Finder
 _MAX_WHEREFROM = (
-    1024
-)  # just picked something....todo: need to figure out what max length is
+    1024  # just picked something....todo: need to figure out what max length is
+)
 
 # _TAGS = "com.apple.metadata:_kMDItemUserTags"
 # _FINDER_COMMENT = "com.apple.metadata:kMDItemFinderComment"
@@ -75,6 +75,7 @@ FinderInfo = "com.apple.FinderInfo"
 kMDItemStarRating = "com.apple.metadata:kMDItemStarRating"
 kMDItemParticipants = "com.apple.metadata:kMDItemParticipants"
 kMDItemProjects = "com.apple.metadata:kMDItemProjects"
+kMDItemVersion = "com.apple.metadata:kMDItemVersion"
 
 
 # Special handling for Finder comments
@@ -106,4 +107,5 @@ __all__ = [
     "kMDItemStarRating",
     "kMDItemParticipants",
     "kMDItemProjects",
+    "kMDItemVersion",
 ]

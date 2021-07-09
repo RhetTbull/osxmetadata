@@ -2,13 +2,13 @@
     such as tags/keywords and Finder comments from files """
 
 
+import base64
 import datetime
 import json
 import logging
 import os.path
 import pathlib
 import plistlib
-import base64
 
 # plistlib creates constants at runtime which causes pylint to complain
 from plistlib import FMT_BINARY  # pylint: disable=E0611
@@ -26,7 +26,14 @@ from .constants import (
     _MAX_FINDERCOMMENT,
     _MAX_WHEREFROM,
     _VALID_COLORIDS,
+    FINDER_COLOR_BLUE,
+    FINDER_COLOR_GRAY,
+    FINDER_COLOR_GREEN,
     FINDER_COLOR_NONE,
+    FINDER_COLOR_ORANGE,
+    FINDER_COLOR_PURPLE,
+    FINDER_COLOR_RED,
+    FINDER_COLOR_YELLOW,
     FinderInfo,
     _kMDItemUserTags,
     kMDItemAuthors,
@@ -38,12 +45,12 @@ from .constants import (
     kMDItemFinderComment,
     kMDItemHeadline,
     kMDItemKeywords,
-    kMDItemUserTags,
-    kMDItemWhereFroms,
-    kMDItemDueDate,
-    kMDItemStarRating,
     kMDItemParticipants,
     kMDItemProjects,
+    kMDItemStarRating,
+    kMDItemUserTags,
+    kMDItemVersion,
+    kMDItemWhereFroms,
 )
 from .datetime_utils import (
     datetime_naive_to_utc,
@@ -73,6 +80,8 @@ __all__ = [
     "kMDItemStarRating",
     "kMDItemParticipants",
     "kMDItemProjects",
+    "kMDItemVersion",
+    "_FINDER_COMMENT_NAMES",
 ]
 
 
@@ -127,6 +136,7 @@ class OSXMetaData:
         "rating",
         "participants",
         "projects",
+        "version",
     ]
 
     def __init__(self, fname, tz_aware=False):
