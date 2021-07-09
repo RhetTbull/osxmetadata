@@ -269,7 +269,20 @@ ATTRIBUTES = {
         "User rating of this item. "
         + "For example, the stars rating of an iTunes track. An integer.",
         None,
-    )
+    ),
+    "participants": Attribute(
+        "participants",
+        "kMDItemParticipants",
+        kMDItemParticipants,
+        str,
+        True,
+        False,
+        _AttributeList,
+        True,
+        True,
+        "The list of people who are visible in an image or movie or written about in a document.  A list of strings.",
+        None,
+    ),
 }
 
 # used for formatting output of --list
@@ -335,9 +348,9 @@ def validate_attribute_value(attribute, value):
             try:
                 new_val = int(val)
             except ValueError:
-               raise TypeError(
-                   f"{val} cannot be converted to expected type {attribute.type_}" 
-               )
+                raise TypeError(
+                    f"{val} cannot be converted to expected type {attribute.type_}"
+                )
         elif attribute.type_ == datetime.datetime:
             if isinstance(val, datetime.datetime):
                 new_val = val

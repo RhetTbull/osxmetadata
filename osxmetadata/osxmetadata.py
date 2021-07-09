@@ -42,6 +42,7 @@ from .constants import (
     kMDItemWhereFroms,
     kMDItemDueDate,
     kMDItemStarRating,
+    kMDItemParticipants,
 )
 from .datetime_utils import (
     datetime_naive_to_utc,
@@ -69,6 +70,7 @@ __all__ = [
     "kMDItemWhereFroms",
     "kMDItemDueDate",
     "kMDItemStarRating",
+    "kMDItemParticipants",
 ]
 
 
@@ -121,6 +123,7 @@ class OSXMetaData:
         "finderinfo",
         "duedate",
         "rating",
+        "participants",
     ]
 
     def __init__(self, fname, tz_aware=False):
