@@ -280,7 +280,22 @@ ATTRIBUTES = {
         _AttributeList,
         True,
         True,
-        "The list of people who are visible in an image or movie or written about in a document.  A list of strings.",
+        "The list of people who are visible in an image or movie or written about in a document. "
+        + "A list of strings.",
+        None,
+    ),
+    "projects": Attribute(
+        "projects",
+        "kMDItemProjects",
+        kMDItemProjects,
+        str,
+        True,
+        False,
+        _AttributeList,
+        True,
+        True,
+        "The list of projects that this file is part of. For example, if you were working on a movie all of the files could be marked as belonging to the project “My Movie”. "
+        + "A list of strings.",
         None,
     ),
 }
