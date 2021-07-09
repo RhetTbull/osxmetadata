@@ -51,6 +51,7 @@ from .constants import (
     kMDItemUserTags,
     kMDItemVersion,
     kMDItemWhereFroms,
+    kMDItemFSIsStationery,
 )
 from .datetime_utils import (
     datetime_naive_to_utc,
@@ -81,7 +82,7 @@ __all__ = [
     "kMDItemParticipants",
     "kMDItemProjects",
     "kMDItemVersion",
-    "_FINDER_COMMENT_NAMES",
+    "kMDItemFSIsStationery",
 ]
 
 
@@ -137,6 +138,7 @@ class OSXMetaData:
         "participants",
         "projects",
         "version",
+        "stationary",
     ]
 
     def __init__(self, fname, tz_aware=False):
@@ -159,7 +161,7 @@ class OSXMetaData:
         # ATTRIBUTES contains both long and short names, want only the short names (attribute.name)
         for name in {attribute.name for attribute in ATTRIBUTES.values()}:
             attribute = ATTRIBUTES[name]
-            if attribute.class_ not in [str, float, int, datetime.datetime]:
+            if attribute.class_ not in [str, float, int, bool, datetime.datetime]:
                 super().__setattr__(
                     name, attribute.class_(attribute, self._attrs, self)
                 )

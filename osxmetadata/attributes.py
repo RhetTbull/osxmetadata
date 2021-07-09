@@ -311,6 +311,19 @@ ATTRIBUTES = {
         "The version number of this file. A string.",
         None,
     ),
+    "stationary": Attribute(
+        "stationary",
+        "kMDItemFSIsStationery",
+        kMDItemFSIsStationery,
+        bool,
+        False,
+        False,
+        bool,
+        False,
+        False,
+        "Boolean indicating if this file is stationery.",
+        None,
+    ),
 }
 
 # used for formatting output of --list
@@ -375,6 +388,13 @@ def validate_attribute_value(attribute, value):
         elif attribute.type_ == int:
             try:
                 new_val = int(val)
+            except ValueError:
+                raise TypeError(
+                    f"{val} cannot be converted to expected type {attribute.type_}"
+                )
+        elif attribute.type_ == bool:
+            try:
+                new_val = bool(val)
             except ValueError:
                 raise TypeError(
                     f"{val} cannot be converted to expected type {attribute.type_}"

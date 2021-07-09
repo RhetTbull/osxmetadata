@@ -76,6 +76,7 @@ kMDItemStarRating = "com.apple.metadata:kMDItemStarRating"
 kMDItemParticipants = "com.apple.metadata:kMDItemParticipants"
 kMDItemProjects = "com.apple.metadata:kMDItemProjects"
 kMDItemVersion = "com.apple.metadata:kMDItemVersion"
+kMDItemFSIsStationery = "com.apple.metadata:kMDItemFSIsStationery"
 
 
 # Special handling for Finder comments
@@ -108,4 +109,5 @@ __all__ = [
     "kMDItemParticipants",
     "kMDItemProjects",
     "kMDItemVersion",
+    "kMDItemFSIsStationery",
 ]
