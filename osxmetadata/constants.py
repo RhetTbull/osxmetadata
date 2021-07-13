@@ -52,6 +52,10 @@ _MAX_WHEREFROM = (
     1024  # just picked something....todo: need to figure out what max length is
 )
 
+# offset of tag color in com.apple.FinderInfo xattr
+# tag color is 3 bits
+_kCOLOR_OFFSET = 76
+
 # _TAGS = "com.apple.metadata:_kMDItemUserTags"
 # _FINDER_COMMENT = "com.apple.metadata:kMDItemFinderComment"
 # _WHERE_FROM = "com.apple.metadata:kMDItemWhereFroms"

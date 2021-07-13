@@ -222,7 +222,7 @@ ATTRIBUTES = {
     ),
     "finderinfo": Attribute(
         "finderinfo",
-        "FinderInfo",
+        "finderinfo",
         FinderInfo,
         str,
         False,
@@ -230,8 +230,8 @@ ATTRIBUTES = {
         _AttributeFinderInfo,
         False,
         False,
-        "Color tag set by the Finder.  Colors can also be set by _kMDItemUserTags.  "
-        + "This is controlled by the Finder and it's recommended you don't directly access this attribute.  "
+        "Info set by the Finder, for example tag color.  Colors can also be set by _kMDItemUserTags.  "
+        + f"{FinderInfo} is controlled by the Finder and it's recommended you don't directly access this attribute.  "
         + "If you set or remove a color tag via _kMDItemUserTag, osxmetadata will automatically handle "
         + "processing of FinderInfo color tag.",
         None,
@@ -324,6 +324,22 @@ ATTRIBUTES = {
         "Boolean indicating if this file is stationery.",
         None,
     ),
+    # "findercolor": Attribute(
+    #     "findercolor",
+    #     "findercolor",
+    #     FinderInfo,
+    #     str,
+    #     False,
+    #     False,
+    #     _AttributeFinderInfo,
+    #     False,
+    #     False,
+    #     "Color tag set by the Finder.  Colors can also be set by _kMDItemUserTags.  "
+    #     + "This is controlled by the Finder and it's recommended you don't directly access this attribute.  "
+    #     + "If you set or remove a color tag via _kMDItemUserTag, osxmetadata will automatically handle "
+    #     + "processing of FinderInfo color tag.",
+    #     None,
+    # ),
 }
 
 # used for formatting output of --list

@@ -1,9 +1,9 @@
 """ Test finderinfo """
 
+import platform
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
-import platform
 
 
 @pytest.fixture(params=["file", "dir"])
@@ -29,30 +29,30 @@ def test_finderinfo(temp_file):
 
     from osxmetadata import OSXMetaData, Tag
     from osxmetadata.constants import _MAX_FINDER_COLOR
-    from osxmetadata.findertags import (
-        get_finderinfo_color,
-        set_finderinfo_color,
-        get_tag_color_name,
-    )
+    from osxmetadata.findertags import get_tag_color_name
+
+    # get_finderinfo_color,
+    # set_finderinfo_color,
 
     meta = OSXMetaData(temp_file)
 
     # check each color combo.  Setting 0 doesn't work -- the attribute gets deleted
     for color_id in range(_MAX_FINDER_COLOR + 1, _MAX_FINDER_COLOR + 1):
-        set_finderinfo_color(temp_file, color_id)
-        color_got = get_finderinfo_color(temp_file)
+        meta.finderinfo.color = color_id
+        color_got = meta.finderinfo.color
         assert color_got == color_id
         color_name = get_tag_color_name(color_id)
         assert meta.tags == [Tag(color_name, color_id)]
 
 
 def test_invalid_colorid(temp_file):
-
+    from osxmetadata import OSXMetaData
     from osxmetadata.constants import _MAX_FINDER_COLOR, _MIN_FINDER_COLOR
-    from osxmetadata.findertags import set_finderinfo_color
+
+    meta = OSXMetaData(temp_file)
 
     with pytest.raises(ValueError):
-        set_finderinfo_color(temp_file, _MAX_FINDER_COLOR + 1)
+        meta.finderinfo.color = _MAX_FINDER_COLOR + 1
 
     with pytest.raises(ValueError):
-        set_finderinfo_color(temp_file, _MIN_FINDER_COLOR - 1)
+        meta.finderinfo.color = _MIN_FINDER_COLOR - 1

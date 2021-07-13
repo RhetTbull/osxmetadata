@@ -17,7 +17,7 @@ import osxmetadata
 from ._version import __version__
 from .attributes import _LONG_NAME_WIDTH, _SHORT_NAME_WIDTH, ATTRIBUTES
 from .backup import load_backup_file, write_backup_file
-from .classes import _AttributeList, _AttributeTagsList
+from .classes import _AttributeList, _AttributeTagsList, _AttributeFinderInfo
 from .constants import (
     _BACKUP_FILENAME,
     _COLORNAMES_LOWER,
@@ -107,6 +107,12 @@ class MyClickCommand(click.Command):
             + f"{', '.join([color for color, colorid in _COLORNAMES_LOWER.items() if colorid != FINDER_COLOR_NONE])}. "
             + "If color is not specified but a tag of the same name has already been assigned a color "
             + "in the Finder, the same color will automatically be assigned. "
+        )
+        formatter.write("\n")
+        formatter.write_text(
+            "com.apple.FinderInfo (finderinfo) value is a key:value dictionary. "
+            + "To set finderinfo, pass value in format key1:value1,key2:value2,etc. "
+            + "For example: 'osxmetadata --set finderinfo color:2 file.ext'."
         )
         formatter.write("\n")
 
@@ -631,8 +637,11 @@ def process_single_file(
             attr, val = item
             attribute = ATTRIBUTES[attr]
 
-            if attr in [*_TAGS_NAMES, *_FINDERINFO_NAMES]:
+            if attr in _TAGS_NAMES:
                 val = tag_factory(val)
+            elif attr in _FINDERINFO_NAMES:
+                val = _AttributeFinderInfo._str_to_value_dict(val)
+
             if verbose:
                 click.echo(f"Setting {attr}={val}")
             try:
@@ -783,11 +792,12 @@ def process_single_file(
                         tags = md.get_attribute(attribute.name)
                         value = [[tag.name, tag.color] for tag in tags]
                         data[attribute.constant] = value
-                    elif attribute.name == "finderinfo":
-                        finderinfo = md.get_attribute(attribute.name)
-                        value = [finderinfo.name, finderinfo.color]
-                        data[attribute.constant] = value
-                    elif attribute.type_ == datetime.datetime:
+                    elif (
+                        attribute.name == "finderinfo"
+                        or attribute.type_ != datetime.datetime
+                    ):
+                        data[attribute.constant] = md.get_attribute(attribute.name)
+                    else:
                         # need to convert datetime.datetime to string to serialize
                         value = md.get_attribute(attribute.name)
                         if type(value) == list:
@@ -795,9 +805,6 @@ def process_single_file(
                         else:
                             value = value.isoformat()
                         data[attribute.constant] = value
-                    else:
-                        # get raw value
-                        data[attribute.constant] = md.get_attribute(attribute.name)
                 except KeyError:
                     # unknown attribute, ignore it
                     pass

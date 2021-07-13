@@ -39,8 +39,8 @@ from .constants import (
 from .debug import _debug, _set_debug
 from .findertags import (
     Tag,
-    get_finderinfo_color,
+    # get_finderinfo_color,
     get_tag_color_name,
-    set_finderinfo_color,
+    # set_finderinfo_color,
 )
 from .osxmetadata import OSXMetaData

@@ -98,7 +98,8 @@ def parse_cli_output(output):
 
 def test_cli_1(temp_file):
     import datetime
-    from osxmetadata import OSXMetaData, kMDItemDownloadedDate
+
+    from osxmetadata import FINDER_COLOR_RED, OSXMetaData, kMDItemDownloadedDate
     from osxmetadata.__main__ import cli
 
     runner = CliRunner()
@@ -133,6 +134,9 @@ def test_cli_1(temp_file):
             "--remove",
             "keywords",
             "foo",
+            "--set",
+            "finderinfo",
+            "color:red",
             "--list",
             temp_file,
         ],
@@ -142,6 +146,7 @@ def test_cli_1(temp_file):
     assert output["keywords"] == "['bar']"
     meta = OSXMetaData(temp_file)
     assert meta.keywords == ["bar"]
+    assert meta.finderinfo.color == FINDER_COLOR_RED
 
     dt = "2020-02-23"
     result = runner.invoke(cli, ["--set", "downloadeddate", dt, "--list", temp_file])
@@ -161,7 +166,7 @@ def test_cli_1(temp_file):
 
 @pytest.mark.parametrize("attribute", test_names_str, ids=ids_str)
 def test_str_attributes(temp_file, attribute):
-    from osxmetadata import OSXMetaData, ATTRIBUTES
+    from osxmetadata import ATTRIBUTES, OSXMetaData
     from osxmetadata.__main__ import cli
 
     runner = CliRunner()
@@ -179,9 +184,9 @@ def test_str_attributes(temp_file, attribute):
 
 @pytest.mark.parametrize("attribute", test_names_list, ids=ids_list)
 def test_list_attributes(temp_file, attribute):
-    from osxmetadata import OSXMetaData, ATTRIBUTES, Tag
-    from osxmetadata.constants import _TAGS_NAMES
+    from osxmetadata import ATTRIBUTES, OSXMetaData, Tag
     from osxmetadata.__main__ import cli
+    from osxmetadata.constants import _TAGS_NAMES
 
     runner = CliRunner()
     result = runner.invoke(
@@ -221,7 +226,7 @@ def test_list_attributes(temp_file, attribute):
 
 @pytest.mark.parametrize("attribute", test_names_dt, ids=ids_list_dt)
 def test_datetime_list_attributes(temp_file, attribute):
-    from osxmetadata import OSXMetaData, ATTRIBUTES
+    from osxmetadata import ATTRIBUTES, OSXMetaData
     from osxmetadata.__main__ import cli
 
     dt = datetime.datetime.now()
@@ -240,7 +245,8 @@ def test_datetime_list_attributes(temp_file, attribute):
 def test_get_json(temp_file):
     import json
     import pathlib
-    from osxmetadata import OSXMetaData, ATTRIBUTES, __version__
+
+    from osxmetadata import ATTRIBUTES, OSXMetaData, __version__
     from osxmetadata.__main__ import cli
 
     runner = CliRunner()
@@ -258,7 +264,8 @@ def test_get_json(temp_file):
 def test_list_json(temp_file):
     import json
     import pathlib
-    from osxmetadata import OSXMetaData, ATTRIBUTES, __version__
+
+    from osxmetadata import ATTRIBUTES, OSXMetaData, __version__
     from osxmetadata.__main__ import cli
 
     runner = CliRunner()
@@ -274,7 +281,7 @@ def test_list_json(temp_file):
 
 
 def test_cli_error_json(temp_file):
-    from osxmetadata import OSXMetaData, ATTRIBUTES
+    from osxmetadata import ATTRIBUTES, OSXMetaData
     from osxmetadata.__main__ import cli
 
     runner = CliRunner()
@@ -284,7 +291,7 @@ def test_cli_error_json(temp_file):
 
 
 def test_cli_error_bad_attribute(temp_file):
-    from osxmetadata import OSXMetaData, ATTRIBUTES
+    from osxmetadata import ATTRIBUTES, OSXMetaData
     from osxmetadata.__main__ import cli
 
     runner = CliRunner()
@@ -304,9 +311,14 @@ def test_cli_error(temp_file):
 
 def test_cli_backup_restore(temp_file):
     import pathlib
-    from osxmetadata import OSXMetaData, ATTRIBUTES, Tag
-    from osxmetadata.constants import _BACKUP_FILENAME
+
+    from osxmetadata import ATTRIBUTES, OSXMetaData, Tag
     from osxmetadata.__main__ import cli
+    from osxmetadata.constants import (
+        _BACKUP_FILENAME,
+        FINDER_COLOR_GREEN,
+        FINDER_COLOR_NONE,
+    )
 
     runner = CliRunner()
     result = runner.invoke(
@@ -322,15 +334,23 @@ def test_cli_backup_restore(temp_file):
             "comment",
             "Hello World!",
             "--list",
+            "--set",
+            "finderinfo",
+            "color:green",
             temp_file,
         ],
     )
     assert result.exit_code == 0
     output = parse_cli_output(result.stdout)
-    assert output["tags"] == "['Foo', 'Bar']"
+    assert output["tags"] == "['Foo', 'Bar', 'Green,Green']"
     meta = OSXMetaData(temp_file)
-    assert meta.get_attribute("tags") == [Tag("Foo"), Tag("Bar")]
+    assert meta.get_attribute("tags") == [
+        Tag("Foo"),
+        Tag("Bar"),
+        Tag("Green", FINDER_COLOR_GREEN),
+    ]
     assert meta.get_attribute("comment") == "Hello World!"
+    assert meta.finderinfo.color == FINDER_COLOR_GREEN
 
     # test creation of backup file
     result = runner.invoke(cli, ["--backup", temp_file])
@@ -341,21 +361,25 @@ def test_cli_backup_restore(temp_file):
     # clear the attributes to see if they can be restored
     meta.clear_attribute("tags")
     meta.clear_attribute("comment")
+    meta.clear_attribute("finderinfo")
     assert meta.tags == []
     assert meta.comment is None
+    assert meta.finderinfo.color == FINDER_COLOR_NONE
 
     result = runner.invoke(cli, ["--restore", temp_file])
     assert result.exit_code == 0
-    assert meta.tags == [Tag("Foo"), Tag("Bar")]
+    assert meta.tags == [Tag("Foo"), Tag("Bar"), Tag("Green", FINDER_COLOR_GREEN)]
     assert meta.comment == "Hello World!"
+    assert meta.finderinfo.color == FINDER_COLOR_GREEN
 
 
 def test_cli_backup_restore_2(temp_file):
     # test set during restore
     import pathlib
-    from osxmetadata import OSXMetaData, ATTRIBUTES, Tag
-    from osxmetadata.constants import _BACKUP_FILENAME
+
+    from osxmetadata import ATTRIBUTES, OSXMetaData, Tag
     from osxmetadata.__main__ import cli
+    from osxmetadata.constants import _BACKUP_FILENAME
 
     runner = CliRunner()
     result = runner.invoke(
@@ -415,9 +439,10 @@ def test_cli_backup_restore_2(temp_file):
 def test_cli_backup_restore_all(temp_file):
     """Test --backup/--restore with --all"""
     import pathlib
-    from osxmetadata import OSXMetaData, ATTRIBUTES, Tag
-    from osxmetadata.constants import _BACKUP_FILENAME
+
+    from osxmetadata import ATTRIBUTES, OSXMetaData, Tag
     from osxmetadata.__main__ import cli
+    from osxmetadata.constants import _BACKUP_FILENAME
 
     runner = CliRunner()
     result = runner.invoke(
@@ -472,6 +497,7 @@ def test_cli_backup_restore_all(temp_file):
 
 def test_cli_mirror(temp_file):
     import datetime
+
     from osxmetadata import OSXMetaData, Tag
     from osxmetadata.__main__ import cli
 
@@ -524,6 +550,7 @@ def test_cli_mirror(temp_file):
 
 def test_cli_mirror_bad_args(temp_file):
     import datetime
+
     from osxmetadata import OSXMetaData
     from osxmetadata.__main__ import cli
 
@@ -826,13 +853,14 @@ def test_cli_version():
 def test_cli_downloadeddate(temp_file):
     # pass ISO 8601 format with timezone, get back naive local time
     import datetime
+
     from osxmetadata import OSXMetaData, kMDItemDownloadedDate
+    from osxmetadata.__main__ import cli
     from osxmetadata.datetime_utils import (
         datetime_naive_to_utc,
-        datetime_utc_to_local,
         datetime_remove_tz,
+        datetime_utc_to_local,
     )
-    from osxmetadata.__main__ import cli
 
     runner = CliRunner()
     dt = "2020-02-23:00:00:00+00:00"  # UTC time
@@ -855,6 +883,7 @@ def test_cli_walk(temp_dir):
     """test --walk"""
     import os
     import pathlib
+
     from osxmetadata import OSXMetaData, Tag
     from osxmetadata.__main__ import cli
 
@@ -879,6 +908,7 @@ def test_cli_walk_files_only(temp_dir):
     """test --walk with --files-only"""
     import os
     import pathlib
+
     from osxmetadata import OSXMetaData, Tag
     from osxmetadata.__main__ import cli
 
@@ -905,6 +935,7 @@ def test_cli_walk_pattern(temp_dir):
     """test --walk with --pattern"""
     import os
     import pathlib
+
     from osxmetadata import OSXMetaData, Tag
     from osxmetadata.__main__ import cli
 
@@ -935,6 +966,7 @@ def test_cli_walk_pattern_2(temp_dir):
     """test --walk with more than one --pattern"""
     import os
     import pathlib
+
     from osxmetadata import OSXMetaData, Tag
     from osxmetadata.__main__ import cli
 
@@ -981,6 +1013,7 @@ def test_cli_files_only(temp_dir):
     import glob
     import os
     import pathlib
+
     from osxmetadata import OSXMetaData, Tag
     from osxmetadata.__main__ import cli
 

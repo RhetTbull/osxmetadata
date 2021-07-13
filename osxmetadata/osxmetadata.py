@@ -59,7 +59,8 @@ from .datetime_utils import (
     datetime_utc_to_local,
 )
 from .debug import _debug, _get_logger, _set_debug
-from .findertags import Tag, get_tag_color_name, set_finderinfo_color
+from .findertags import Tag, get_tag_color_name
+
 
 __all__ = [
     "OSXMetaData",
@@ -211,8 +212,7 @@ class OSXMetaData:
                     value = [[tag.name, tag.color] for tag in tags]
                     dict_data[attribute.constant] = value
                 elif attribute.name == "finderinfo":
-                    finderinfo = self.get_attribute(attribute.name)
-                    value = [finderinfo.name, finderinfo.color]
+                    value = self.finderinfo.asdict()
                     dict_data[attribute.constant] = value
                 elif attribute.type_ == datetime.datetime:
                     # need to convert datetime.datetime to string to serialize
@@ -270,11 +270,11 @@ class OSXMetaData:
                         )
                     self.set_attribute(key, [Tag(*tag_val) for tag_val in val])
                 elif key == FinderInfo:
-                    if not isinstance(val, list):
+                    if not isinstance(val, dict):
                         raise TypeError(
-                            f"expected list for attribute {key} but got {type(val)}"
+                            f"expected dict for attribute {key} but got {type(val)}"
                         )
-                    self.set_attribute(key, Tag(val[0], val[1]))
+                    self.set_attribute(key, val)
                 elif key in ATTRIBUTES:
                     self.set_attribute(key, val)
                 elif all_:
@@ -515,7 +515,7 @@ class OSXMetaData:
 
             if attribute.name in ["finderinfo", "tags"]:
                 # don't clear the entire FinderInfo attribute, just delete the color
-                set_finderinfo_color(str(self._fname), FINDER_COLOR_NONE)
+                self.finderinfo.set_finderinfo_color(FINDER_COLOR_NONE)
 
             if attribute.name != "finderinfo":
                 # remove the entire attribute
