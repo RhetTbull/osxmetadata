@@ -140,6 +140,7 @@ class OSXMetaData:
         "projects",
         "version",
         "stationary",
+        "findercolor",
     ]
 
     def __init__(self, fname, tz_aware=False):
@@ -298,6 +299,9 @@ class OSXMetaData:
         elif attribute.name == "finderinfo":
             self.finderinfo._load_data()
             return self.finderinfo.data
+        elif attribute.name == "findercolor":
+            self.findercolor._load_data()
+            return self.findercolor.data
 
         # must be a "normal" metadata attribute
         try:
@@ -365,12 +369,9 @@ class OSXMetaData:
         value: value to store in attribute"""
         attribute = ATTRIBUTES[attribute_name]
 
-        # user tags need special processing to normalize names
-        if attribute.name == "tags":
-            return self.tags.set_value(value)
-
-        if attribute.name == "finderinfo":
-            return self.finderinfo.set_value(value)
+        # user tags and Finder info need special processing
+        if attribute.name in ["tags", "finderinfo", "findercolor"]:
+            return getattr(self, attribute.name).set_value(value)
 
         # verify type is correct
         value = validate_attribute_value(attribute, value)
@@ -385,8 +386,6 @@ class OSXMetaData:
             # must be a normal scalar (e.g. str, float)
             plist = plistlib.dumps(value, fmt=FMT_BINARY)
             self._attrs.set(attribute.constant, plist)
-
-        return value
 
     def update_attribute(self, attribute_name, value):
         """Update attribute with union of itself and value
@@ -422,8 +421,8 @@ class OSXMetaData:
             else:
                 new_value.extend(value)
             return self.tags.set_value(new_value)
-        if attribute.name == "finderinfo":
-            raise ValueError(f"cannot append or update finderinfo")
+        if attribute.name in ["finderinfo", "findercolor"]:
+            raise ValueError(f"cannot append or update {attribute.name}")
 
         value = validate_attribute_value(attribute, value)
 
@@ -513,11 +512,11 @@ class OSXMetaData:
                 # code following will also clear the attribute for Finder Comment
                 self.clear_finder_comment(self._posix_name)
 
-            if attribute.name in ["finderinfo", "tags"]:
+            if attribute.name in ["finderinfo", "findercolor", "tags"]:
                 # don't clear the entire FinderInfo attribute, just delete the color
                 self.finderinfo.set_finderinfo_color(FINDER_COLOR_NONE)
 
-            if attribute.name != "finderinfo":
+            if attribute.name not in ["finderinfo", "findercolor"]:
                 # remove the entire attribute
                 self._attrs.remove(attribute.constant)
         except (IOError, OSError):

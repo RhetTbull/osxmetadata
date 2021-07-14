@@ -1,16 +1,10 @@
 """ Functions for handling Finder tags and colors """
 
 import logging
-import os
 import pathlib
 import plistlib
-import sys
-
-import bitstring
-import xattr
 
 from osxmetadata.constants import (
-    _COLORIDS,
     _COLORIDS,
     _COLORNAMES,
     _COLORNAMES_LOWER,
@@ -18,58 +12,6 @@ from osxmetadata.constants import (
     _MIN_FINDER_COLOR,
     FINDER_COLOR_NONE,
 )
-
-# offset of tag color in com.apple.FinderInfo xattr
-# tag color is 3 bits
-# _kCOLOR_OFFSET = 76
-
-
-# def set_finderinfo_color(filename, colorid):
-#     """set tag color of filename to colorid
-#     filename: path to file
-#     colorid: ID of tag color in range 0 to 7
-#     """
-
-#     if not os.path.exists(filename):
-#         raise FileNotFoundError(f"filename {filename} not found")
-
-#     if not _MIN_FINDER_COLOR <= colorid <= _MAX_FINDER_COLOR:
-#         raise ValueError(f"colorid out of range {colorid}")
-
-#     attr = xattr.xattr(filename)
-
-#     try:
-#         finderinfo = attr.get("com.apple.FinderInfo")
-#         finderbits = bitstring.BitArray(finderinfo)
-#     except Exception:
-#         finderbits = bitstring.BitArray(uint=0, length=256)
-
-#     # color is encoded as 3 binary bits
-#     bits = bitstring.BitArray(uint=colorid, length=3)
-
-#     # set color bits
-#     finderbits.overwrite(bits, _kCOLOR_OFFSET)
-#     attr.set("com.apple.FinderInfo", finderbits.bytes)
-
-
-# def get_finderinfo_color(filename):
-#     """get the tag color of a file set via com.apple.FinderInfo
-#     filename: path to file
-#     returns: color id as int, 0 if no color
-#              or None if com.apple.FinderInfo not set"""
-
-#     if not os.path.exists(filename):
-#         raise FileNotFoundError(f"filename {filename} not found")
-
-#     attr = xattr.xattr(filename)
-
-#     try:
-#         finderinfo = attr.get("com.apple.FinderInfo")
-#         finderbits = bitstring.BitArray(finderinfo)
-#         bits = finderbits[_kCOLOR_OFFSET : _kCOLOR_OFFSET + 3]
-#         return bits.uint
-#     except Exception as e:
-#         return None
 
 
 def get_tag_color_name(colorid):

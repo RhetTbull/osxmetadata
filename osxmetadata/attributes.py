@@ -4,7 +4,12 @@
 import datetime
 from collections import namedtuple  # pylint: disable=syntax-error
 
-from .classes import _AttributeFinderInfo, _AttributeList, _AttributeTagsList
+from .classes import (
+    _AttributeFinderColor,
+    _AttributeFinderInfo,
+    _AttributeList,
+    _AttributeTagsList,
+)
 from .constants import *
 from .datetime_utils import (
     datetime_has_tz,
@@ -324,22 +329,22 @@ ATTRIBUTES = {
         "Boolean indicating if this file is stationery.",
         None,
     ),
-    # "findercolor": Attribute(
-    #     "findercolor",
-    #     "findercolor",
-    #     FinderInfo,
-    #     str,
-    #     False,
-    #     False,
-    #     _AttributeFinderInfo,
-    #     False,
-    #     False,
-    #     "Color tag set by the Finder.  Colors can also be set by _kMDItemUserTags.  "
-    #     + "This is controlled by the Finder and it's recommended you don't directly access this attribute.  "
-    #     + "If you set or remove a color tag via _kMDItemUserTag, osxmetadata will automatically handle "
-    #     + "processing of FinderInfo color tag.",
-    #     None,
-    # ),
+    "findercolor": Attribute(
+        "findercolor",
+        "findercolor",
+        FinderInfo,
+        str,
+        False,
+        False,
+        _AttributeFinderColor,
+        False,
+        False,
+        "Color tag set by the Finder.  Colors can also be set by _kMDItemUserTags.  "
+        + "This is controlled by the Finder and it's recommended you don't directly access this attribute.  "
+        + "If you set or remove a color tag via _kMDItemUserTag, osxmetadata will automatically handle "
+        + "processing of FinderInfo color tag.",
+        None,
+    ),
 }
 
 # used for formatting output of --list

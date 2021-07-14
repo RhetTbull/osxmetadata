@@ -59,7 +59,7 @@ ids2 = [
 
 @pytest.mark.parametrize("attribute", test_data, ids=ids)
 def test_list_attribute(temp_file, attribute):
-    """ test set_attribute, get_attribute, etc for list items"""
+    """test set_attribute, get_attribute, etc for list items"""
     from osxmetadata import OSXMetaData
 
     meta = OSXMetaData(temp_file)
@@ -97,7 +97,7 @@ def test_list_attribute(temp_file, attribute):
 
 @pytest.mark.parametrize("attribute", test_data2, ids=ids2)
 def test_list_attribute_2(temp_file, attribute):
-    """ test getting and setting attribute by name """
+    """test getting and setting attribute by name"""
     from osxmetadata import OSXMetaData
 
     meta = OSXMetaData(temp_file)
@@ -108,7 +108,7 @@ def test_list_attribute_2(temp_file, attribute):
 
 
 def test_list_methods(temp_file):
-    """ Test various list methods """
+    """Test various list methods"""
     from osxmetadata import OSXMetaData
     from osxmetadata.constants import kMDItemKeywords
 
@@ -153,6 +153,10 @@ def test_list_methods(temp_file):
     assert tag_got == tag_expected
     assert meta.keywords == ["Green", "Foo"]
     assert meta.get_attribute(attribute) == ["Green", "Foo"]
+
+    # delete by assigning None
+    meta.keywords = None
+    assert meta.keywords == []
 
 
 # def test_description(temp_file):

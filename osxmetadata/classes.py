@@ -182,8 +182,6 @@ class _AttributeFinderInfo:
         self.data = value
         self._write_data()
 
-
-
     def _load_data(self):
         self._tags = {}
 
@@ -223,6 +221,9 @@ class _AttributeFinderInfo:
         filename: path to file
         colorid: ID of tag color in range 0 to 7
         """
+
+        if colorid is None:
+            colorid = FINDER_COLOR_NONE
 
         if not _MIN_FINDER_COLOR <= colorid <= _MAX_FINDER_COLOR:
             raise ValueError(f"colorid out of range {colorid}")
@@ -264,12 +265,11 @@ class _AttributeFinderInfo:
 
     def __repr__(self):
         self._load_data()
-        # return str(self.data)
         return repr(self.data)
 
     def __str__(self):
         self._load_data()
-        return f"'{self.data},{self.data}'"
+        return f"'{self.data}'"
 
     def __eq__(self, other):
         self._load_data()
@@ -278,6 +278,25 @@ class _AttributeFinderInfo:
     def __getitem__(self, key):
         self._load_data()
         return self.data[key]
+
+
+class _AttributeFinderColor(_AttributeFinderInfo):
+    def __init__(self, attribute, xattr_, osxmetadata_obj):
+        super().__init__(attribute, xattr_, osxmetadata_obj)
+
+    def set_value(self, value):
+        if not isinstance(value, int):
+            raise TypeError(f"value must be a int, not {type(value)}")
+
+        self.data = {"color": value}
+        self._write_data()
+
+    def __repr__(self):
+        return repr(self.data.get("color", None))
+
+    def __eq__(self, other):
+        self._load_data()
+        return self.data.get("color") == other
 
 
 class _AttributeTagsList(_AttributeList, _AttributeFinderInfo):
@@ -346,9 +365,10 @@ class _AttributeTagsList(_AttributeList, _AttributeFinderInfo):
         # also write FinderInfo if required
         # if findercolor in tag set being written, do nothing
         # if findercolor not in tag set being written, overwrite findercolor with first color tag
+        # the behavior of Finder is to set findercolor to the most recently set color but we won't necessarily know that
         finder_color = self.get_finderinfo_color()
         tag_colors = [tag.color for tag in self.data]
-        if finder_color not in tag_colors:
+        if finder_color == FINDER_COLOR_NONE or finder_color not in tag_colors:
             # overwrite FinderInfo color with new color
             # get first non-zero color in tag if there is one
             try:
@@ -360,8 +380,3 @@ class _AttributeTagsList(_AttributeList, _AttributeFinderInfo):
             except StopIteration:
                 color = FINDER_COLOR_NONE
             self.set_finderinfo_color(color)
-
-
-# class _AttributeFinderColor(_AttributeFinderInfo):
-#     def __init__(self, attribute, xattr_, osxmetadata_obj):
-#         super().__init__(attribute, xattr_, osxmetadata_obj)
