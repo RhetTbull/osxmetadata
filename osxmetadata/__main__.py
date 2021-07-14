@@ -15,9 +15,14 @@ import click
 import osxmetadata
 
 from ._version import __version__
-from .attributes import _LONG_NAME_WIDTH, _SHORT_NAME_WIDTH, ATTRIBUTES
+from .attributes import (
+    _LONG_NAME_WIDTH,
+    _SHORT_NAME_WIDTH,
+    ATTRIBUTE_DISPATCH,
+    ATTRIBUTES,
+)
 from .backup import load_backup_file, write_backup_file
-from .classes import _AttributeList, _AttributeTagsList, _AttributeFinderInfo
+from .classes import _AttributeFinderInfo, _AttributeList, _AttributeTagsList
 from .constants import (
     _BACKUP_FILENAME,
     _COLORNAMES_LOWER,
@@ -826,11 +831,13 @@ def process_single_file(
             attribute_list = md.list_metadata()
             for attr in attribute_list:
                 try:
-                    attribute = ATTRIBUTES[attr]
-                    value = md.get_attribute_str(attribute.name)
-                    click.echo(
-                        f"{attribute.name:{_SHORT_NAME_WIDTH}}{attribute.constant:{_LONG_NAME_WIDTH}} = {value}"
-                    )
+                    attribute_names = ATTRIBUTE_DISPATCH[attr]
+                    for name in attribute_names:
+                        attribute = ATTRIBUTES[name]
+                        value = md.get_attribute_str(attribute.name)
+                        click.echo(
+                            f"{attribute.name:{_SHORT_NAME_WIDTH}}{attribute.constant:{_LONG_NAME_WIDTH}} = {value}"
+                        )
                 except KeyError:
                     click.echo(
                         f"{'UNKNOWN':{_SHORT_NAME_WIDTH}}{attr:{_LONG_NAME_WIDTH}} = THIS ATTRIBUTE NOT HANDLED",

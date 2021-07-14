@@ -293,15 +293,8 @@ class OSXMetaData:
         attribute = ATTRIBUTES[attribute_name]
 
         # user tags and finderinfo need special processing
-        if attribute.name == "tags":
-            self.tags._load_data()
-            return self.tags.data
-        elif attribute.name == "finderinfo":
-            self.finderinfo._load_data()
-            return self.finderinfo.data
-        elif attribute.name == "findercolor":
-            self.findercolor._load_data()
-            return self.findercolor.data
+        if attribute.name in ["tags", "finderinfo", "findercolor"]:
+            return getattr(self, attribute.name).get_value()
 
         # must be a "normal" metadata attribute
         try:

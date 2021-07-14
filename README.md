@@ -35,7 +35,7 @@ The command line tool can also be run via `python -m osxmetadata`.  Running it w
 
 ```
 Usage: osxmetadata [OPTIONS] FILE
-
+  
   Read/write metadata from file(s).
 
 Options:
@@ -116,6 +116,10 @@ blue, yellow, red, orange. If color is not specified but a tag of the same
 name has already been assigned a color in the Finder, the same color will
 automatically be assigned.
 
+com.apple.FinderInfo (finderinfo) value is a key:value dictionary. To set
+finderinfo, pass value in format key1:value1,key2:value2,etc. For example:
+'osxmetadata --set finderinfo color:2 file.ext'.
+
 Short Name      Description
 authors         kMDItemAuthors, com.apple.metadata:kMDItemAuthors; The
                 author, or authors, of the contents of the file.  A list of
@@ -148,15 +152,22 @@ duedate         kMDItemDueDate, com.apple.metadata:kMDItemDueDate; The date
                 zone), or 2020-04-14T12:00:00-07:00 (ISO 8601 with timezone
                 offset). Times without timezone offset are assumed to be in
                 local timezone.
-findercomment   kMDItemFinderComment,
-                com.apple.metadata:kMDItemFinderComment; Finder comments for
-                this file.  A string.
-finderinfo      FinderInfo, com.apple.FinderInfo; Color tag set by the
+findercolor     findercolor, com.apple.FinderInfo; Color tag set by the
                 Finder.  Colors can also be set by _kMDItemUserTags.  This
                 is controlled by the Finder and it's recommended you don't
                 directly access this attribute.  If you set or remove a
                 color tag via _kMDItemUserTag, osxmetadata will
                 automatically handle processing of FinderInfo color tag.
+findercomment   kMDItemFinderComment,
+                com.apple.metadata:kMDItemFinderComment; Finder comments for
+                this file.  A string.
+finderinfo      finderinfo, com.apple.FinderInfo; Info set by the Finder,
+                for example tag color.  Colors can also be set by
+                _kMDItemUserTags.  com.apple.FinderInfo is controlled by the
+                Finder and it's recommended you don't directly access this
+                attribute.  If you set or remove a color tag via
+                _kMDItemUserTag, osxmetadata will automatically handle
+                processing of FinderInfo color tag.
 headline        kMDItemHeadline, com.apple.metadata:kMDItemHeadline; A
                 publishable entry providing a synopsis of the contents of
                 the file.  A string.
@@ -206,8 +217,9 @@ Information about commonly used MacOS metadata attributes is available from [App
 |kMDItemDescription|description|com.apple.metadata:kMDItemDescription|A description of the content of the resource.  The description may include an abstract, table of contents, reference to a graphical representation of content or a free-text account of the content.  A string.|
 |kMDItemDownloadedDate|downloadeddate|com.apple.metadata:kMDItemDownloadedDate|The date the item was downloaded.  A datetime.datetime object.  If datetime.datetime object lacks tzinfo (i.e. it is timezone naive), it will be assumed to be in local timezone.|
 |kMDItemDueDate|duedate|com.apple.metadata:kMDItemDueDate|The date the item is due.  A datetime.datetime object.  If datetime.datetime object lacks tzinfo (i.e. it is timezone naive), it will be assumed to be in local timezone.|
+|findercolor|findercolor|com.apple.FinderInfo|Color tag set by the Finder.  Colors can also be set by _kMDItemUserTags.  This is controlled by the Finder and it's recommended you don't directly access this attribute.  If you set or remove a color tag via _kMDItemUserTag, osxmetadata will automatically handle processing of FinderInfo color tag.|
 |kMDItemFinderComment|findercomment|com.apple.metadata:kMDItemFinderComment|Finder comments for this file.  A string.|
-|FinderInfo|finderinfo|com.apple.FinderInfo|Color tag set by the Finder.  Colors can also be set by _kMDItemUserTags.  This is controlled by the Finder and it's recommended you don't directly access this attribute.  If you set or remove a color tag via _kMDItemUserTag, osxmetadata will automatically handle processing of FinderInfo color tag.|
+|finderinfo|finderinfo|com.apple.FinderInfo|Info set by the Finder, for example tag color.  Colors can also be set by _kMDItemUserTags.  com.apple.FinderInfo is controlled by the Finder and it's recommended you don't directly access this attribute.  If you set or remove a color tag via _kMDItemUserTag, osxmetadata will automatically handle processing of FinderInfo color tag.|
 |kMDItemHeadline|headline|com.apple.metadata:kMDItemHeadline|A publishable entry providing a synopsis of the contents of the file.  A string.|
 |kMDItemKeywords|keywords|com.apple.metadata:kMDItemKeywords|Keywords associated with this file. For example, “Birthday”, “Important”, etc. This differs from Finder tags (_kMDItemUserTags) which are keywords/tags shown in the Finder and searchable in Spotlight using "tag:tag_name".  A list of strings.|
 |kMDItemParticipants|participants|com.apple.metadata:kMDItemParticipants|The list of people who are visible in an image or movie or written about in a document. A list of strings.|

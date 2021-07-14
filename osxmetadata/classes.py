@@ -48,6 +48,10 @@ class _AttributeList(collections.abc.MutableSequence):
         self.data = value
         self._write_data()
 
+    def get_value(self):
+        self._load_data()
+        return self.data
+
     def _load_data(self):
         self._values = []
         try:
@@ -182,6 +186,10 @@ class _AttributeFinderInfo:
         self.data = value
         self._write_data()
 
+    def get_value(self):
+        self._load_data()
+        return self.data
+
     def _load_data(self):
         self._tags = {}
 
@@ -291,8 +299,12 @@ class _AttributeFinderColor(_AttributeFinderInfo):
         self.data = {"color": value}
         self._write_data()
 
+    def get_value(self):
+        self._load_data()
+        return self.data.get("color", None)
+
     def __repr__(self):
-        return repr(self.data.get("color", None))
+        return repr(self.get_value())
 
     def __eq__(self, other):
         self._load_data()
