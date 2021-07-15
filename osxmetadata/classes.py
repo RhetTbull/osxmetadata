@@ -16,6 +16,7 @@ from .constants import (
     _VALID_COLORIDS,
     FINDER_COLOR_NONE,
     _kCOLOR_OFFSET,
+    _kSTATIONARYPAD_OFFSET,
 )
 from .datetime_utils import (
     datetime_naive_to_utc,
@@ -24,6 +25,22 @@ from .datetime_utils import (
 )
 from .debug import _debug
 from .findertags import Tag
+
+
+def value_to_bool(value):
+    """Return bool True/False for a given value.
+    If value is string and is True or 1, return True
+    If value is string and is False or 0, return False
+    Otherwise if value is numeric or None, return bool(value)
+    """
+    if isinstance(value, bool):
+        return value
+    elif isinstance(value, str):
+        return value.lower() in ("true", "1")
+    elif isinstance(value, int) or value is not None:
+        return bool(value)
+    else:
+        return False
 
 
 class _AttributeList(collections.abc.MutableSequence):
@@ -169,7 +186,7 @@ class _AttributeFinderInfo:
         self._md = osxmetadata_obj
 
         # valid keys for the finderinfo dict
-        self.keys = ["color"]
+        self.keys = ["color", "stationarypad"]
 
         self._constant = attribute.constant
 
@@ -195,8 +212,9 @@ class _AttributeFinderInfo:
 
         # check color tag stored in com.apple.FinderInfo
         color = self.get_finderinfo_color()
+        stationarypad = self.get_finderinfo_stationarypad()
 
-        self.data = {"color": color}
+        self.data = {"color": color, "stationarypad": stationarypad}
 
     def _write_data(self):
         # Overwrites the existing attribute values with the iterable of values provided.
@@ -209,8 +227,12 @@ class _AttributeFinderInfo:
             # nothing to do
             return
 
-        colorid = self.data["color"] if "color" in self.data else FINDER_COLOR_NONE
-        self.set_finderinfo_color(colorid)
+        colorid = self.data.get("color", None)
+        stationarypad = self.data.get("stationarypad", None)
+        if colorid is not None:
+            self.set_finderinfo_color(colorid)
+        if stationarypad is not None:
+            self.set_finderinfo_stationarypad(stationarypad)
 
     @property
     def color(self):
@@ -221,12 +243,32 @@ class _AttributeFinderInfo:
     def color(self, value):
         self.set_finderinfo_color(value)
 
+    @property
+    def stationarypad(self):
+        self._load_data()
+        return self.data["stationarypad"]
+
+    @stationarypad.setter
+    def stationarypad(self, value):
+        self.set_finderinfo_stationarypad(value)
+
     def asdict(self):
         return self.data
 
+    def get_finderinfo_color(self):
+        """get the tag color of a file set via com.apple.FinderInfo
+        returns: color id as int, 0 if no color
+                or None if com.apple.FinderInfo not set"""
+
+        try:
+            finderbits = self._get_finderinfo_bits()
+            bits = finderbits[_kCOLOR_OFFSET : _kCOLOR_OFFSET + 3]
+            return bits.uint
+        except Exception as e:
+            return None
+
     def set_finderinfo_color(self, colorid):
         """set tag color of filename to colorid
-        filename: path to file
         colorid: ID of tag color in range 0 to 7
         """
 
@@ -244,18 +286,29 @@ class _AttributeFinderInfo:
         finderbits.overwrite(bits, _kCOLOR_OFFSET)
         self._set_findinfo_bits(finderbits)
 
-    def get_finderinfo_color(self):
-        """get the tag color of a file set via com.apple.FinderInfo
-        filename: path to file
-        returns: color id as int, 0 if no color
-                or None if com.apple.FinderInfo not set"""
+    def get_finderinfo_stationarypad(self):
+        """get the Stationary Pad bit from com.apple.FinderInfo
+        returns: True if Stationary Pad is set, False if not set"""
 
         try:
             finderbits = self._get_finderinfo_bits()
-            bits = finderbits[_kCOLOR_OFFSET : _kCOLOR_OFFSET + 3]
-            return bits.uint
+            bit = finderbits.bin[_kSTATIONARYPAD_OFFSET]
+            return bool(int(bit))
         except Exception as e:
-            return None
+            return False
+
+    def set_finderinfo_stationarypad(self, value):
+        """set the Stationary Pad flag of com.apple.FinderInfo"""
+
+        value = 1 if value_to_bool(value) else 0
+
+        # stationary pad is encoded as a single bit
+        bit = bitstring.BitArray(uint=value, length=1)
+
+        # set color bits
+        finderbits = self._get_finderinfo_bits()
+        finderbits.overwrite(bit, _kSTATIONARYPAD_OFFSET)
+        self._set_findinfo_bits(finderbits)
 
     def _get_finderinfo_bits(self) -> bitstring.BitArray:
         """Get FinderInfo bits"""

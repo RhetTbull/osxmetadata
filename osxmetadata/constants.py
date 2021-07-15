@@ -56,6 +56,9 @@ _MAX_WHEREFROM = (
 # tag color is 3 bits
 _kCOLOR_OFFSET = 76
 
+#offset of stationary pad bit in com.apple.FinderInfo xattr
+_kSTATIONARYPAD_OFFSET = 68
+
 # _TAGS = "com.apple.metadata:_kMDItemUserTags"
 # _FINDER_COMMENT = "com.apple.metadata:kMDItemFinderComment"
 # _WHERE_FROM = "com.apple.metadata:kMDItemWhereFroms"

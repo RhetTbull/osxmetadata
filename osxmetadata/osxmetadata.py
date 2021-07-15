@@ -506,8 +506,11 @@ class OSXMetaData:
                 self.clear_finder_comment(self._posix_name)
 
             if attribute.name in ["finderinfo", "findercolor", "tags"]:
-                # don't clear the entire FinderInfo attribute, just delete the color
+                # don't clear the entire FinderInfo attribute, just delete the bits we know about
                 self.finderinfo.set_finderinfo_color(FINDER_COLOR_NONE)
+
+            if attribute.name in ["finderinfo", "stationarypad"]:
+                self.finderinfo.set_finderinfo_stationarypad(False)
 
             if attribute.name not in ["finderinfo", "findercolor"]:
                 # remove the entire attribute

@@ -326,7 +326,8 @@ ATTRIBUTES = {
         class_=bool,
         append=False,
         update=False,
-        help="Boolean indicating if this file is stationery.",
+        help="Boolean indicating if this file is stationery. "
+        + "Note: this is not what the Finder uses for Stationary Pad flag.",
         api_help=None,
     ),
     "findercolor": Attribute(
@@ -345,6 +346,20 @@ ATTRIBUTES = {
         + "processing of FinderInfo color tag.",
         api_help=None,
     ),
+    # "stationarypad": Attribute(
+    #     name="stationarypad",
+    #     short_constant="stationarypad",
+    #     constant=FinderInfo,
+    #     type_=str,
+    #     list=False,
+    #     as_list=False,
+    #     class_=_AttributeFinderStationaryPad,
+    #     append=False,
+    #     update=False,
+    #     help="Marks the file as stationary (a template that can be re-used). "
+    #     +"Setting this to True is the same as checking the Stationary Pad box in Finder Info.",
+    #     api_help=None,
+    # ),
 }
 
 # used for formatting output of --list
@@ -370,6 +385,7 @@ for attribute in ATTRIBUTES.values():
     _temp_attributes[attribute.short_constant] = attribute
 if _temp_attributes:
     ATTRIBUTES.update(_temp_attributes)
+
 
 def validate_attribute_value(attribute, value):
     """validate that value is compatible with attribute.type_
