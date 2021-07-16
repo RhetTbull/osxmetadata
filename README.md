@@ -1,10 +1,7 @@
 # osxmetadata 
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat)](#contributors-)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
-
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat)](#contributors-)
 
 
 ## What is osxmetadata?
@@ -35,7 +32,7 @@ The command line tool can also be run via `python -m osxmetadata`.  Running it w
 
 ```
 Usage: osxmetadata [OPTIONS] FILE
-  
+
   Read/write metadata from file(s).
 
 Options:
@@ -189,7 +186,13 @@ rating          kMDItemStarRating, com.apple.metadata:kMDItemStarRating;
                 an iTunes track. An integer.
 stationary      kMDItemFSIsStationery,
                 com.apple.metadata:kMDItemFSIsStationery; Boolean indicating
-                if this file is stationery.
+                if this file is stationery. Note: this is not what the
+                Finder uses for Stationary Pad flag.  See also
+                'stationarypad'.
+stationarypad   stationarypad, com.apple.FinderInfo; Marks the file as
+                stationary (a template that can be re-used). Setting this to
+                True is the same as checking the 'Stationary Pad' box in
+                Finder Info.
 tags            _kMDItemUserTags, com.apple.metadata:_kMDItemUserTags;
                 Finder tags; searchable in Spotlight using "tag:tag_name".
                 If you want tags/keywords visible in the Finder, use this
@@ -225,7 +228,8 @@ Information about commonly used MacOS metadata attributes is available from [App
 |kMDItemParticipants|participants|com.apple.metadata:kMDItemParticipants|The list of people who are visible in an image or movie or written about in a document. A list of strings.|
 |kMDItemProjects|projects|com.apple.metadata:kMDItemProjects|The list of projects that this file is part of. For example, if you were working on a movie all of the files could be marked as belonging to the project “My Movie”. A list of strings.|
 |kMDItemStarRating|rating|com.apple.metadata:kMDItemStarRating|User rating of this item. For example, the stars rating of an iTunes track. An integer.|
-|kMDItemFSIsStationery|stationary|com.apple.metadata:kMDItemFSIsStationery|Boolean indicating if this file is stationery.|
+|kMDItemFSIsStationery|stationary|com.apple.metadata:kMDItemFSIsStationery|Boolean indicating if this file is stationery. Note: this is not what the Finder uses for Stationary Pad flag.  See also 'stationarypad'.|
+|stationarypad|stationarypad|com.apple.FinderInfo|Marks the file as stationary (a template that can be re-used). Setting this to True is the same as checking the 'Stationary Pad' box in Finder Info.|
 |_kMDItemUserTags|tags|com.apple.metadata:_kMDItemUserTags|Finder tags; searchable in Spotlight using "tag:tag_name".  If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords.  A list of Tag objects.|
 |kMDItemVersion|version|com.apple.metadata:kMDItemVersion|The version number of this file. A string.|
 |kMDItemWhereFroms|wherefroms|com.apple.metadata:kMDItemWhereFroms|Describes where the file was obtained from (e.g. URL downloaded from).  A list of strings.|

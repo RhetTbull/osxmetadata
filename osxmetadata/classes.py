@@ -152,6 +152,9 @@ class _AttributeList(collections.abc.MutableSequence):
         self._load_data()
         return self.data == other
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 
 class _AttributeFinderInfo:
     """represents info stored in com.apple.FinderInfo"""
@@ -301,7 +304,7 @@ class _AttributeFinderInfo:
         """set the Stationary Pad flag of com.apple.FinderInfo"""
 
         value = 1 if value_to_bool(value) else 0
-
+        
         # stationary pad is encoded as a single bit
         bit = bitstring.BitArray(uint=value, length=1)
 
@@ -341,7 +344,7 @@ class _AttributeFinderInfo:
         return self.data[key]
 
 
-class _AttributeFinderColor(_AttributeFinderInfo):
+class _AttributeFinderInfoColor(_AttributeFinderInfo):
     def __init__(self, attribute, xattr_, osxmetadata_obj):
         super().__init__(attribute, xattr_, osxmetadata_obj)
 
@@ -362,6 +365,35 @@ class _AttributeFinderColor(_AttributeFinderInfo):
     def __eq__(self, other):
         self._load_data()
         return self.data.get("color") == other
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
+class _AttributeFinderInfoStationaryPad(_AttributeFinderInfo):
+    def __init__(self, attribute, xattr_, osxmetadata_obj):
+        super().__init__(attribute, xattr_, osxmetadata_obj)
+
+    def set_value(self, value):
+        self.data = {"stationarypad": value_to_bool(value)}
+        self._write_data()
+
+    def get_value(self):
+        self._load_data()
+        return self.data.get("stationarypad", None)
+
+    def __repr__(self):
+        return repr(self.get_value())
+
+    def __eq__(self, other):
+        self._load_data()
+        return self.data.get("stationarypad") == other
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __bool__(self):
+        return bool(self.data.get("stationarypad", None))
 
 
 class _AttributeTagsList(_AttributeList, _AttributeFinderInfo):

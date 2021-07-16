@@ -187,3 +187,27 @@ def test_finderinfo_stationarypad_and_color(temp_file):
     meta.finderinfo = {"stationarypad": False}
     assert meta.finderinfo.color == FINDER_COLOR_GREEN
     assert not meta.finderinfo.stationarypad
+
+
+def test_stationarypad(temp_file):
+    """Test stationarypad attribute"""
+    from osxmetadata import OSXMetaData
+
+    meta = OSXMetaData(temp_file)
+    assert not meta.stationarypad
+
+    meta.stationarypad = True
+    assert meta.stationarypad
+
+    meta.stationarypad = 0
+    assert not meta.stationarypad
+
+    meta.stationarypad = 1
+    assert meta.stationarypad
+
+    meta.stationarypad = False
+    assert not meta.stationarypad
+    assert not meta.get_attribute("stationarypad")
+    
+    meta.set_attribute("stationarypad", True)
+    assert meta.get_attribute("stationarypad")

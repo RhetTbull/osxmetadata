@@ -91,6 +91,19 @@ __all__ = [
 # TODO: check what happens if OSXMetaData.__init__ called with invalid file--should result in error but saw one case where it didn't
 # TODO: cleartags does not always clear colors--this is a new behavior, did Mac OS change something in implementation of colors?
 
+# all attributes that are part of com.apple.FinderInfo
+_FINDERINFO_ATTRIBUTES = ["finderinfo", "findercolor", "stationarypad"]
+
+# all attributes that use an Attribute class (defined in attributes.py)
+_ATTRIBUTE_CLASS_ATTRIBUTES = ["tags", *_FINDERINFO_ATTRIBUTES]
+
+# all attributes related to stationary pad
+_FINDERINFO_STATIONARYPAD_ATTRIBUTES = ["finderinfo", "stationarypad"]
+
+# all attributes related to Finder color
+_FINDERINFO_COLOR_ATTRIBUTES = ["finderinfo", "findercolor"]
+
+
 # AppleScript for manipulating Finder comments
 _scpt_set_finder_comment = applescript.AppleScript(
     """
@@ -117,37 +130,38 @@ class OSXMetaData:
     """Create an OSXMetaData object to access file metadata"""
 
     __slots__ = [
+        "__init",
+        "_attrs",
         "_fname",
         "_posix_name",
-        "_attrs",
         "_tz_aware",
-        "__init",
         "authors",
         "comment",
         "copyright",
         "creator",
         "description",
         "downloadeddate",
+        "duedate",
+        "findercolor",
         "findercomment",
+        "finderinfo",
         "headline",
         "keywords",
-        "tags",
-        "wherefroms",
-        "finderinfo",
-        "duedate",
-        "rating",
         "participants",
         "projects",
-        "version",
+        "rating",
         "stationary",
-        "findercolor",
+        "stationarypad",
+        "tags",
+        "version",
+        "wherefroms",
     ]
 
     def __init__(self, fname, tz_aware=False):
         """Create an OSXMetaData object to access file metadata
         fname: filename to operate on
         timezone_aware: bool; if True, date/time attributes will return
-                  timezone aware datetime.dateime attributes; if False (default)
+                  timezone aware datetime.datetime attributes; if False (default)
                   date/time attributes will return timezone naive objects"""
         self._fname = pathlib.Path(fname)
         self._posix_name = self._fname.resolve().as_posix()
@@ -293,7 +307,7 @@ class OSXMetaData:
         attribute = ATTRIBUTES[attribute_name]
 
         # user tags and finderinfo need special processing
-        if attribute.name in ["tags", "finderinfo", "findercolor"]:
+        if attribute.name in _ATTRIBUTE_CLASS_ATTRIBUTES:
             return getattr(self, attribute.name).get_value()
 
         # must be a "normal" metadata attribute
@@ -363,7 +377,7 @@ class OSXMetaData:
         attribute = ATTRIBUTES[attribute_name]
 
         # user tags and Finder info need special processing
-        if attribute.name in ["tags", "finderinfo", "findercolor"]:
+        if attribute.name in _ATTRIBUTE_CLASS_ATTRIBUTES:
             return getattr(self, attribute.name).set_value(value)
 
         # verify type is correct
@@ -414,7 +428,7 @@ class OSXMetaData:
             else:
                 new_value.extend(value)
             return self.tags.set_value(new_value)
-        if attribute.name in ["finderinfo", "findercolor"]:
+        if attribute.name in _FINDERINFO_ATTRIBUTES:
             raise ValueError(f"cannot append or update {attribute.name}")
 
         value = validate_attribute_value(attribute, value)
@@ -505,14 +519,14 @@ class OSXMetaData:
                 # code following will also clear the attribute for Finder Comment
                 self.clear_finder_comment(self._posix_name)
 
-            if attribute.name in ["finderinfo", "findercolor", "tags"]:
+            if attribute.name in ["tags", *_FINDERINFO_COLOR_ATTRIBUTES]:
                 # don't clear the entire FinderInfo attribute, just delete the bits we know about
                 self.finderinfo.set_finderinfo_color(FINDER_COLOR_NONE)
 
-            if attribute.name in ["finderinfo", "stationarypad"]:
+            if attribute.name in _FINDERINFO_STATIONARYPAD_ATTRIBUTES:
                 self.finderinfo.set_finderinfo_stationarypad(False)
 
-            if attribute.name not in ["finderinfo", "findercolor"]:
+            if attribute.name not in _FINDERINFO_ATTRIBUTES:
                 # remove the entire attribute
                 self._attrs.remove(attribute.constant)
         except (IOError, OSError):

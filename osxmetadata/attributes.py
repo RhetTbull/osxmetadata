@@ -5,8 +5,9 @@ import datetime
 from collections import namedtuple  # pylint: disable=syntax-error
 
 from .classes import (
-    _AttributeFinderColor,
     _AttributeFinderInfo,
+    _AttributeFinderInfoColor,
+    _AttributeFinderInfoStationaryPad,
     _AttributeList,
     _AttributeTagsList,
 )
@@ -327,7 +328,7 @@ ATTRIBUTES = {
         append=False,
         update=False,
         help="Boolean indicating if this file is stationery. "
-        + "Note: this is not what the Finder uses for Stationary Pad flag.",
+        + "Note: this is not what the Finder uses for Stationary Pad flag.  See also 'stationarypad'.",
         api_help=None,
     ),
     "findercolor": Attribute(
@@ -337,7 +338,7 @@ ATTRIBUTES = {
         type_=str,
         list=False,
         as_list=False,
-        class_=_AttributeFinderColor,
+        class_=_AttributeFinderInfoColor,
         append=False,
         update=False,
         help="Color tag set by the Finder.  Colors can also be set by _kMDItemUserTags.  "
@@ -346,20 +347,20 @@ ATTRIBUTES = {
         + "processing of FinderInfo color tag.",
         api_help=None,
     ),
-    # "stationarypad": Attribute(
-    #     name="stationarypad",
-    #     short_constant="stationarypad",
-    #     constant=FinderInfo,
-    #     type_=str,
-    #     list=False,
-    #     as_list=False,
-    #     class_=_AttributeFinderStationaryPad,
-    #     append=False,
-    #     update=False,
-    #     help="Marks the file as stationary (a template that can be re-used). "
-    #     +"Setting this to True is the same as checking the Stationary Pad box in Finder Info.",
-    #     api_help=None,
-    # ),
+    "stationarypad": Attribute(
+        name="stationarypad",
+        short_constant="stationarypad",
+        constant=FinderInfo,
+        type_=str,
+        list=False,
+        as_list=False,
+        class_=_AttributeFinderInfoStationaryPad,
+        append=False,
+        update=False,
+        help="Marks the file as stationary (a template that can be re-used). "
+        + "Setting this to True is the same as checking the 'Stationary Pad' box in Finder Info.",
+        api_help=None,
+    ),
 }
 
 # used for formatting output of --list
