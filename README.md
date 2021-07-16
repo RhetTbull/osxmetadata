@@ -220,10 +220,16 @@ stationarypad   stationarypad, com.apple.FinderInfo; Marks the file as
                 stationary (a template that can be re-used). Setting this to
                 True is the same as checking the 'Stationary Pad' box in
                 Finder Info.
+subject         kMDItemSubject, com.apple.metadata:kMDItemSubject; Subject
+                of the this item. A string.
 tags            _kMDItemUserTags, com.apple.metadata:_kMDItemUserTags;
                 Finder tags; searchable in Spotlight using "tag:tag_name".
                 If you want tags/keywords visible in the Finder, use this
                 instead of kMDItemKeywords.  A list of Tag objects.
+title           kMDItemTitle, com.apple.metadata:kMDItemTitle; The title of
+                the file. For example, this could be the title of a
+                document, the name of a song, or the subject of an email
+                message. A string.
 version         kMDItemVersion, com.apple.metadata:kMDItemVersion; The
                 version number of this file. A string.
 wherefroms      kMDItemWhereFroms, com.apple.metadata:kMDItemWhereFroms;
@@ -257,7 +263,9 @@ Information about commonly used MacOS metadata attributes is available from [App
 |kMDItemStarRating|rating|com.apple.metadata:kMDItemStarRating|User rating of this item. For example, the stars rating of an iTunes track. An integer.|
 |kMDItemFSIsStationery|stationary|com.apple.metadata:kMDItemFSIsStationery|Boolean indicating if this file is stationery. Note: this is not what the Finder uses for Stationary Pad flag.  See also 'stationarypad'.|
 |stationarypad|stationarypad|com.apple.FinderInfo|Marks the file as stationary (a template that can be re-used). Setting this to True is the same as checking the 'Stationary Pad' box in Finder Info.|
+|kMDItemSubject|subject|com.apple.metadata:kMDItemSubject|Subject of the this item. A string.|
 |_kMDItemUserTags|tags|com.apple.metadata:_kMDItemUserTags|Finder tags; searchable in Spotlight using "tag:tag_name".  If you want tags/keywords visible in the Finder, use this instead of kMDItemKeywords.  A list of Tag objects.|
+|kMDItemTitle|title|com.apple.metadata:kMDItemTitle|The title of the file. For example, this could be the title of a document, the name of a song, or the subject of an email message. A string.|
 |kMDItemVersion|version|com.apple.metadata:kMDItemVersion|The version number of this file. A string.|
 |kMDItemWhereFroms|wherefroms|com.apple.metadata:kMDItemWhereFroms|Describes where the file was obtained from (e.g. URL downloaded from).  A list of strings.|
 

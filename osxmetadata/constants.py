@@ -56,7 +56,7 @@ _MAX_WHEREFROM = (
 # tag color is 3 bits
 _kCOLOR_OFFSET = 76
 
-#offset of stationary pad bit in com.apple.FinderInfo xattr
+# offset of stationary pad bit in com.apple.FinderInfo xattr
 _kSTATIONARYPAD_OFFSET = 68
 
 # _TAGS = "com.apple.metadata:_kMDItemUserTags"
@@ -65,25 +65,27 @@ _kSTATIONARYPAD_OFFSET = 68
 # _DOWNLOAD_DATE = "com.apple.metadata:kMDItemDownloadedDate"
 
 
+FinderInfo = "com.apple.FinderInfo"
+_kMDItemUserTags = "com.apple.metadata:_kMDItemUserTags"
 kMDItemAuthors = "com.apple.metadata:kMDItemAuthors"
 kMDItemComment = "com.apple.metadata:kMDItemComment"
 kMDItemCopyright = "com.apple.metadata:kMDItemCopyright"
 kMDItemCreator = "com.apple.metadata:kMDItemCreator"
 kMDItemDescription = "com.apple.metadata:kMDItemDescription"
 kMDItemDownloadedDate = "com.apple.metadata:kMDItemDownloadedDate"
+kMDItemDueDate = "com.apple.metadata:kMDItemDueDate"
+kMDItemFSIsStationery = "com.apple.metadata:kMDItemFSIsStationery"
 kMDItemFinderComment = "com.apple.metadata:kMDItemFinderComment"
 kMDItemHeadline = "com.apple.metadata:kMDItemHeadline"
 kMDItemKeywords = "com.apple.metadata:kMDItemKeywords"
-_kMDItemUserTags = "com.apple.metadata:_kMDItemUserTags"
-kMDItemUserTags = "com.apple.metadata:_kMDItemUserTags"
-kMDItemWhereFroms = "com.apple.metadata:kMDItemWhereFroms"
-kMDItemDueDate = "com.apple.metadata:kMDItemDueDate"
-FinderInfo = "com.apple.FinderInfo"
-kMDItemStarRating = "com.apple.metadata:kMDItemStarRating"
 kMDItemParticipants = "com.apple.metadata:kMDItemParticipants"
 kMDItemProjects = "com.apple.metadata:kMDItemProjects"
+kMDItemStarRating = "com.apple.metadata:kMDItemStarRating"
+kMDItemSubject = "com.apple.metadata:kMDItemSubject"
+kMDItemTitle = "com.apple.metadata:kMDItemTitle"
+kMDItemUserTags = "com.apple.metadata:_kMDItemUserTags"
 kMDItemVersion = "com.apple.metadata:kMDItemVersion"
-kMDItemFSIsStationery = "com.apple.metadata:kMDItemFSIsStationery"
+kMDItemWhereFroms = "com.apple.metadata:kMDItemWhereFroms"
 
 
 # Special handling for Finder comments
@@ -98,23 +100,25 @@ _FINDERINFO_NAMES = ["finderinfo", "com.apple.FinderInfo"]
 _BACKUP_FILENAME = ".osxmetadata.json"
 
 __all__ = [
+    "FinderInfo",
+    "_kMDItemUserTags",
     "kMDItemAuthors",
     "kMDItemComment",
     "kMDItemCopyright",
     "kMDItemCreator",
     "kMDItemDescription",
     "kMDItemDownloadedDate",
+    "kMDItemDueDate",
+    "kMDItemFSIsStationery",
     "kMDItemFinderComment",
     "kMDItemHeadline",
     "kMDItemKeywords",
-    "kMDItemUserTags",
-    "_kMDItemUserTags",
-    "kMDItemWhereFroms",
-    "kMDItemDueDate",
-    "FinderInfo",
-    "kMDItemStarRating",
     "kMDItemParticipants",
     "kMDItemProjects",
+    "kMDItemStarRating",
+    "kMDItemSubject",
+    "kMDItemTitle",
+    "kMDItemUserTags",
     "kMDItemVersion",
-    "kMDItemFSIsStationery",
+    "kMDItemWhereFroms",
 ]

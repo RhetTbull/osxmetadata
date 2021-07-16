@@ -361,6 +361,33 @@ ATTRIBUTES = {
         + "Setting this to True is the same as checking the 'Stationary Pad' box in Finder Info.",
         api_help=None,
     ),
+    "title": Attribute(
+        name="title",
+        short_constant="kMDItemTitle",
+        constant=kMDItemTitle,
+        type_=str,
+        list=False,
+        as_list=False,
+        class_=str,
+        append=True,
+        update=False,
+        help="The title of the file. For example, this could be the title of a document, the name of a song, "
+        +"or the subject of an email message. A string.",
+        api_help=None,
+    ),
+    "subject": Attribute(
+        name="subject",
+        short_constant="kMDItemSubject",
+        constant=kMDItemSubject,
+        type_=str,
+        list=False,
+        as_list=False,
+        class_=str,
+        append=True,
+        update=False,
+        help="Subject of the this item. A string.",
+        api_help=None,
+    )
 }
 
 # used for formatting output of --list

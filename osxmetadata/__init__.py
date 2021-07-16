@@ -4,12 +4,6 @@
 from ._version import __version__
 from .attributes import ATTRIBUTES
 from .constants import (
-    _COLORIDS,
-    _COLORNAMES,
-    _FINDER_COMMENT_NAMES,
-    _MAX_FINDERCOMMENT,
-    _MAX_WHEREFROM,
-    _VALID_COLORIDS,
     FINDER_COLOR_BLUE,
     FINDER_COLOR_GRAY,
     FINDER_COLOR_GREEN,
@@ -19,6 +13,12 @@ from .constants import (
     FINDER_COLOR_RED,
     FINDER_COLOR_YELLOW,
     FinderInfo,
+    _COLORIDS,
+    _COLORNAMES,
+    _FINDER_COMMENT_NAMES,
+    _MAX_FINDERCOMMENT,
+    _MAX_WHEREFROM,
+    _VALID_COLORIDS,
     _kMDItemUserTags,
     kMDItemAuthors,
     kMDItemComment,
@@ -32,15 +32,12 @@ from .constants import (
     kMDItemParticipants,
     kMDItemProjects,
     kMDItemStarRating,
+    kMDItemSubject,
+    kMDItemTitle,
     kMDItemUserTags,
     kMDItemVersion,
     kMDItemWhereFroms,
 )
 from .debug import _debug, _set_debug
-from .findertags import (
-    Tag,
-    # get_finderinfo_color,
-    get_tag_color_name,
-    # set_finderinfo_color,
-)
+from .findertags import Tag, get_tag_color_name
 from .osxmetadata import OSXMetaData
