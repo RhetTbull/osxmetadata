@@ -50,6 +50,8 @@ _FINDERINFO_STATIONARYPAD_ATTRIBUTES = ["finderinfo", "stationarypad"]
 # all attributes related to Finder color
 _FINDERINFO_COLOR_ATTRIBUTES = ["finderinfo", "findercolor"]
 
+# all attributes that are included in finderinfo
+_FINDERINFO_SUB_ATTRIBUTES = ["findercolor", "stationarypad"]
 
 # AppleScript for manipulating Finder comments
 _scpt_set_finder_comment = applescript.AppleScript(
@@ -173,7 +175,7 @@ class OSXMetaData:
                     tags = self.get_attribute(attribute.name)
                     value = [[tag.name, tag.color] for tag in tags]
                     dict_data[attribute.constant] = value
-                elif attribute.name == "finderinfo":
+                elif attribute.constant == FinderInfo:
                     value = self.finderinfo.asdict()
                     dict_data[attribute.constant] = value
                 elif attribute.type_ == datetime.datetime:
