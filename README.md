@@ -18,13 +18,40 @@ Only works on MacOS.  Requires Python 3.7+.
 
 ## Installation instructions
 
-osxmetadata uses setuptools, thus simply run:
+### Installation using pipx
+If you aren't familiar with installing python applications, I recommend you install `osxmetadata` with [pipx](https://github.com/pipxproject/pipx). If you use `pipx`, you will not need to create a virtual environment as `pipx` takes care of this. The easiest way to do this on a Mac is to use [homebrew](https://brew.sh/):
 
-	python setup.py install
+- Open `Terminal` (search for `Terminal` in Spotlight or look in `Applications/Utilities`)
+- Install `homebrew` according to instructions at [https://brew.sh/](https://brew.sh/)
+- Type the following into Terminal: `brew install pipx`
+- Then type this: `pipx install osxmetadata`
+- Now you should be able to run `osxmetadata` by typing: `osxmetadata`
+
+Once you've installed osxmetadata with pipx, to upgrade to the latest version:
+
+    pipx upgrade osxmetadata
+
+### Installation using pip
+You can also install directly from [pypi](https://pypi.org/project/osxmetadata/):
+
+    pip install osxmetadata
+
+Once you've installed osxmetadata with pip, to upgrade to the latest version:
+
+    pip install --upgrade osxmetadata
+
+### Installation from git repository
+OSXMetaData uses setuptools, thus simply run:
+
+    git clone https://github.com/RhetTbull/osxmetadata.git
+    cd osxmetadata 
+    python3 setup.py install
+
+I recommend you create a [virtual environment](https://docs.python.org/3/tutorial/venv.html) before installing osxmetadata.
 
 ## Command Line Usage
 
-Installs command line tool called osxmetadata which provides a simple interface to view/edit metadata supported by osxmetadata.
+Installs command line tool called `osxmetadata` which provides a simple interface to view/edit metadata supported by osxmetadata.
 
 If you only care about the command line tool, I recommend installing with [pipx](https://github.com/pipxproject/pipx)
 
