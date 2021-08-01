@@ -144,97 +144,119 @@ com.apple.FinderInfo (finderinfo) value is a key:value dictionary. To set
 finderinfo, pass value in format key1:value1,key2:value2,etc. For example:
 'osxmetadata --set finderinfo color:2 file.ext'.
 
-Short Name      Description
-authors         kMDItemAuthors, com.apple.metadata:kMDItemAuthors; The
-                author, or authors, of the contents of the file.  A list of
-                strings.
-comment         kMDItemComment, com.apple.metadata:kMDItemComment; A comment
-                related to the file.  This differs from the Finder comment,
-                kMDItemFinderComment.  A string.
-copyright       kMDItemCopyright, com.apple.metadata:kMDItemCopyright; The
-                copyright owner of the file contents.  A string.
-creator         kMDItemCreator, com.apple.metadata:kMDItemCreator;
-                Application used to create the document content (for example
-                “Word”, “Pages”, and so on).  A string.
-description     kMDItemDescription, com.apple.metadata:kMDItemDescription; A
-                description of the content of the resource.  The description
-                may include an abstract, table of contents, reference to a
-                graphical representation of content or a free-text account
-                of the content.  A string.
-downloadeddate  kMDItemDownloadedDate,
-                com.apple.metadata:kMDItemDownloadedDate; The date the item
-                was downloaded.  A date in ISO 8601 format, time and
-                timezone offset are optional: e.g. 2020-04-14T12:00:00 (ISO
-                8601 w/o timezone), 2020-04-14 (ISO 8601 w/o time and time
-                zone), or 2020-04-14T12:00:00-07:00 (ISO 8601 with timezone
-                offset). Times without timezone offset are assumed to be in
-                local timezone.
-duedate         kMDItemDueDate, com.apple.metadata:kMDItemDueDate; The date
-                the item is due.  A date in ISO 8601 format, time and
-                timezone offset are optional: e.g. 2020-04-14T12:00:00 (ISO
-                8601 w/o timezone), 2020-04-14 (ISO 8601 w/o time and time
-                zone), or 2020-04-14T12:00:00-07:00 (ISO 8601 with timezone
-                offset). Times without timezone offset are assumed to be in
-                local timezone.
-findercolor     findercolor, com.apple.FinderInfo; Color tag set by the
-                Finder.  Colors can also be set by _kMDItemUserTags.  This
-                is controlled by the Finder and it's recommended you don't
-                directly access this attribute.  If you set or remove a
-                color tag via _kMDItemUserTag, osxmetadata will
-                automatically handle processing of FinderInfo color tag.
-findercomment   kMDItemFinderComment,
-                com.apple.metadata:kMDItemFinderComment; Finder comments for
-                this file.  A string.
-finderinfo      finderinfo, com.apple.FinderInfo; Info set by the Finder,
-                for example tag color.  Colors can also be set by
-                _kMDItemUserTags.  com.apple.FinderInfo is controlled by the
-                Finder and it's recommended you don't directly access this
-                attribute.  If you set or remove a color tag via
-                _kMDItemUserTag, osxmetadata will automatically handle
-                processing of FinderInfo color tag.
-headline        kMDItemHeadline, com.apple.metadata:kMDItemHeadline; A
-                publishable entry providing a synopsis of the contents of
-                the file.  A string.
-keywords        kMDItemKeywords, com.apple.metadata:kMDItemKeywords;
-                Keywords associated with this file. For example, “Birthday”,
-                “Important”, etc. This differs from Finder tags
-                (_kMDItemUserTags) which are keywords/tags shown in the
-                Finder and searchable in Spotlight using "tag:tag_name".  A
-                list of strings.
-participants    kMDItemParticipants, com.apple.metadata:kMDItemParticipants;
-                The list of people who are visible in an image or movie or
-                written about in a document. A list of strings.
-projects        kMDItemProjects, com.apple.metadata:kMDItemProjects; The
-                list of projects that this file is part of. For example, if
-                you were working on a movie all of the files could be marked
-                as belonging to the project “My Movie”. A list of strings.
-rating          kMDItemStarRating, com.apple.metadata:kMDItemStarRating;
-                User rating of this item. For example, the stars rating of
-                an iTunes track. An integer.
-stationary      kMDItemFSIsStationery,
-                com.apple.metadata:kMDItemFSIsStationery; Boolean indicating
-                if this file is stationery. Note: this is not what the
-                Finder uses for Stationary Pad flag.  See also
-                'stationarypad'.
-stationarypad   stationarypad, com.apple.FinderInfo; Marks the file as
-                stationary (a template that can be re-used). Setting this to
-                True is the same as checking the 'Stationary Pad' box in
-                Finder Info.
-subject         kMDItemSubject, com.apple.metadata:kMDItemSubject; Subject
-                of the this item. A string.
-tags            _kMDItemUserTags, com.apple.metadata:_kMDItemUserTags;
-                Finder tags; searchable in Spotlight using "tag:tag_name".
-                If you want tags/keywords visible in the Finder, use this
-                instead of kMDItemKeywords.  A list of Tag objects.
-title           kMDItemTitle, com.apple.metadata:kMDItemTitle; The title of
-                the file. For example, this could be the title of a
-                document, the name of a song, or the subject of an email
-                message. A string.
-version         kMDItemVersion, com.apple.metadata:kMDItemVersion; The
-                version number of this file. A string.
-wherefroms      kMDItemWhereFroms, com.apple.metadata:kMDItemWhereFroms;
-                Describes where the file was obtained from (e.g. URL
-                downloaded from).  A list of strings.
+Short Name               Description
+authors                  kMDItemAuthors, com.apple.metadata:kMDItemAuthors;
+                         The author, or authors, of the contents of the
+                         file.  A list of strings.
+comment                  kMDItemComment, com.apple.metadata:kMDItemComment;
+                         A comment related to the file.  This differs from
+                         the Finder comment, kMDItemFinderComment.  A
+                         string.
+copyright                kMDItemCopyright,
+                         com.apple.metadata:kMDItemCopyright; The copyright
+                         owner of the file contents.  A string.
+creator                  kMDItemCreator, com.apple.metadata:kMDItemCreator;
+                         Application used to create the document content
+                         (for example “Word”, “Pages”, and so on).  A
+                         string.
+description              kMDItemDescription,
+                         com.apple.metadata:kMDItemDescription; A
+                         description of the content of the resource.  The
+                         description may include an abstract, table of
+                         contents, reference to a graphical representation
+                         of content or a free-text account of the content.
+                         A string.
+downloadeddate           kMDItemDownloadedDate,
+                         com.apple.metadata:kMDItemDownloadedDate; The date
+                         the item was downloaded.  A date in ISO 8601
+                         format, time and timezone offset are optional: e.g.
+                         2020-04-14T12:00:00 (ISO 8601 w/o timezone),
+                         2020-04-14 (ISO 8601 w/o time and time zone), or
+                         2020-04-14T12:00:00-07:00 (ISO 8601 with timezone
+                         offset). Times without timezone offset are assumed
+                         to be in local timezone.
+duedate                  kMDItemDueDate, com.apple.metadata:kMDItemDueDate;
+                         The date the item is due.  A date in ISO 8601
+                         format, time and timezone offset are optional: e.g.
+                         2020-04-14T12:00:00 (ISO 8601 w/o timezone),
+                         2020-04-14 (ISO 8601 w/o time and time zone), or
+                         2020-04-14T12:00:00-07:00 (ISO 8601 with timezone
+                         offset). Times without timezone offset are assumed
+                         to be in local timezone.
+findercolor              findercolor, com.apple.FinderInfo; Color tag set by
+                         the Finder.  Colors can also be set by
+                         _kMDItemUserTags.  This is controlled by the Finder
+                         and it's recommended you don't directly access this
+                         attribute.  If you set or remove a color tag via
+                         _kMDItemUserTag, osxmetadata will automatically
+                         handle processing of FinderInfo color tag.
+findercomment            kMDItemFinderComment,
+                         com.apple.metadata:kMDItemFinderComment; Finder
+                         comments for this file.  A string.
+finderinfo               finderinfo, com.apple.FinderInfo; Info set by the
+                         Finder, for example tag color.  Colors can also be
+                         set by _kMDItemUserTags.  com.apple.FinderInfo is
+                         controlled by the Finder and it's recommended you
+                         don't directly access this attribute.  If you set
+                         or remove a color tag via _kMDItemUserTag,
+                         osxmetadata will automatically handle processing of
+                         FinderInfo color tag.
+headline                 kMDItemHeadline,
+                         com.apple.metadata:kMDItemHeadline; A publishable
+                         entry providing a synopsis of the contents of the
+                         file.  A string.
+keywords                 kMDItemKeywords,
+                         com.apple.metadata:kMDItemKeywords; Keywords
+                         associated with this file. For example, “Birthday”,
+                         “Important”, etc. This differs from Finder tags
+                         (_kMDItemUserTags) which are keywords/tags shown in
+                         the Finder and searchable in Spotlight using
+                         "tag:tag_name".  A list of strings.
+osxphotos_detected_text  OSXPhotosDetectedText,
+                         osxphotos.metadata:detected_text; Text detected in
+                         a photo; used by osxphotos
+                         (https://github.com/RhetTbull/osxphotos).
+participants             kMDItemParticipants,
+                         com.apple.metadata:kMDItemParticipants; The list of
+                         people who are visible in an image or movie or
+                         written about in a document. A list of strings.
+projects                 kMDItemProjects,
+                         com.apple.metadata:kMDItemProjects; The list of
+                         projects that this file is part of. For example, if
+                         you were working on a movie all of the files could
+                         be marked as belonging to the project “My Movie”. A
+                         list of strings.
+rating                   kMDItemStarRating,
+                         com.apple.metadata:kMDItemStarRating; User rating
+                         of this item. For example, the stars rating of an
+                         iTunes track. An integer.
+stationary               kMDItemFSIsStationery,
+                         com.apple.metadata:kMDItemFSIsStationery; Boolean
+                         indicating if this file is stationery. Note: this
+                         is not what the Finder uses for Stationary Pad
+                         flag.  See also 'stationarypad'.
+stationarypad            stationarypad, com.apple.FinderInfo; Marks the file
+                         as stationary (a template that can be re-used).
+                         Setting this to True is the same as checking the
+                         'Stationary Pad' box in Finder Info.
+subject                  kMDItemSubject, com.apple.metadata:kMDItemSubject;
+                         Subject of the this item. A string.
+tags                     _kMDItemUserTags,
+                         com.apple.metadata:_kMDItemUserTags; Finder tags;
+                         searchable in Spotlight using "tag:tag_name".  If
+                         you want tags/keywords visible in the Finder, use
+                         this instead of kMDItemKeywords.  A list of Tag
+                         objects.
+title                    kMDItemTitle, com.apple.metadata:kMDItemTitle; The
+                         title of the file. For example, this could be the
+                         title of a document, the name of a song, or the
+                         subject of an email message. A string.
+version                  kMDItemVersion, com.apple.metadata:kMDItemVersion;
+                         The version number of this file. A string.
+wherefroms               kMDItemWhereFroms,
+                         com.apple.metadata:kMDItemWhereFroms; Describes
+                         where the file was obtained from (e.g. URL
+                         downloaded from).  A list of strings.
 ```
 
 
@@ -258,6 +280,7 @@ Information about commonly used MacOS metadata attributes is available from [App
 |finderinfo|finderinfo|com.apple.FinderInfo|Info set by the Finder, for example tag color.  Colors can also be set by _kMDItemUserTags.  com.apple.FinderInfo is controlled by the Finder and it's recommended you don't directly access this attribute.  If you set or remove a color tag via _kMDItemUserTag, osxmetadata will automatically handle processing of FinderInfo color tag.|
 |kMDItemHeadline|headline|com.apple.metadata:kMDItemHeadline|A publishable entry providing a synopsis of the contents of the file.  A string.|
 |kMDItemKeywords|keywords|com.apple.metadata:kMDItemKeywords|Keywords associated with this file. For example, “Birthday”, “Important”, etc. This differs from Finder tags (_kMDItemUserTags) which are keywords/tags shown in the Finder and searchable in Spotlight using "tag:tag_name".  A list of strings.|
+|OSXPhotosDetectedText|osxphotos_detected_text|osxphotos.metadata:detected_text|Text detected in a photo; used by osxphotos (https://github.com/RhetTbull/osxphotos).|
 |kMDItemParticipants|participants|com.apple.metadata:kMDItemParticipants|The list of people who are visible in an image or movie or written about in a document. A list of strings.|
 |kMDItemProjects|projects|com.apple.metadata:kMDItemProjects|The list of projects that this file is part of. For example, if you were working on a movie all of the files could be marked as belonging to the project “My Movie”. A list of strings.|
 |kMDItemStarRating|rating|com.apple.metadata:kMDItemStarRating|User rating of this item. For example, the stars rating of an iTunes track. An integer.|

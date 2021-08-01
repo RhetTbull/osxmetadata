@@ -86,7 +86,7 @@ kMDItemTitle = "com.apple.metadata:kMDItemTitle"
 kMDItemUserTags = "com.apple.metadata:_kMDItemUserTags"
 kMDItemVersion = "com.apple.metadata:kMDItemVersion"
 kMDItemWhereFroms = "com.apple.metadata:kMDItemWhereFroms"
-
+OSXPhotosDetectedText = "osxphotos.metadata:detected_text"
 
 # Special handling for Finder comments
 _FINDER_COMMENT_NAMES = [
@@ -121,4 +121,5 @@ __all__ = [
     "kMDItemUserTags",
     "kMDItemVersion",
     "kMDItemWhereFroms",
+    "OSXPhotosDetectedText",
 ]

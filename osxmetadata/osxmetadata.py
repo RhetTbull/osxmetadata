@@ -18,12 +18,12 @@ import xattr
 
 from ._version import __version__
 from .attributes import ATTRIBUTES, Attribute, validate_attribute_value
-from .classes import _AttributeList, _AttributeTagsList
+from .classes import _AttributeOSXPhotosDetectedText, _AttributeList, _AttributeTagsList
 from .constants import (
     _FINDER_COMMENT_NAMES,
+    FINDER_COLOR_NONE,
     FinderInfo,
     _kMDItemUserTags,
-    FINDER_COLOR_NONE,
 )
 from .datetime_utils import (
     datetime_naive_to_utc,
@@ -33,7 +33,6 @@ from .datetime_utils import (
 from .debug import _debug, _get_logger, _set_debug
 from .findertags import Tag, get_tag_color_name
 
-
 # TODO: What to do about colors
 # TODO: check what happens if OSXMetaData.__init__ called with invalid file--should result in error but saw one case where it didn't
 # TODO: cleartags does not always clear colors--this is a new behavior, did Mac OS change something in implementation of colors?
@@ -42,7 +41,11 @@ from .findertags import Tag, get_tag_color_name
 _FINDERINFO_ATTRIBUTES = ["finderinfo", "findercolor", "stationarypad"]
 
 # all attributes that use an Attribute class (defined in attributes.py)
-_ATTRIBUTE_CLASS_ATTRIBUTES = ["tags", *_FINDERINFO_ATTRIBUTES]
+_ATTRIBUTE_CLASS_ATTRIBUTES = [
+    "tags",
+    "osxphotos_detected_text",
+    *_FINDERINFO_ATTRIBUTES,
+]
 
 # all attributes related to stationary pad
 _FINDERINFO_STATIONARYPAD_ATTRIBUTES = ["finderinfo", "stationarypad"]
@@ -104,6 +107,7 @@ class OSXMetaData:
         "tags",
         "version",
         "wherefroms",
+        "osxphotos_detected_text",
     ]
 
     def __init__(self, fname, tz_aware=False):
@@ -336,7 +340,10 @@ class OSXMetaData:
             # Finder Comment needs special handling
             # code following will also set the attribute for Finder Comment
             self.set_finder_comment(self._posix_name, value)
-        elif attribute.class_ in [_AttributeList, _AttributeTagsList]:
+        elif attribute.class_ in [
+            _AttributeList,
+            _AttributeTagsList,
+        ]:
             getattr(self, attribute.name).set_value(value)
         else:
             # must be a normal scalar (e.g. str, float)
@@ -382,32 +389,43 @@ class OSXMetaData:
 
         value = validate_attribute_value(attribute, value)
 
-        if attribute.list:
-            if new_value is None:
-                # no original value
-                new_value = value
+        if (
+            attribute.class_ == _AttributeOSXPhotosDetectedText
+            and new_value is None
+            or attribute.class_ != _AttributeOSXPhotosDetectedText
+            and attribute.list
+            and new_value is None
+        ):
+            new_value = value
+        elif attribute.list:
+            new_value = list(new_value)
+            if update:
+                for val in value:
+                    if val not in new_value:
+                        new_value.append(val)
+            elif attribute.class_ == _AttributeOSXPhotosDetectedText:
+                for val in value:
+                    new_value.append(val)
             else:
-                new_value = list(new_value)
-                if update:
-                    for val in value:
-                        if val not in new_value:
-                            new_value.append(val)
-                else:
-                    new_value.extend(value)
+                new_value.extend(value)
         else:
             # scalar value
             if update:
                 raise AttributeError(f"Cannot use update on {attribute.type_}")
             if new_value is None:
                 new_value = value
-
             else:
                 new_value += value
+
         try:
             if attribute.name in _FINDER_COMMENT_NAMES:
                 # Finder Comment needs special handling
                 self.set_finder_comment(self._posix_name, new_value)
-            elif attribute.class_ in [_AttributeList, _AttributeTagsList]:
+            elif attribute.class_ in [
+                _AttributeList,
+                _AttributeTagsList,
+                _AttributeOSXPhotosDetectedText,
+            ]:
                 # if tags, set_value will normalize
                 getattr(self, attribute.name).set_value(new_value)
             else:
@@ -497,6 +515,7 @@ class OSXMetaData:
             if md.startswith("com.apple.metadata")
             or md.startswith("com.apple.FinderInfo")
             or md.startswith("com.osxmetadata.test")
+            or md.startswith("osxphotos.metadata")
         ]
         return mdlist
 

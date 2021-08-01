@@ -843,6 +843,11 @@ def process_single_file(
                         f"{'UNKNOWN':{_SHORT_NAME_WIDTH}}{attr:{_LONG_NAME_WIDTH}} = THIS ATTRIBUTE NOT HANDLED",
                         err=True,
                     )
+                except Exception as e:
+                    click.echo(
+                        f"{'Error loading attribute':{_SHORT_NAME_WIDTH}}{attr:{_LONG_NAME_WIDTH}}: {e}",
+                        err=True,
+                    )
 
 
 if __name__ == "__main__":

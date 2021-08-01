@@ -10,6 +10,7 @@ from .classes import (
     _AttributeFinderInfoStationaryPad,
     _AttributeList,
     _AttributeTagsList,
+    _AttributeOSXPhotosDetectedText,
 )
 from .constants import *
 from .datetime_utils import (
@@ -34,7 +35,6 @@ from .datetime_utils import (
 #   for reference on common metadata attributes
 # type_: expected type for the attribute, e.g. if Apple says it's a CFString, it'll be python str
 #   CFNumber = python float, etc.
-#   (called type_ so pylint doesn't complain about misplaced type identifier)
 # list: (boolean) True if attribute is a list (e.g. a CFArray)
 # as_list: (boolean) True if attribute is a single value but stored in a list
 #   Note: the only attribute I've seen this on is com.apple.metadata:kMDItemDownloadedDate
@@ -372,7 +372,7 @@ ATTRIBUTES = {
         append=True,
         update=False,
         help="The title of the file. For example, this could be the title of a document, the name of a song, "
-        +"or the subject of an email message. A string.",
+        + "or the subject of an email message. A string.",
         api_help=None,
     ),
     "subject": Attribute(
@@ -387,7 +387,20 @@ ATTRIBUTES = {
         update=False,
         help="Subject of the this item. A string.",
         api_help=None,
-    )
+    ),
+    "osxphotos_detected_text": Attribute(
+        name="osxphotos_detected_text",
+        short_constant="OSXPhotosDetectedText",
+        constant=OSXPhotosDetectedText,
+        type_=list,
+        list=True,
+        as_list=False,
+        class_=_AttributeOSXPhotosDetectedText,
+        append=True,
+        update=True,
+        help="Text detected in a photo; used by osxphotos (https://github.com/RhetTbull/osxphotos).",
+        api_help=None,
+    ),
 }
 
 # used for formatting output of --list
@@ -420,7 +433,8 @@ def validate_attribute_value(attribute, value):
     and convert value to correct type
     returns value as type attribute.type_
     value may be a single value or a list depending on what attribute expects
-    if value contains None, returns None"""
+    if value contains None, returns None
+    """
 
     # check to see if we got None
     try:
@@ -443,6 +457,9 @@ def validate_attribute_value(attribute, value):
         raise ValueError(
             f"{attribute.name} expects only one value but list of {len(value)} provided"
         )
+
+    if attribute.class_ == _AttributeOSXPhotosDetectedText:
+        return _AttributeOSXPhotosDetectedText.validate_value(value)
 
     new_values = []
     for val in value:
@@ -491,10 +508,12 @@ def validate_attribute_value(attribute, value):
                 # convert to UTC and remove timezone
                 new_val = datetime_tz_to_utc(new_val)
                 new_val = datetime_remove_tz(new_val)
+        elif attribute.type_ == list:
+            new_val = val if isinstance(val, (list, tuple)) else [val]
         else:
             raise TypeError(f"Unknown type: {type(val)}")
         new_values.append(new_val)
-
+    
     if attribute.list:
         return new_values
     else:

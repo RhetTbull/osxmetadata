@@ -2,6 +2,7 @@
 
 import collections.abc
 import datetime
+import json
 import plistlib
 from plistlib import FMT_BINARY  # pylint: disable=E0611
 
@@ -304,7 +305,7 @@ class _AttributeFinderInfo:
         """set the Stationary Pad flag of com.apple.FinderInfo"""
 
         value = 1 if value_to_bool(value) else 0
-        
+
         # stationary pad is encoded as a single bit
         bit = bitstring.BitArray(uint=value, length=1)
 
@@ -477,3 +478,79 @@ class _AttributeTagsList(_AttributeList, _AttributeFinderInfo):
             except StopIteration:
                 color = FINDER_COLOR_NONE
             self.set_finderinfo_color(color)
+
+
+class _AttributeJSONList(_AttributeList):
+    """represents a list item that stores its value as JSON"""
+
+    def __init__(self, attribute, xattr_, osxmetadata_obj):
+        """initialize object
+        attribute: an OSXMetaData Attributes namedtuple
+        xattr_: an instance of xattr.xattr
+        osxmetadata_obj: instance of OSXMetaData that created this class instance"""
+        self._attribute = attribute
+        self._attrs = xattr_
+        self._md = osxmetadata_obj
+
+        self._constant = attribute.constant
+
+        self.data = []
+        self._json = None
+        self._load_data()
+
+    def set_value(self, value):
+        if not isinstance(value, list):
+            raise TypeError(f"value must be a list, not {type(value)}")
+        self.data = value
+        self._write_data()
+
+    def get_value(self):
+        self._load_data()
+        return self.data
+
+    def _load_data(self):
+        try:
+            self._json = self._attrs[self._constant]
+            self.data = json.loads(self._json)
+        except KeyError:
+            self.data = []
+
+    def _write_data(self):
+        self._json = json.dumps(self.data).encode("utf-8")
+        self._attrs.set(self._constant, self._json)
+
+
+class _AttributeOSXPhotosDetectedText(_AttributeJSONList):
+    """represents an OSXPhotos.metadata:detected_text attribute"""
+
+    @classmethod
+    def validate_value(cls, value):
+        """verify value is valid"""
+
+        if not isinstance(value, (list, str)):
+            raise TypeError(f"value must be a list or JSON str, not {type(value)}")
+
+        if value and isinstance(value, str):
+            # assume it's JSON
+            value = json.loads(value[0])
+        elif value:
+            if not isinstance(value[0], list):
+                value = [value]
+
+            for item in value:
+                if not isinstance(item, (list, tuple)):
+                    raise TypeError(f"items must be lists or tuples, not {type(item)}")
+                if len(item) != 2:
+                    raise TypeError(f"items must be of length 2, not {len(item)}")
+                if type(item[0]) != str:
+                    raise TypeError(f"first item must be a string, not {type(item[0])}")
+                if not isinstance(item[1], (int, float)):
+                    raise TypeError(
+                        f"second item must be a number, not {type(item[1])}"
+                    )
+                item[1] = float(item[1])
+        return value
+
+    def set_value(self, value):
+        value = self.validate_value(value)
+        return super().set_value(value)
