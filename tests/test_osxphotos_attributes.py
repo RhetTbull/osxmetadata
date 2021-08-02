@@ -79,10 +79,12 @@ def test_osxphotos_detected_text_attribute(temp_file):
     meta.osxphotos_detected_text = expected
     got = meta.osxphotos_detected_text
     assert expected == got
+    assert len(meta.osxphotos_detected_text) == 1
 
     expected.append(["Bar", 0.7])
     meta.osxphotos_detected_text.append(["Bar", 0.7])
     assert meta.osxphotos_detected_text == expected
+    assert len(meta.osxphotos_detected_text) == 2
 
     expected.remove(["Bar", 0.7])
     meta.osxphotos_detected_text.remove(["Bar", 0.7])
@@ -101,6 +103,7 @@ def test_osxphotos_detected_text_attribute(temp_file):
 
     meta.osxphotos_detected_text = None
     assert not meta.osxphotos_detected_text
+    assert meta.get_attribute("osxphotos_detected_text") is None
 
     expected = [["Foo", 0.75]]
     meta.osxphotos_detected_text = expected

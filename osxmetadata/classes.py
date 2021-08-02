@@ -494,7 +494,7 @@ class _AttributeJSONList(_AttributeList):
 
         self._constant = attribute.constant
 
-        self.data = []
+        self.data = None
         self._json = None
         self._load_data()
 
@@ -513,7 +513,7 @@ class _AttributeJSONList(_AttributeList):
             self._json = self._attrs[self._constant]
             self.data = json.loads(self._json)
         except KeyError:
-            self.data = []
+            self.data = None
 
     def _write_data(self):
         self._json = json.dumps(self.data).encode("utf-8")
@@ -554,3 +554,7 @@ class _AttributeOSXPhotosDetectedText(_AttributeJSONList):
     def set_value(self, value):
         value = self.validate_value(value)
         return super().set_value(value)
+
+    def __len__(self):
+        self._load_data()
+        return self.data.__len__() if self.data else 0
