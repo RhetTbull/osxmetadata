@@ -48,9 +48,9 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     install_requires=[
-        "xattr==0.9.7",
+        "xattr>=0.9.7",
         "click>=7.0",
-        "bitstring==3.1.7",
+        "bitstring>=3.1.9",
         "pyobjc-core",
         "pyobjc-framework-AppleScriptKit",
         "pyobjc-framework-AppleScriptObjC",
