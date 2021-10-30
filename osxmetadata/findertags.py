@@ -70,31 +70,38 @@ def get_finder_tags():
 
     # TODO: Is it possible to get a race condition where Finder is writing at same time
     # this code is trying to open the plist file?  If so, what happens?
-    plist_file = pathlib.Path(
-        str(pathlib.Path.home()) + "/Library/SyncedPreferences/com.apple.finder.plist"
-    )
+    plist_files = [
+        pathlib.Path(
+            str(pathlib.Path.home())
+            + "/Library/SyncedPreferences/com.apple.finder.plist"
+        ),
+        # On Monterey the SyncedPreferences/com.apple.finder.plist does not exist
+        # it might be in this one but I can't verify until I can get access to Monterey
+        # pathlib.Path(
+        # str(pathlib.Path.home()) + "/Library/Preferences/com.apple.finder.plist"
+        # ),
+    ]
     tags = {}
-    try:
-        with open(plist_file, "rb") as fp:
-            pl = plistlib.load(fp)
-            try:
-                finder_tags = pl["values"]["FinderTagDict"]["value"]["FinderTags"]
-                for tag in finder_tags:
-                    try:
-                        name = tag["n"]
-                        color = tag["l"]
-                    except KeyError:
-                        # color will not be present if no color
-                        color = 0
-                    tags[name] = color
 
-            except Exception as e:
-                logging.warning(f"Exception while parsing plist file: {e}")
-                raise e
-
-    except Exception as e:
-        logging.warning(f"Could not open plist file: {plist_file}, exception: {e}")
-        raise e
+    for plist_file in plist_files:
+        try:
+            with open(plist_file, "rb") as fp:
+                pl = plistlib.load(fp)
+                try:
+                    finder_tags = pl["values"]["FinderTagDict"]["value"]["FinderTags"]
+                    for tag in finder_tags:
+                        try:
+                            name = tag["n"]
+                            color = tag["l"]
+                        except KeyError:
+                            # color will not be present if no color
+                            color = 0
+                        tags[name] = color
+                    break
+                except Exception as e:
+                    pass
+        except Exception as e:
+            pass
 
     return tags
 
