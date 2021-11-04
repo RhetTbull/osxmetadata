@@ -51,10 +51,16 @@ setup(
         "xattr>=0.9.7",
         "click>=7.0",
         "bitstring>=3.1.9",
+        "py-applescript==1.0.2",
         "pyobjc-core>=7.3,<8.0",
         "pyobjc-framework-AppleScriptKit>=7.3,<8.0",
         "pyobjc-framework-AppleScriptObjC>=7.3,<8.0",
-        "py-applescript==1.0.2",
+        # the following aren't actually needed, but are required for pyobjc dependencies to work with pip
+        # if not included, pip tries to install a beta version of pyobjc
+        "pyobjc-framework-Cocoa>=7.3,<8.0",
+        "pyobjc-framework-AVFoundation>=7.3,<8.0",
+        "pyobjc-framework-Quartz>=7.3,<8.0",
+        "pyobjc-framework-CoreMedia>=7.3,<8.0",
     ],
     python_requires=">=3.7",
     entry_points={"console_scripts": ["osxmetadata=osxmetadata.__main__:cli"]},
