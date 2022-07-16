@@ -18,7 +18,7 @@ import xattr
 
 from ._version import __version__
 from .attributes import ATTRIBUTES, Attribute, validate_attribute_value
-from .classes import _AttributeOSXPhotosDetectedText, _AttributeList, _AttributeTagsList
+from .classes import _AttributeList, _AttributeOSXPhotosDetectedText, _AttributeTagsList
 from .constants import (
     _FINDER_COMMENT_NAMES,
     FINDER_COLOR_NONE,
@@ -297,12 +297,12 @@ class OSXMetaData:
         e.g. if attribute is a datedate.datetime object, will
         format using datetime.isoformat()
         attribute_name: name of attribute"""
-        
+
         attribute = ATTRIBUTES[attribute_name]
         value = self.get_attribute(attribute_name)
         if attribute.class_ == _AttributeOSXPhotosDetectedText:
             return json.dumps(value)
-        
+
         if type(value) in [list, set]:
             if value:
                 if type(value[0]) == datetime.datetime:

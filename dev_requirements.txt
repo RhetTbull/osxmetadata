@@ -1,2 +1,2 @@
-pytest==6.2.4
-pyinstaller==4.3
+pytest==7.1.2
+pyinstaller==5.2
