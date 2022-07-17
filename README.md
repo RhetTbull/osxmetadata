@@ -292,6 +292,12 @@ Information about commonly used MacOS metadata attributes is available from [App
 |kMDItemVersion|version|com.apple.metadata:kMDItemVersion|The version number of this file. A string.|
 |kMDItemWhereFroms|wherefroms|com.apple.metadata:kMDItemWhereFroms|Describes where the file was obtained from (e.g. URL downloaded from).  A list of strings.|
 
+## Notes on backup/restore
+
+When run with `--backup`, osxmetadata backs up the metadata of each file in a file called `.osxmetadata.json`. A backup file is created in every directory that includes files being backup up. The format is plain JSON text with a record for each file that was backed up. If you delete a file then run the `--backup` again, the deleted file's record is not deleted from the `.osxmetadata.json` backup file. The backup file is kept in each directory/sub-directory and only the filename is used for `--restore` which means you can move/rename the directory (along with the `.osxmetadata.json` file) and the restore will still work correctly.
+
+**Note**: Prior to version 0.99.38, the backup file was not well-formed JSON which meant that some apps/viewers could not process the JSON file.  Version 0.99.38 fixes this and will silently update any `.osxmetadata.json` file encountered during `--backup` to be well-formed JSON but this breaks backwards compatibility with older versions of osxmetadata. If you use osxmetadata to sync data across multiple Macs, you must ensure all Macs are running the updated version.  For additional details, see [issue #57](https://github.com/RhetTbull/osxmetadata/issues/57).
+
 ## Example uses of the package
 
 ### Using the command line tool to set metadata:
