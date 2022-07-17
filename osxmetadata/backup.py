@@ -32,7 +32,7 @@ def write_backup_file(backup_file, backup_data):
     as returned by json.loads(OSXMetaData.to_json())"""
 
     with open(backup_file, mode="w") as fp:
-        json.dump(list(backup_data.values()), fp)
+        json.dump(list(backup_data.values()), fp, indent=2)
 
 
 def load_backup_file(backup_file):
