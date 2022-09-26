@@ -3,6 +3,17 @@
 
 from ._version import __version__
 from .attribute_data import ATTRIBUTE_DATA, RESOURCE_KEY_DATA
+from .constants import (
+    FINDER_COLOR_BLUE,
+    FINDER_COLOR_GRAY,
+    FINDER_COLOR_GREEN,
+    FINDER_COLOR_NONE,
+    FINDER_COLOR_ORANGE,
+    FINDER_COLOR_PURPLE,
+    FINDER_COLOR_RED,
+    FINDER_COLOR_YELLOW,
+)
+from .finder_tags import Tag, _kMDItemUserTags
 from .osxmetadata import OSXMetaData
 
 # add constants to module namespace
@@ -13,22 +24,23 @@ for constant in RESOURCE_KEY_DATA.keys():
 
 
 __all__ = [
-    "__version__",
+    "FINDER_COLOR_BLUE",
+    "FINDER_COLOR_GRAY",
+    "FINDER_COLOR_GREEN",
+    "FINDER_COLOR_NONE",
+    "FINDER_COLOR_ORANGE",
+    "FINDER_COLOR_PURPLE",
+    "FINDER_COLOR_RED",
+    "FINDER_COLOR_YELLOW", 
     "OSXMetaData",
+    "Tag",
+    "__version__",
+    "_kMDItemUserTags",
     *ATTRIBUTE_DATA.keys(),
     *RESOURCE_KEY_DATA.keys(),
 ]
 
-# from .attributes import ATTRIBUTES
-# from .constants import (
-#     FINDER_COLOR_BLUE,
-#     FINDER_COLOR_GRAY,
-#     FINDER_COLOR_GREEN,
-#     FINDER_COLOR_NONE,
-#     FINDER_COLOR_ORANGE,
-#     FINDER_COLOR_PURPLE,
-#     FINDER_COLOR_RED,
-#     FINDER_COLOR_YELLOW,
+
 #     FinderInfo,
 #     _COLORIDS,
 #     _COLORNAMES,
@@ -39,5 +51,3 @@ __all__ = [
 #     _kMDItemUserTags,
 # )
 # from .debug import _debug, _set_debug
-# from .findertags import Tag, get_tag_color_name
-# from .osxmetadata import OSXMetaData

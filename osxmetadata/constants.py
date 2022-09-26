@@ -43,14 +43,14 @@ FINDER_COLOR_YELLOW = 5
 FINDER_COLOR_RED = 6
 FINDER_COLOR_ORANGE = 7
 
-_MIN_FINDER_COLOR = 0
-_MAX_FINDER_COLOR = 7
+# _MIN_FINDER_COLOR = 0
+# _MAX_FINDER_COLOR = 7
 
-_VALID_COLORIDS = "01234567"
-_MAX_FINDERCOMMENT = 750  # determined through trial & error with Finder
-_MAX_WHEREFROM = (
-    1024  # just picked something....todo: need to figure out what max length is
-)
+# _VALID_COLORIDS = "01234567"
+# _MAX_FINDERCOMMENT = 750  # determined through trial & error with Finder
+# _MAX_WHEREFROM = (
+#     1024  # just picked something....todo: need to figure out what max length is
+# )
 
 # offset of tag color in com.apple.FinderInfo xattr
 # tag color is 3 bits
@@ -60,23 +60,23 @@ _kCOLOR_OFFSET = 76
 _kSTATIONARYPAD_OFFSET = 68
 
 
-FinderInfo = "com.apple.FinderInfo"
-_kMDItemUserTags = "com.apple.metadata:_kMDItemUserTags"
-OSXPhotosDetectedText = "osxphotos.metadata:detected_text"
+# FinderInfo = "com.apple.FinderInfo"
+# _kMDItemUserTags = "com.apple.metadata:_kMDItemUserTags"
+# OSXPhotosDetectedText = "osxphotos.metadata:detected_text"
 
 # Special handling for Finder comments
-_FINDER_COMMENT_NAMES = [
-    "findercomment",
-    "kMDItemFinderComment",
-    "com.apple.metadata:kMDItemFinderComment",
-]
-_TAGS_NAMES = ["tags", "_kMDItemUserTags", "com.apple.metadata:_kMDItemUserTags"]
-_FINDERINFO_NAMES = ["finderinfo", "com.apple.FinderInfo"]
+# _FINDER_COMMENT_NAMES = [
+#     "findercomment",
+#     "kMDItemFinderComment",
+#     "com.apple.metadata:kMDItemFinderComment",
+# ]
+# _TAGS_NAMES = ["tags", "_kMDItemUserTags", "com.apple.metadata:_kMDItemUserTags"]
+# _FINDERINFO_NAMES = ["finderinfo", "com.apple.FinderInfo"]
 
-_BACKUP_FILENAME = ".osxmetadata.json"
+# _BACKUP_FILENAME = ".osxmetadata.json"
 
-__all__ = [
-    "FinderInfo",
-    "_kMDItemUserTags",
-    "OSXPhotosDetectedText",
-]
+# __all__ = [
+#     "FinderInfo",
+#     "_kMDItemUserTags",
+#     "OSXPhotosDetectedText",
+# ]

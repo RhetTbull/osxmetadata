@@ -13,8 +13,18 @@ import typing as t
 from collections import namedtuple
 
 import xattr
+from Foundation import NSURL
+
+from .nsurl_metadata import set_nsurl_metadata
+
+NSURLTagNamesKey = "NSURLTagNamesKey"
 
 Tag = namedtuple("Tag", ["name", "color"])
+
+_kMDItemUserTags = "_kMDItemUserTags"
+_kMDItemUserTagsXattr = "com.apple.metadata:_kMDItemUserTags"
+
+__all__ = ["Tag", "_kMDItemUserTags", "get_finder_tags", "set_finder_tags"]
 
 
 def split_tag_names_colors(tag_values: t.List[str]) -> t.List[Tag]:
@@ -49,10 +59,27 @@ def get_finder_tags(xattr_obj: xattr.xattr) -> t.List[Tag]:
         list of Finder tags
     """
     try:
-        tag_data = xattr_obj["com.apple.metadata:_kMDItemUserTags"]
+        tag_data = xattr_obj[_kMDItemUserTagsXattr]
         # load the binary plist values
         tag_values = plistlib.loads(tag_data)
         tags = split_tag_names_colors(tag_values)
     except KeyError:
         tags = []
     return tags
+
+
+def set_finder_tags(url: NSURL, tags: t.List[Tag]):
+    """Set Finder tags in extended attribute _kMDItemUserTags
+
+    Args:
+        url: NSURL for file
+        tags: list of Finder tags
+    """
+    if not isinstance(tags, list):
+        raise TypeError("tags must be a list of Tag namedtuples")
+    if not all(isinstance(tag, Tag) for tag in tags):
+        raise TypeError("tags must be a list of Tag namedtuples")
+
+    # convert to list of strings in format name\ncolor
+    tag_values = [f"{tag.name}\n{tag.color}" for tag in tags]
+    set_nsurl_metadata(url, NSURLTagNamesKey, tag_values)

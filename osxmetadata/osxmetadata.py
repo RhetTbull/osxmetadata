@@ -9,7 +9,7 @@ import xattr
 from Foundation import NSURL, NSURLTagNamesKey
 
 from .attribute_data import ATTRIBUTE_DATA, ATTRIBUTE_SHORT_NAMES, RESOURCE_KEY_DATA
-from .finder_tags import get_finder_tags
+from .finder_tags import Tag, _kMDItemUserTags, get_finder_tags, set_finder_tags
 from .mditem import MDItemValueType, get_mditem_metadata, set_mditem_metadata
 from .nsurl_metadata import get_nsurl_metadata, set_nsurl_metadata
 
@@ -47,7 +47,7 @@ class OSXMetaData:
         """Get metadata attribute value
         attribute: metadata attribute name
         """
-        return get_mditem_metadata(self._mditem, attribute)
+        return self.__getattr__(attribute)
 
     def set(self, attribute: str, value: MDItemValueType):
         """Set metadata attribute value
@@ -56,11 +56,12 @@ class OSXMetaData:
             attribute: metadata attribute name
             value: value to set attribute to; must match the type expected by the attribute (e.g. str or list)
         """
-        set_mditem_metadata(self._mditem, attribute, value)
+        self.__setattr__(attribute, value)
 
     @property
-    def tags(self) -> t.List[str]:
+    def tags(self) -> t.List[Tag]:
         """Get Finder tags"""
+        # Note: setter is handled by __setattr__
         return get_finder_tags(self._xattr)
 
     def __getattr__(self, attribute: str) -> MDItemValueType:
@@ -83,11 +84,15 @@ class OSXMetaData:
             value: value to set
         """
         try:
-            if self.__init and attribute in ATTRIBUTE_SHORT_NAMES:
-                # handle dynamic properties like self.keywords and self.comments
-                set_mditem_metadata(
-                    self._mditem, ATTRIBUTE_SHORT_NAMES[attribute], value
-                )
+            if self.__init:
+                if attribute in ATTRIBUTE_SHORT_NAMES:
+                    # handle dynamic properties like self.keywords and self.comments
+                    set_mditem_metadata(
+                        self._mditem, ATTRIBUTE_SHORT_NAMES[attribute], value
+                    )
+                elif attribute == "tags":
+                    # handle Finder tags
+                    set_finder_tags(self._url, value)
         except (KeyError, AttributeError):
             super().__setattr__(attribute, value)
 
@@ -101,6 +106,8 @@ class OSXMetaData:
             return get_mditem_metadata(self._mditem, key)
         elif key in RESOURCE_KEY_DATA:
             return get_nsurl_metadata(self._url, key)
+        elif key == _kMDItemUserTags:
+            return get_finder_tags(self._xattr)
         else:
             raise KeyError(f"Invalid key: {key}")
 
@@ -116,5 +123,7 @@ class OSXMetaData:
         elif key in RESOURCE_KEY_DATA:
             # todo: check read-only in description
             set_nsurl_metadata(self._url, key, value)
+        elif key == _kMDItemUserTags:
+            set_finder_tags(self._xattr, value)
         else:
             raise KeyError(f"Invalid key: {key}")
