@@ -7,7 +7,7 @@ import typing as t
 
 import Foundation
 
-METADATA_FILES = [
+MDITEM_METADATA_FILES = [
     "audio_attributes.json",
     "common_attributes.json",
     "filesystem_attributes.json",
@@ -15,15 +15,15 @@ METADATA_FILES = [
     "video_attributes.json",
 ]
 
-RESOURCE_KEY_FILES = ["nsurl_resource_keys.json"]
+NSURL_RESOURCE_KEY_FILES = ["nsurl_resource_keys.json"]
 
 
-def load_attribute_data() -> t.Dict:
+def load_mditem_attribute_data() -> t.Dict:
     """Load attribute metadata from JSON files"""
     # TODO: would be better to use importlib.abc.ResourceReader but I can't find a single example of how to do this
     parent = pathlib.Path(__file__).parent
     data = {}
-    for filename in METADATA_FILES:
+    for filename in MDITEM_METADATA_FILES:
         with open(parent / filename, "r") as f:
             file_data = json.load(f)
             for item in file_data:
@@ -60,12 +60,12 @@ def load_attribute_data() -> t.Dict:
     return data
 
 
-def load_resource_key_data() -> t.Dict:
-    """Load resource key metadata from JSON files"""
+def load_nsurl_resource_key_data() -> t.Dict:
+    """Load NSRL resource key metadata from JSON files"""
     # TODO: would be better to use importlib.abc.ResourceReader but I can't find a single example of how to do this
     parent = pathlib.Path(__file__).parent
     data = {}
-    for filename in RESOURCE_KEY_FILES:
+    for filename in NSURL_RESOURCE_KEY_FILES:
         with open(parent / filename, "r") as f:
             file_data = json.load(f)
             for item in file_data:
@@ -79,14 +79,14 @@ def load_resource_key_data() -> t.Dict:
     return data
 
 
-ATTRIBUTE_DATA = load_attribute_data()
-ATTRIBUTE_SHORT_NAMES = {
-    item["short_name"]: item["name"] for item in ATTRIBUTE_DATA.values()
+MDITEM_ATTRIBUTE_DATA = load_mditem_attribute_data()
+MDITEM_ATTRIBUTE_SHORT_NAMES = {
+    item["short_name"]: item["name"] for item in MDITEM_ATTRIBUTE_DATA.values()
 }
-RESOURCE_KEY_DATA = load_resource_key_data()
+NSURL_RESOURCE_KEY_DATA = load_nsurl_resource_key_data()
 
 __all__ = [
-    "ATTRIBUTE_DATA",
-    "ATTRIBUTE_SHORT_NAMES",
-    "RESOURCE_KEY_DATA",
+    "MDITEM_ATTRIBUTE_DATA",
+    "MDITEM_ATTRIBUTE_SHORT_NAMES",
+    "NSURL_RESOURCE_KEY_DATA",
 ]

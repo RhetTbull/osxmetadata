@@ -1,9 +1,13 @@
-"""Load attribute metadata from JSON files"""
+"""Load metadata about metadata attributes from JSON files"""
 
 from .load_attribute_data import (
-    ATTRIBUTE_DATA,
-    ATTRIBUTE_SHORT_NAMES,
-    RESOURCE_KEY_DATA,
+    MDITEM_ATTRIBUTE_DATA,
+    MDITEM_ATTRIBUTE_SHORT_NAMES,
+    NSURL_RESOURCE_KEY_DATA,
 )
 
-__all__ = ["ATTRIBUTE_DATA", "ATTRIBUTE_SHORT_NAMES", "RESOURCE_KEY_DATA"]
+__all__ = [
+    "MDITEM_ATTRIBUTE_DATA",
+    "MDITEM_ATTRIBUTE_SHORT_NAMES",
+    "NSURL_RESOURCE_KEY_DATA",
+]

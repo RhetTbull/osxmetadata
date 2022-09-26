@@ -15,7 +15,7 @@ import CoreFoundation
 import CoreServices
 import objc
 
-from .attribute_data import ATTRIBUTE_DATA
+from .attribute_data import MDITEM_ATTRIBUTE_DATA
 
 # Absolute time in macOS is measured in seconds relative to the absolute reference date of Jan 1 2001 00:00:00 GMT.
 # Reference: https://developer.apple.com/documentation/corefoundation/1542812-cfdategetabsolutetime?language=objc
@@ -100,7 +100,7 @@ def get_mditem_metadata(
     Returns value of attribute
     """
     value = CoreServices.MDItemCopyAttribute(mditem, attribute)
-    if not (attribute_data := ATTRIBUTE_DATA.get(attribute)):
+    if not (attribute_data := MDITEM_ATTRIBUTE_DATA.get(attribute)):
         raise ValueError(f"Unknown attribute: {attribute}")
     attribute_type = attribute_data["python_type"]
     if value is None:
