@@ -1,0 +1,567 @@
+[
+    {
+        "name": "NSURLIsApplicationKey",
+        "description": "",
+        "version": "iOS 9.0+ iPadOS 9.0+ macOS 10.11+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLApplicationIsScriptableKey",
+        "description": "",
+        "version": "macOS 10.11+"
+    },
+    {
+        "name": "NSURLIsDirectoryKey",
+        "description": "Key for determining whether the resource is a directory, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLParentDirectoryURLKey",
+        "description": "The parent directory of the resource, returned as an NSURL object, or nil if the resource is the root directory of its volume (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLFileAllocatedSizeKey",
+        "description": "The key for the total size allocated on-disk for the file.",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLFileProtectionKey",
+        "description": "The key for the protection level of the file.",
+        "version": "iOS 9.0+ iPadOS 9.0+ macOS 10.11+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLFileContentIdentifierKey",
+        "description": "The key for a value that APFS assigns to identify a file's content data stream.",
+        "version": "iOS 14.0+ iPadOS 14.0+ macOS 11.0+ Mac Catalyst 14.0+ tvOS 14.0+ watchOS 7.0+"
+    },
+    {
+        "name": "NSURLFileResourceIdentifierKey",
+        "description": "The key for the resource's unique identifier.",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLFileResourceTypeKey",
+        "description": "The key for the resource's object type.",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLFileSecurityKey",
+        "description": "The key for the resource's security information.",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLFileSizeKey",
+        "description": "The key for the file's size, in bytes.",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLIsAliasFileKey",
+        "description": "The key for determining whether the file is an alias.",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLIsPackageKey",
+        "description": "The key for determining whether the resource is a file package.",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLIsRegularFileKey",
+        "description": "The key for determining whether the resource is a regular file rather than a directory or a symbolic link.",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLIsPurgeableKey",
+        "description": "The key for a Boolean value that indicates whether the file system can delete a file when the system needs to free space.",
+        "version": "iOS 14.0+ iPadOS 14.0+ macOS 11.0+ Mac Catalyst 14.0+ tvOS 14.0+ watchOS 7.0+"
+    },
+    {
+        "name": "NSURLIsSparseKey",
+        "description": "The key for a Boolean value that indicates whether the file has sparse regions.",
+        "version": "iOS 14.0+ iPadOS 14.0+ macOS 11.0+ Mac Catalyst 14.0+ tvOS 14.0+ watchOS 7.0+"
+    },
+    {
+        "name": "NSURLMayHaveExtendedAttributesKey",
+        "description": "The key for a Boolean value that indicates whether the file has extended attributes.",
+        "version": "iOS 14.0+ iPadOS 14.0+ macOS 11.0+ Mac Catalyst 14.0+ tvOS 14.0+ watchOS 7.0+"
+    },
+    {
+        "name": "NSURLMayShareFileContentKey",
+        "description": "The key for a Boolean value that indicates whether cloned files and their original files may share data blocks.",
+        "version": "iOS 14.0+ iPadOS 14.0+ macOS 11.0+ Mac Catalyst 14.0+ tvOS 14.0+ watchOS 7.0+"
+    },
+    {
+        "name": "NSURLPreferredIOBlockSizeKey",
+        "description": "The key for the optimal block size to use when reading or writing the file's data.",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLTotalFileAllocatedSizeKey",
+        "description": "The key for the total allocated size of the file, in bytes.",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLTotalFileSizeKey",
+        "description": "The key for the total displayable size of the file, in bytes.",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeAvailableCapacityKey",
+        "description": "Key for the volume's available capacity in bytes (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeAvailableCapacityForImportantUsageKey",
+        "description": "Key for the volume's available capacity in bytes for storing important resources (read-only).",
+        "version": "iOS 11.0+ iPadOS 11.0+ macOS 10.13+ Mac Catalyst 13.1+"
+    },
+    {
+        "name": "NSURLVolumeAvailableCapacityForOpportunisticUsageKey",
+        "description": "Key for the volume's available capacity in bytes for storing nonessential resources (read-only).",
+        "version": "iOS 11.0+ iPadOS 11.0+ macOS 10.13+ Mac Catalyst 13.1+"
+    },
+    {
+        "name": "NSURLVolumeTotalCapacityKey",
+        "description": "Key for the volume's total capacity in bytes (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeIsAutomountedKey",
+        "description": "Key for determining whether the volume is automounted, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeIsBrowsableKey",
+        "description": "Key for determining whether the volume is visible in GUI-based file-browsing environments, such as the Desktop or the Finder application, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeIsEjectableKey",
+        "description": "Key for determining whether the volume is ejectable from the drive mechanism under software control, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeIsEncryptedKey",
+        "description": "Whether the volume is encrypted, returned as NSNumber containing a Boolean value (read-only).",
+        "version": "iOS 10.0+ iPadOS 10.0+ macOS 10.12+ Mac Catalyst 13.1+ tvOS 10.0+ watchOS 3.0+"
+    },
+    {
+        "name": "NSURLVolumeIsInternalKey",
+        "description": "Key for determining whether the volume is connected to an internal bus, returned as a Boolean NSNumber object, or nil if it cannot be determined (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeIsJournalingKey",
+        "description": "Key for determining whether the volume is currently journaling, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeIsLocalKey",
+        "description": "Key for determining whether the volume is stored on a local device, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeIsReadOnlyKey",
+        "description": "Key for determining whether the volume is read-only, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeIsRemovableKey",
+        "description": "Key for determining whether the volume is removable from the drive mechanism, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeIsRootFileSystemKey",
+        "description": "Whether the volume is the root filesystem, returned as NSNumber containing a Boolean value (read-only).",
+        "version": "iOS 10.0+ iPadOS 10.0+ macOS 10.12+ Mac Catalyst 13.1+ tvOS 10.0+ watchOS 3.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsFileProtectionKey",
+        "description": "A Boolean value that indicates the volume supports data protection for files.",
+        "version": "iOS 14.0+ iPadOS 14.0+ macOS 11.0+ Mac Catalyst 14.0+ tvOS 14.0+ watchOS 7.0+"
+    },
+    {
+        "name": "NSURLIsMountTriggerKey",
+        "description": "Key for determining whether the URL is a file system trigger directory, returned as a Boolean NSNumber object (read-only). Traversing or opening a file system trigger directory causes an attempt to mount a file system on the directory.",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLIsVolumeKey",
+        "description": "Key for determining whether the resource is the root directory of a volume, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeCreationDateKey",
+        "description": "Key for the volume's creation date, returned as an NSDate object, or NULL if it cannot be determined (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeIdentifierKey",
+        "description": "The unique identifier of the resource's volume, returned as an id (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeLocalizedFormatDescriptionKey",
+        "description": "Key for the volume's descriptive format name, returned as an NSString object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeLocalizedNameKey",
+        "description": "The name of the volume as it should be displayed in the user interface, returned as an NSString object (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeMaximumFileSizeKey",
+        "description": "Key for the largest file size supported by the volume in bytes, returned as a Boolean NSNumber object, or nil if it cannot be determined (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeNameKey",
+        "description": "The name of the volume, returned as an NSString object (read-write). Settable only if NSURLVolumeSupportsRenamingKey is YES.",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeResourceCountKey",
+        "description": "Key for the total number of resources on the volume, returned as an NSNumber object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsAccessPermissionsKey",
+        "description": "",
+        "version": "iOS 11.0+ iPadOS 11.0+ macOS 10.13+ Mac Catalyst 13.1+ tvOS 11.0+ watchOS 4.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsAdvisoryFileLockingKey",
+        "description": "Key for determining whether the volume implements whole-file advisory locks in the style of flock, along with the O_EXLOCK and O_SHLOCK flags of the open function, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsCasePreservedNamesKey",
+        "description": "Key for determining whether the volume supports case-preserved names, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsCaseSensitiveNamesKey",
+        "description": "Key for determining whether the volume supports case-sensitive names, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsCompressionKey",
+        "description": "Whether the volume supports transparent decompression of compressed files using decmpfs, returned as NSNumber containing a Boolean value (read-only).",
+        "version": "iOS 10.0+ iPadOS 10.0+ macOS 10.12+ Mac Catalyst 13.1+ tvOS 10.0+ watchOS 3.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsExclusiveRenamingKey",
+        "description": "Whether the volume supports exclusive renaming using renamex_np(2) with the RENAME_EXCL option, returned as NSNumber containing a Boolean value (read-only).",
+        "version": "iOS 10.0+ iPadOS 10.0+ macOS 10.12+ Mac Catalyst 13.1+ tvOS 10.0+ watchOS 3.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsExtendedSecurityKey",
+        "description": "Key for determining whether the volume supports extended security (access control lists), returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsFileCloningKey",
+        "description": "Whether the volume supports cloning using clonefile(2), returned as NSNumber containing a Boolean value (read-only).",
+        "version": "iOS 10.0+ iPadOS 10.0+ macOS 10.12+ Mac Catalyst 13.1+ tvOS 10.0+ watchOS 3.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsHardLinksKey",
+        "description": "Key for determining whether the volume supports hard links, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsImmutableFilesKey",
+        "description": "",
+        "version": "iOS 11.0+ iPadOS 11.0+ macOS 10.13+ Mac Catalyst 13.1+ tvOS 11.0+ watchOS 4.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsJournalingKey",
+        "description": "Key for determining whether the volume supports journaling, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsPersistentIDsKey",
+        "description": "Key for determining whether the volume supports persistent IDs, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsRenamingKey",
+        "description": "Key for determining whether the volume can be renamed, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsRootDirectoryDatesKey",
+        "description": "Key for determining whether the volume supports reliable storage of times for the root directory, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsSparseFilesKey",
+        "description": "Key for determining whether the volume supports sparse files, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsSwapRenamingKey",
+        "description": "Whether the volume supports renaming using renamex_np(2) with the RENAME_SWAP option, returned as NSNumber containing a Boolean value (read-only).",
+        "version": "iOS 10.0+ iPadOS 10.0+ macOS 10.12+ Mac Catalyst 13.1+ tvOS 10.0+ watchOS 3.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsSymbolicLinksKey",
+        "description": "Key for determining whether the volume supports symbolic links, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsVolumeSizesKey",
+        "description": "Key for determining whether the volume supports returning volume size information, returned as a Boolean NSNumber object (read-only). If true, volume size information is available as values of the NSURLVolumeTotalCapacityKey andNSURLVolumeAvailableCapacityKey keys.",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeSupportsZeroRunsKey",
+        "description": "Key for determining whether the volume supports zero runs, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeURLForRemountingKey",
+        "description": "Key for the URL needed to remount the network volume, returned as an NSURL object, or nil if a URL is not available (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeURLKey",
+        "description": "The root directory of the resource's volume, returned as an NSURL object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLVolumeUUIDStringKey",
+        "description": "Key for the volume's persistent UUID, returned as an NSString object, or nil if a persistent UUID is not available (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLIsUbiquitousItemKey",
+        "description": "The key for a Boolean value that indicates whether the item is in iCloud storage.",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLUbiquitousSharedItemMostRecentEditorNameComponentsKey",
+        "description": "The key for the name components of the most recent editor.",
+        "version": "iOS 10.0+ iPadOS 10.0+ macOS 10.12+ Mac Catalyst 13.1+"
+    },
+    {
+        "name": "NSURLUbiquitousItemDownloadRequestedKey",
+        "description": "The key for a Boolean value that indicates whether the system has already made a call startDownloadingUbiquitousItemAtURL:error: to download the item.",
+        "version": "iOS 8.0+ iPadOS 8.0+ macOS 10.10+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLUbiquitousItemIsDownloadingKey",
+        "description": "The key for a Boolean value that indicates whether the system is downloading the item from iCloud.",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLUbiquitousItemDownloadingErrorKey",
+        "description": "The key for an error object that indicates why downloading the item from iCloud fails.",
+        "version": "iOS 7.0+ iPadOS 7.0+ macOS 10.9+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLUbiquitousItemDownloadingStatusKey",
+        "description": "The key for the current download state for the item.",
+        "version": "iOS 7.0+ iPadOS 7.0+ macOS 10.9+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLUbiquitousItemIsExcludedFromSyncKey",
+        "description": "The key of a Boolean value that indicates whether the system excludes the item from syncing.",
+        "version": "iOS 14.5+ iPadOS 14.5+ macOS 11.3+ Mac Catalyst 14.5+ tvOS 14.5+ watchOS 7.4+"
+    },
+    {
+        "name": "NSURLUbiquitousItemIsUploadedKey",
+        "description": "The key for a Boolean value that indicates whether the system uploads the item's data to iCloud storage.",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLUbiquitousItemIsUploadingKey",
+        "description": "The key for a Boolean value that indicates whether the system is uploading the item to iCloud.",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLUbiquitousItemUploadingErrorKey",
+        "description": "The key for an error object that indicates why uploading the item to iCloud fails.",
+        "version": "iOS 7.0+ iPadOS 7.0+ macOS 10.9+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLUbiquitousItemHasUnresolvedConflictsKey",
+        "description": "The key for a Boolean value that indicates whether this item has outstanding conflicts.",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLUbiquitousItemContainerDisplayNameKey",
+        "description": "The key for a string that contains the name of the item's container as it appears to the user.",
+        "version": "iOS 8.0+ iPadOS 8.0+ macOS 10.10+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLUbiquitousSharedItemOwnerNameComponentsKey",
+        "description": "The key for the name components of the item's owner.",
+        "version": "iOS 10.0+ iPadOS 10.0+ macOS 10.12+ Mac Catalyst 13.1+"
+    },
+    {
+        "name": "NSURLUbiquitousSharedItemCurrentUserPermissionsKey",
+        "description": "The key for the current user's permissions.",
+        "version": "iOS 10.0+ iPadOS 10.0+ macOS 10.12+ Mac Catalyst 13.1+"
+    },
+    {
+        "name": "NSURLUbiquitousSharedItemCurrentUserRoleKey",
+        "description": "The key for the role of the current user.",
+        "version": "iOS 10.0+ iPadOS 10.0+ macOS 10.12+ Mac Catalyst 13.1+"
+    },
+    {
+        "name": "NSURLUbiquitousItemIsSharedKey",
+        "description": "The key for a Boolean value that indicates a shared item.",
+        "version": "iOS 10.0+ iPadOS 10.0+ macOS 10.12+ Mac Catalyst 13.1+"
+    },
+    {
+        "name": "NSURLKeysOfUnsetValuesKey",
+        "description": "Key for the resource properties that have not been set after the setResourceValues:error: method returns an error, returned as an array of NSString objects.",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLQuarantinePropertiesKey",
+        "description": "",
+        "version": "macOS 10.10+"
+    },
+    {
+        "name": "NSURLAddedToDirectoryDateKey",
+        "description": "The time at which the resource's was created or renamed into or within its parent directory, returned as an NSDate. Inconsistent behavior may be observed when this attribute is requested on hard-linked items. This property is not supported by all volumes. (read-only)",
+        "version": "iOS 8.0+ iPadOS 8.0+ macOS 10.10+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLAttributeModificationDateKey",
+        "description": "The time at which the resource's attributes were most recently modified, returned as an NSDate object if the volume supports attribute modification dates, or nil if attribute modification dates are unsupported (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLContentAccessDateKey",
+        "description": "The time at which the resource was most recently accessed.",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLContentModificationDateKey",
+        "description": "The time at which the resource was most recently modified.",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLCreationDateKey",
+        "description": "The time at which the resource was created.",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLCustomIconKey",
+        "description": "The icon stored with the resource, returned as an NSImage object, or nil if the resource has no custom icon.",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLDocumentIdentifierKey",
+        "description": "The document identifier returned as an NSNumber (read-only).",
+        "version": "iOS 8.0+ iPadOS 8.0+ macOS 10.10+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLEffectiveIconKey",
+        "description": "The resource's normal icon, returned as an NSImage object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLGenerationIdentifierKey",
+        "description": "An opaque generation identifier, returned as an id <NSCopying, NSCoding, NSObject> (read-only)",
+        "version": "iOS 8.0+ iPadOS 8.0+ macOS 10.10+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLHasHiddenExtensionKey",
+        "description": "Key for determining whether the resource's extension is normally removed from its localized name, returned as a Boolean NSNumber object (read-write).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLIsExcludedFromBackupKey",
+        "description": "A key for indicating whether the system excludes the resource from all backups of app data.",
+        "version": "iOS 5.1+ iPadOS 5.1+ macOS 10.8+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLIsExecutableKey",
+        "description": "Key for determining whether the current process (as determined by the EUID) can execute the resource (if it is a file) or search the resource (if it is a directory), returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLIsHiddenKey",
+        "description": "Key for determining whether the resource is normally not displayed to users, returned as a Boolean NSNumber object (read-write).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLIsReadableKey",
+        "description": "Key for determining whether the current process (as determined by the EUID) can read the resource, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLIsSymbolicLinkKey",
+        "description": "Key for determining whether the resource is a symbolic link, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLIsSystemImmutableKey",
+        "description": "Key for determining whether the resource's system immutable bit is set, returned as a Boolean NSNumber object (read-write).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLIsUserImmutableKey",
+        "description": "Key for determining whether the resource's user immutable bit is set, returned as a Boolean NSNumber object (read-write).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLIsWritableKey",
+        "description": "Key for determining whether the current process (as determined by the EUID) can write to the resource, returned as a Boolean NSNumber object (read-only).",
+        "version": "iOS 5.0+ iPadOS 5.0+ macOS 10.7+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLLabelColorKey",
+        "description": "The resource's label color, returned as an NSColor object, or nil if the resource has no label color (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLLabelNumberKey",
+        "description": "The resource's label number, returned as an NSNumber object (read-write).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLLinkCountKey",
+        "description": "The number of hard links to the resource, returned as an NSNumber object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLLocalizedLabelKey",
+        "description": "The resource's localized label text, returned as an NSString object, or nil if the resource has no localized label text (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLLocalizedNameKey",
+        "description": "The resource's localized or extension-hidden name, returned as an NSString object (read-only).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLNameKey",
+        "description": "The resource's name in the file system, returned as an NSString object (read-write).",
+        "version": "iOS 4.0+ iPadOS 4.0+ macOS 10.6+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLPathKey",
+        "description": "The file system path for the URL, returned as an NSString object (read-only).",
+        "version": "iOS 6.0+ iPadOS 6.0+ macOS 10.8+ Mac Catalyst 13.1+ tvOS 9.0+ watchOS 2.0+"
+    },
+    {
+        "name": "NSURLCanonicalPathKey",
+        "description": "",
+        "version": "iOS 10.0+ iPadOS 10.0+ macOS 10.12+ Mac Catalyst 13.1+ tvOS 10.0+ watchOS 3.0+"
+    },
+    {
+        "name": "NSURLTagNamesKey",
+        "description": "The names of tags attached to the resource, returned as an array of NSString values (read-write).",
+        "version": "macOS 10.9+"
+    },
+    {
+        "name": "NSURLContentTypeKey",
+        "description": "The resource's type.",
+        "version": "iOS 14.0+ iPadOS 14.0+ macOS 11.0+ Mac Catalyst 14.0+ tvOS 14.0+ watchOS 7.0+"
+    }
+]
