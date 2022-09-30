@@ -1,8 +1,6 @@
 """Test osxmetadata basic mditem metadata tags"""
 
-import os
 import time
-from tempfile import NamedTemporaryFile
 
 import pytest
 
@@ -29,81 +27,72 @@ MDITEM_ATTRIBUTES_TO_TEST = [
 
 
 @pytest.mark.parametrize("attribute_name", MDITEM_ATTRIBUTES_TO_TEST)
-def test_mditem_attributes_get_set(attribute_name):
+def test_mditem_attributes_get_set(attribute_name, test_file):
     """test mditem attributes"""
 
     # can't use tmp_path fixture because the tmpfs filesystem doesn't support xattrs
-    with NamedTemporaryFile(dir=os.getcwd(), prefix="tmp_") as test_file:
-        attribute = MDITEM_ATTRIBUTE_DATA[attribute_name]
-        attribute_type = attribute["python_type"]
-        test_value = value_for_type(attribute_type)
+    attribute = MDITEM_ATTRIBUTE_DATA[attribute_name]
+    attribute_type = attribute["python_type"]
+    test_value = value_for_type(attribute_type)
 
-        md = OSXMetaData(test_file.name)
-        md.set(attribute_name, test_value)
-        if attribute_name == "kMDItemFinderComment":
-            time.sleep(0.1)  # Finder comment is slow to update
-        assert md.get(attribute_name) == test_value
+    md = OSXMetaData(test_file.name)
+    md.set(attribute_name, test_value)
+    if attribute_name == "kMDItemFinderComment":
+        time.sleep(0.1)  # Finder comment is slow to update
+    assert md.get(attribute_name) == test_value
 
 
 @pytest.mark.parametrize("attribute_name", MDITEM_ATTRIBUTES_TO_TEST)
-def test_mditem_attributes_dict(attribute_name):
+def test_mditem_attributes_dict(attribute_name, test_file):
     """test mditem attributes with dict access"""
 
-    # can't use tmp_path fixture because the tmpfs filesystem doesn't support xattrs
-    with NamedTemporaryFile(dir=os.getcwd(), prefix="tmp_") as test_file:
-        attribute = MDITEM_ATTRIBUTE_DATA[attribute_name]
-        attribute_type = attribute["python_type"]
-        test_value = value_for_type(attribute_type)
+    attribute = MDITEM_ATTRIBUTE_DATA[attribute_name]
+    attribute_type = attribute["python_type"]
+    test_value = value_for_type(attribute_type)
 
-        md = OSXMetaData(test_file.name)
-        md[attribute_name] = test_value
-        if attribute_name == "kMDItemFinderComment":
-            time.sleep(0.1)  # Finder comment is slow to update
-        assert md[attribute_name] == test_value
+    md = OSXMetaData(test_file.name)
+    md[attribute_name] = test_value
+    if attribute_name == "kMDItemFinderComment":
+        time.sleep(0.1)  # Finder comment is slow to update
+    assert md[attribute_name] == test_value
 
 
 @pytest.mark.parametrize("attribute_name", MDITEM_ATTRIBUTES_TO_TEST)
-def test_mditem_attributes_property(attribute_name):
+def test_mditem_attributes_property(attribute_name, test_file):
     """test mditem attributes with property access"""
 
-    # can't use tmp_path fixture because the tmpfs filesystem doesn't support xattrs
-    with NamedTemporaryFile(dir=os.getcwd(), prefix="tmp_") as test_file:
-        attribute = MDITEM_ATTRIBUTE_DATA[attribute_name]
-        attribute_type = attribute["python_type"]
-        test_value = value_for_type(attribute_type)
+    attribute = MDITEM_ATTRIBUTE_DATA[attribute_name]
+    attribute_type = attribute["python_type"]
+    test_value = value_for_type(attribute_type)
 
-        md = OSXMetaData(test_file.name)
-        setattr(md, attribute_name, test_value)
-        if attribute_name == "kMDItemFinderComment":
-            time.sleep(0.1)  # Finder comment is slow to update
-        assert getattr(md, attribute_name) == test_value
+    md = OSXMetaData(test_file.name)
+    setattr(md, attribute_name, test_value)
+    if attribute_name == "kMDItemFinderComment":
+        time.sleep(0.1)  # Finder comment is slow to update
+    assert getattr(md, attribute_name) == test_value
 
 
 @pytest.mark.parametrize("attribute_name", MDITEM_ATTRIBUTES_TO_TEST)
-def test_mditem_attributes_short_name(attribute_name):
+def test_mditem_attributes_short_name(attribute_name, test_file):
     """test mditem attributes"""
 
-    # can't use tmp_path fixture because the tmpfs filesystem doesn't support xattrs
-    with NamedTemporaryFile(dir=os.getcwd(), prefix="tmp_") as test_file:
-        attribute = MDITEM_ATTRIBUTE_DATA[attribute_name]
-        attribute_type = attribute["python_type"]
-        test_value = value_for_type(attribute_type)
+    attribute = MDITEM_ATTRIBUTE_DATA[attribute_name]
+    attribute_type = attribute["python_type"]
+    test_value = value_for_type(attribute_type)
 
-        md = OSXMetaData(test_file.name)
-        setattr(md, attribute["short_name"], test_value)
-        if attribute_name == "findercomment":
-            time.sleep(0.1)  # Finder comment is slow to update
-        assert getattr(md, attribute["short_name"]) == test_value
+    md = OSXMetaData(test_file.name)
+    setattr(md, attribute["short_name"], test_value)
+    if attribute_name == "findercomment":
+        time.sleep(0.1)  # Finder comment is slow to update
+    assert getattr(md, attribute["short_name"]) == test_value
 
 
 @pytest.mark.parametrize("attribute_name", MDITEM_ATTRIBUTE_DATA.keys())
-def test_mditem_attributes_all(attribute_name):
+def test_mditem_attributes_all(attribute_name, test_file):
     """Test that all attributes can be accessed without error"""
 
-    # can't use tmp_path fixture because the tmpfs filesystem doesn't support xattrs
-    with NamedTemporaryFile(dir=os.getcwd(), prefix="tmp_") as test_file:
-        md = OSXMetaData(test_file.name)
-        md.get(attribute_name)
+    md = OSXMetaData(test_file.name)
+    md.get(attribute_name)
 
 
 def test_mditem_attributes_image(test_image):

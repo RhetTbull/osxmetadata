@@ -68,18 +68,18 @@ def get_finder_tags(xattr_obj: xattr.xattr) -> t.List[Tag]:
     return tags
 
 
-def set_finder_tags(url: NSURL, tags: t.List[Tag]):
+def set_finder_tags(url: NSURL, tags: t.Optional[t.List[Tag]]):
     """Set Finder tags in extended attribute _kMDItemUserTags
 
     Args:
         url: NSURL for file
         tags: list of Finder tags
     """
-    if not isinstance(tags, list):
-        raise TypeError("tags must be a list of Tag namedtuples")
-    if not all(isinstance(tag, Tag) for tag in tags):
-        raise TypeError("tags must be a list of Tag namedtuples")
+    if tags is not None and not isinstance(tags, (list, tuple)):
+        raise TypeError("tags must be a list or tuple of Tag namedtuples or None")
+    if tags is not None and not all(isinstance(tag, Tag) for tag in tags):
+        raise TypeError("tags items must be Tag namedtuples")
 
     # convert to list of strings in format name\ncolor
-    tag_values = [f"{tag.name}\n{tag.color}" for tag in tags]
+    tag_values = [f"{tag.name}\n{tag.color}" for tag in tags] if tags else []
     set_nsurl_metadata(url, NSURLTagNamesKey, tag_values)

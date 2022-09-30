@@ -157,7 +157,6 @@ class OSXMetaData:
         elif key in MDITEM_ATTRIBUTE_DATA:
             set_mditem_metadata(self._mditem, key, value)
         elif key in NSURL_RESOURCE_KEY_DATA:
-            # TODO: check read-only in description
             set_nsurl_metadata(self._url, key, value)
         else:
             raise KeyError(f"Invalid key: {key}")

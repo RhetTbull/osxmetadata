@@ -1,8 +1,11 @@
 """Config for pytest"""
 
-import pytest
 import datetime
+import os
 import typing as t
+from tempfile import NamedTemporaryFile
+
+import pytest
 
 TEST_IMAGE = "tests/test_image.jpg"
 TEST_VIDEO = "tests/test_video.mov"
@@ -22,6 +25,14 @@ def test_video():
 @pytest.fixture(scope="session")
 def test_audio():
     return TEST_AUDIO
+
+
+@pytest.fixture(scope="module")
+def test_file():
+    """Create a temporary file"""
+    # can't use tmp_path fixture because the tmpfs filesystem doesn't support xattrs
+    with NamedTemporaryFile(dir=os.getcwd(), prefix="tmp_") as test_file:
+        yield test_file
 
 
 def value_for_type(
