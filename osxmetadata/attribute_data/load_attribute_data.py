@@ -119,12 +119,6 @@ MDITEM_ATTRIBUTE_READ_ONLY = {
 }
 
 NSURL_RESOURCE_KEY_DATA = load_nsurl_resource_key_data()
-# Some resource keys are read-only
-NSURL_RESOURCE_KEY_READ_ONLY = {
-    k["name"]
-    for k in NSURL_RESOURCE_KEY_DATA.values()
-    if "read-only" in k["description"].lower()
-}
 
 __all__ = [
     "MDITEM_ATTRIBUTE_DATA",
@@ -136,5 +130,4 @@ __all__ = [
     "MDITEM_ATTRIBUTE_IMAGE",
     "MDITEM_ATTRIBUTE_VIDEO",
     "NSURL_RESOURCE_KEY_DATA",
-    "NSURL_RESOURCE_KEY_READ_ONLY",
 ]

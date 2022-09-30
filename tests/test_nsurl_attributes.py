@@ -7,7 +7,6 @@ import pytest
 from osxmetadata import OSXMetaData
 from osxmetadata.attribute_data import (
     NSURL_RESOURCE_KEY_DATA,
-    NSURL_RESOURCE_KEY_READ_ONLY,
 )
 
 from .conftest import value_for_type
