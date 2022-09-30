@@ -1,10 +1,13 @@
 # Tests for osxphotos
 
-## Running Tests ##
+## Running Tests
+
 Tests require pytest:
 `pip install pytest`
 
 To run the tests, do the following from the main source folder:
 `python -m pytest tests/`
 
-Running the tests this way allows the library to be tested without installing it.
+## Test Data
+
+The test suite includes some image, audio, and video files in the `tests/` folder.  These files were produced by the author and are licensed under the [Creative Commons Attribution-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-sa/4.0/). The files are used for testing purposes only and are not included in the osxphotos package.

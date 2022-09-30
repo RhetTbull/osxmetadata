@@ -18,12 +18,12 @@ MDITEM_METADATA_FILES = [
 NSURL_RESOURCE_KEY_FILES = ["nsurl_resource_keys.json"]
 
 
-def load_mditem_attribute_data() -> t.Dict:
+def load_mditem_attribute_data(files) -> t.Dict:
     """Load attribute metadata from JSON files"""
     # TODO: would be better to use importlib.abc.ResourceReader but I can't find a single example of how to do this
     parent = pathlib.Path(__file__).parent
     data = {}
-    for filename in MDITEM_METADATA_FILES:
+    for filename in files:
         with open(parent / filename, "r") as f:
             file_data = json.load(f)
             for item in file_data:
@@ -79,14 +79,62 @@ def load_nsurl_resource_key_data() -> t.Dict:
     return data
 
 
-MDITEM_ATTRIBUTE_DATA = load_mditem_attribute_data()
+# all attribute data
+MDITEM_ATTRIBUTE_DATA = load_mditem_attribute_data(MDITEM_METADATA_FILES)
+
+# specific types of attribute data
+MDITEM_ATTRIBUTE_AUDIO = load_mditem_attribute_data(["audio_attributes.json"])
+MDITEM_ATTRIBUTE_COMMON = load_mditem_attribute_data(["common_attributes.json"])
+MDITEM_ATTRIBUTE_FILESYSTEM = load_mditem_attribute_data(["filesystem_attributes.json"])
+MDITEM_ATTRIBUTE_IMAGE = load_mditem_attribute_data(["image_attributes.json"])
+MDITEM_ATTRIBUTE_VIDEO = load_mditem_attribute_data(["video_attributes.json"])
+
+# short names for accessing via OSXMetaData().short_name
 MDITEM_ATTRIBUTE_SHORT_NAMES = {
     item["short_name"]: item["name"] for item in MDITEM_ATTRIBUTE_DATA.values()
 }
+
+# Some attributes are read-only
+MDITEM_ATTRIBUTE_READ_ONLY = {
+    "kMDItemAttributeChangeDate",
+    "kMDItemContentType",
+    "kMDItemKind",
+    "kMDItemLastUsedDate",
+    "kMDItemSecurityMethod",
+    "kMDItemTextContent",
+    "kMDItemFSHasCustomIcon",
+    "kMDItemFSIsStationery",
+    "kMDItemDisplayName",
+    "kMDItemFSContentChangeDate",
+    "kMDItemFSCreationDate",
+    "kMDItemFSInvisible",
+    "kMDItemFSIsExtensionHidden",
+    "kMDItemFSLabel",
+    "kMDItemFSName",
+    "kMDItemFSNodeCount",
+    "kMDItemFSOwnerGroupID",
+    "kMDItemFSOwnerUserID",
+    "kMDItemFSSize",
+    "kMDItemPath",
+}
+
 NSURL_RESOURCE_KEY_DATA = load_nsurl_resource_key_data()
+# Some resource keys are read-only
+NSURL_RESOURCE_KEY_READ_ONLY = {
+    k["name"]
+    for k in NSURL_RESOURCE_KEY_DATA.values()
+    if "read-only" in k["description"].lower()
+}
 
 __all__ = [
     "MDITEM_ATTRIBUTE_DATA",
+    "MDITEM_ATTRIBUTE_READ_ONLY",
     "MDITEM_ATTRIBUTE_SHORT_NAMES",
+    "MDITEM_ATTRIBUTE_AUDIO",
+    "MDITEM_ATTRIBUTE_COMMON",
+    "MDITEM_ATTRIBUTE_FILESYSTEM",
+    "MDITEM_ATTRIBUTE_IMAGE",
+    "MDITEM_ATTRIBUTE_VIDEO",
     "NSURL_RESOURCE_KEY_DATA",
+    "NSURL_RESOURCE_KEY_READ_ONLY",
 ]

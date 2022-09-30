@@ -33,6 +33,7 @@ twine = "^4.0.1"
 wheel = "^0.37.1"
 xattr = "^0.9.9"
 pyobjc-framework-CoreServices = "^8.5.1"
+pyobjc-framework-ScriptingBridge = "^8.5.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.1.3"

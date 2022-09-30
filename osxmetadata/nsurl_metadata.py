@@ -3,7 +3,9 @@
 import typing as t
 
 import CoreFoundation
+import objc
 from Foundation import NSURL
+
 
 __all__ = ["get_nsurl_metadata", "set_nsurl_metadata"]
 
@@ -27,12 +29,13 @@ def set_nsurl_metadata(url: NSURL, key: str, value: t.Any):
         key: metadata attribute name, e.g. NSURLTagNamesKey
         value: value to set attribute to; must match the type expected by the attribute (e.g. str or list)
     """
-    if isinstance(value, list):
-        value = CoreFoundation.CFArrayCreate(
-            None, value, len(value), CoreFoundation.kCFTypeArrayCallBacks
-        )
-    kv = CoreFoundation.NSDictionary.dictionaryWithObject_forKey_(value, key)
-    success, error = url.setResourceValues_error_(kv, None)
-    if not success:
-        raise OSError(f"Error setting tag {key} = {value} on {url}: {error}")
-    return True
+    with objc.autorelease_pool():
+        if isinstance(value, list):
+            value = CoreFoundation.CFArrayCreate(
+                None, value, len(value), CoreFoundation.kCFTypeArrayCallBacks
+            )
+        kv = CoreFoundation.NSDictionary.dictionaryWithObject_forKey_(value, key)
+        success, error = url.setResourceValues_error_(kv, None)
+        if not success:
+            raise OSError(f"Error setting tag {key} = {value} on {url}: {error}")
+        return True

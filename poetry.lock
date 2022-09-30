@@ -530,6 +530,18 @@ pyobjc-core = ">=8.5.1"
 pyobjc-framework-Cocoa = ">=8.5.1"
 
 [[package]]
+name = "pyobjc-framework-ScriptingBridge"
+version = "8.5.1"
+description = "Wrappers for the framework ScriptingBridge on macOS"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+pyobjc-core = ">=8.5.1"
+pyobjc-framework-Cocoa = ">=8.5.1"
+
+[[package]]
 name = "pyparsing"
 version = "3.0.9"
 description = "pyparsing module - Classes and methods to define and execute parsing grammars"
@@ -766,7 +778,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "15fea0ad1d52784a2ffc4705a6c2c329f2959e886dbac459f01467c190f99e54"
+content-hash = "74f55ddd515af332d6d8a8ab931c50143914f959ac1e0ee56d1cb890923965ca"
 
 [metadata.files]
 altgraph = [
@@ -1082,6 +1094,12 @@ pyobjc-framework-Quartz = [
     {file = "pyobjc_framework_Quartz-8.5.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:4599337079050512179229625d97c1494ee4821fcbb82b1a209ed498d7e476af"},
     {file = "pyobjc_framework_Quartz-8.5.1-cp38-cp38-macosx_11_0_universal2.whl", hash = "sha256:9b7c1030fda93695f8c0bbbe03fce3251a351ca392dd6b03f94805d3afaadd16"},
     {file = "pyobjc_framework_Quartz-8.5.1-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:8790fd2499fb1a80d49d8991739e15c5604dba4c8ece87e4afa2f3f679fa0f12"},
+]
+pyobjc-framework-ScriptingBridge = [
+    {file = "pyobjc-framework-ScriptingBridge-8.5.1.tar.gz", hash = "sha256:51b2da03b4c7d12ac814e953bfa897d1763683d4f9293f76a0ecc54745cc64d6"},
+    {file = "pyobjc_framework_ScriptingBridge-8.5.1-cp36-abi3-macosx_10_9_universal2.whl", hash = "sha256:ad3d5452a0ca8769ab5cfb47cb8ba87b9002c0be518162937d507e778cf3a634"},
+    {file = "pyobjc_framework_ScriptingBridge-8.5.1-cp36-abi3-macosx_10_9_x86_64.whl", hash = "sha256:25fd56eaddecd09ad75620e5f80a7befa02bb175b5c696a54d2742829f7984b2"},
+    {file = "pyobjc_framework_ScriptingBridge-8.5.1-cp36-abi3-macosx_11_0_universal2.whl", hash = "sha256:4ec4feef84502a882e55baddf11b55d5a2c1d8de8d3da908c5ef8be9c1460c9f"},
 ]
 pyparsing = [
     {file = "pyparsing-3.0.9-py3-none-any.whl", hash = "sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc"},

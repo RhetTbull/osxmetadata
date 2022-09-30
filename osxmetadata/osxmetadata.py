@@ -1,7 +1,10 @@
 """ OSXMetaData class to read and write various Mac OS X metadata 
     such as tags/keywords and Finder comments from files """
 
+# TODO: Add get_xattr(), set_xattr() methods and ability to specify type=bplist
+
 import pathlib
+import plistlib
 import typing as t
 
 import CoreServices
@@ -63,6 +66,19 @@ class OSXMetaData:
         """
         self.__setattr__(attribute, value)
 
+    def get_xattr(self, key: str, plist: bool = False) -> t.Any:
+        """Get xattr value
+
+        Args:
+            key: xattr name
+            type_: xattr type; if None, return bytes, otherwise return dict
+        """
+        xattr = self._xattr[key]
+        if plist:
+            # todo: handle differnet types like datetime and tzaware
+            xattr = plistlib.loads(xattr)
+        return xattr
+
     def __getattr__(self, attribute: str) -> MDItemValueType:
         """Get metadata attribute value
 
@@ -94,7 +110,7 @@ class OSXMetaData:
             if self.__init:
                 if attribute in ["findercomment", kMDItemFinderComment]:
                     # finder comment cannot be set using MDItemSetAttribute
-                    set_finder_comment(self._posix_path, value)
+                    set_finder_comment(self._url, value)
                 elif attribute in ["tags", _kMDItemUserTags, NSURLTagNamesKey]:
                     # handle Finder tags
                     set_finder_tags(self._url, value)
@@ -103,8 +119,12 @@ class OSXMetaData:
                     set_mditem_metadata(
                         self._mditem, MDITEM_ATTRIBUTE_SHORT_NAMES[attribute], value
                     )
+                elif attribute in MDITEM_ATTRIBUTE_DATA:
+                    set_mditem_metadata(self._mditem, attribute, value)
+                elif attribute in NSURL_RESOURCE_KEY_DATA:
+                    set_nsurl_metadata(self._url, attribute, value)
                 else:
-                    raise AttributeError(f"Invalid attribute: {attribute}")
+                    raise ValueError(f"Invalid attribute: {attribute}")
         except (KeyError, AttributeError):
             super().__setattr__(attribute, value)
 
@@ -133,7 +153,7 @@ class OSXMetaData:
         if key == _kMDItemUserTags:
             set_finder_tags(self._xattr, value)
         elif key == kMDItemFinderComment:
-            set_finder_comment(self._posix_path, value)
+            set_finder_comment(self._url, value)
         elif key in MDITEM_ATTRIBUTE_DATA:
             set_mditem_metadata(self._mditem, key, value)
         elif key in NSURL_RESOURCE_KEY_DATA:
