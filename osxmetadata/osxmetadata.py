@@ -14,7 +14,7 @@ from .attribute_data import (
     NSURL_RESOURCE_KEY_DATA,
 )
 from .finder_comment import kMDItemFinderComment, set_finder_comment
-from .finder_tags import Tag, _kMDItemUserTags, get_finder_tags, set_finder_tags
+from .finder_tags import _kMDItemUserTags, get_finder_tags, set_finder_tags
 from .mditem import (
     MDItemValueType,
     get_mditem_metadata,
@@ -22,6 +22,13 @@ from .mditem import (
     set_mditem_metadata,
 )
 from .nsurl_metadata import get_nsurl_metadata, set_nsurl_metadata
+
+ALL_ATTRIBUTES = {
+    *list(MDITEM_ATTRIBUTE_DATA.keys()),
+    *list(NSURL_RESOURCE_KEY_DATA.keys()),
+    *list(MDITEM_ATTRIBUTE_SHORT_NAMES.keys()),
+    _kMDItemUserTags,
+}
 
 
 class OSXMetaData:
@@ -146,7 +153,7 @@ class OSXMetaData:
                         # so that is what this code does
                         set_finder_comment(self._url, "")
                         self._xattr.remove("com.apple.metadata:kMDItemFinderComment")
-                elif attribute in ["tags", _kMDItemUserTags, NSURLTagNamesKey]:
+                elif attribute in ["tags", _kMDItemUserTags]:
                     # handle Finder tags
                     set_finder_tags(self._url, value)
                 elif attribute in MDITEM_ATTRIBUTE_SHORT_NAMES:

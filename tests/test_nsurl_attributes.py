@@ -39,5 +39,5 @@ def test_nsurl_attribute_NSURLTagNamesKey(test_file):
     assert md.get("NSURLTagNamesKey") is None
     md["NSURLTagNamesKey"] = ["a", "b"]
     assert md.NSURLTagNamesKey == ["a", "b"]
-    md.NSURLTagNamesKey = None
+    md.NSURLTagNamesKey = []
     assert not md.NSURLTagNamesKey

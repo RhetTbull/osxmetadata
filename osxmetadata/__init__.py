@@ -15,7 +15,7 @@ from .constants import (
 )
 from .finder_tags import Tag, _kMDItemUserTags
 from .mditem import MDItemValueType
-from .osxmetadata import OSXMetaData
+from .osxmetadata import OSXMetaData, ALL_ATTRIBUTES
 
 # add metadata attribute constants such as kMDItemFinderComment and NSURLTagNamesKey to module namespace
 for constant in MDITEM_ATTRIBUTE_DATA.keys():
@@ -37,6 +37,7 @@ __all__ = [
     "OSXMetaData",
     "Tag",
     "__version__",
+    "ALL_ATTRIBUTES",
     "_kMDItemUserTags",
     *MDITEM_ATTRIBUTE_DATA.keys(),
     *NSURL_RESOURCE_KEY_DATA.keys(),
