@@ -34,17 +34,15 @@ ALL_ATTRIBUTES = {
 class OSXMetaData:
     """Create an OSXMetaData object to access file metadata"""
 
-    def __init__(self, fname: str, tz_aware: bool = False):
+    def __init__(self, fname: str):
         """Create an OSXMetaData object to access file metadata
         fname: filename to operate on
-        TODO: tz_aware: bool; if True, date/time attributes will return timezone aware datetime.datetime attributes otherwise values will be naive
         """
         self._fname = pathlib.Path(fname)
         if not self._fname.exists():
             raise FileNotFoundError(f"file does not exist: {fname}")
 
         self._posix_path = self._fname.resolve().as_posix()
-        self._tz_aware = tz_aware
 
         # create MDItemRef, NSURL, and xattr objects
         # MDItemRef is used for most attributes
