@@ -9,8 +9,6 @@ from osxmetadata.attribute_data import (
     NSURL_RESOURCE_KEY_DATA,
 )
 
-from .conftest import value_for_type
-
 
 @pytest.mark.parametrize("attribute_name", NSURL_RESOURCE_KEY_DATA.keys())
 def test_nsurl_attributes_all(attribute_name, test_file):

@@ -1,10 +1,7 @@
 """ OSXMetaData class to read and write various Mac OS X metadata 
     such as tags/keywords and Finder comments from files """
 
-# TODO: Add get_xattr(), set_xattr() methods and ability to specify type=bplist
-
 import pathlib
-import plistlib
 import typing as t
 
 import CoreServices
@@ -16,16 +13,13 @@ from .attribute_data import (
     MDITEM_ATTRIBUTE_SHORT_NAMES,
     NSURL_RESOURCE_KEY_DATA,
 )
-from .finder_comment import (
-    kMDItemFinderComment,
-    set_finder_comment,
-)
+from .finder_comment import kMDItemFinderComment, set_finder_comment
 from .finder_tags import Tag, _kMDItemUserTags, get_finder_tags, set_finder_tags
 from .mditem import (
     MDItemValueType,
     get_mditem_metadata,
-    set_mditem_metadata,
     remove_mditem_metadata,
+    set_mditem_metadata,
 )
 from .nsurl_metadata import get_nsurl_metadata, set_nsurl_metadata
 
@@ -74,18 +68,40 @@ class OSXMetaData:
         """
         self.__setattr__(attribute, value)
 
-    def get_xattr(self, key: str, plist: bool = False) -> t.Any:
+    def get_xattr(
+        self, key: str, decode: t.Callable[[t.ByteString], t.Any] = None
+    ) -> t.Any:
         """Get xattr value
 
         Args:
             key: xattr name
-            type_: xattr type; if None, return bytes, otherwise return dict
+            decode: optional Callable to decode value before returning
         """
         xattr = self._xattr[key]
-        if plist:
-            # todo: handle differnet types like datetime and tzaware
-            xattr = plistlib.loads(xattr)
+        if decode:
+            xattr = decode(xattr)
         return xattr
+
+    def set_xattr(
+        self, key: str, value: t.Any, encode: t.Callable[[t.ByteString], t.Any] = None
+    ):
+        """Set xattr value
+
+        Args:
+            key: xattr name
+            encode: optional Callable to encode value before setting
+        """
+        if encode:
+            value = encode(value)
+        self._xattr[key] = value
+
+    def remove_xattr(self, key: str):
+        """Remove xattr
+
+        Args:
+            key: xattr name
+        """
+        self._xattr.remove(key)
 
     def __getattr__(self, attribute: str) -> MDItemValueType:
         """Get metadata attribute value
