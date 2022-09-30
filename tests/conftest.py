@@ -2,6 +2,7 @@
 
 import datetime
 import os
+import time
 import typing as t
 from tempfile import NamedTemporaryFile
 
@@ -33,6 +34,24 @@ def test_file():
     # can't use tmp_path fixture because the tmpfs filesystem doesn't support xattrs
     with NamedTemporaryFile(dir=os.getcwd(), prefix="tmp_") as test_file:
         yield test_file
+
+
+@pytest.fixture(scope="module")
+def test_dir():
+    """Create a temporary directory"""
+    # can't use tmp_path fixture because the tmpfs filesystem doesn't support xattrs
+    with NamedTemporaryFile(dir=os.getcwd(), prefix="tmp_") as test_dir:
+        yield test_dir
+
+
+@pytest.fixture(scope="session")
+def snooze():
+    """Sleep for a bit to allow Finder to update metadata"""
+
+    def _sleep():
+        time.sleep(0.1)
+
+    return _sleep
 
 
 def value_for_type(

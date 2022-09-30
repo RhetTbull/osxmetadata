@@ -5,7 +5,7 @@ https://developer.apple.com/documentation/coreservices/1427080-mditemcopyattribu
 
 but does not provide a documented way to set file metadata.
 
-This package uses the undocumented function MDItemSetAttribute to do so.
+This package uses the undocumented functions MDItemSetAttribute, MDItemRemoveAttribute to do so.
 """
 
 import datetime
@@ -16,6 +16,8 @@ import CoreServices
 import objc
 
 from .attribute_data import MDITEM_ATTRIBUTE_DATA
+
+__all__ = ["get_mditem_metadata", "remove_mditem_metadata", "set_mditem_metadata"]
 
 # Absolute time in macOS is measured in seconds relative to the absolute reference date of Jan 1 2001 00:00:00 GMT.
 # Reference: https://developer.apple.com/documentation/corefoundation/1542812-cfdategetabsolutetime?language=objc
@@ -42,11 +44,16 @@ def MDItemSetAttribute(mditem, name, attr):
     ...
 
 
+def MDItemRemoveAttribute(mditem, name):
+    """ "dummy function definition"""
+    ...
+
+
 # This will load MDItemSetAttribute from the CoreServices framework into module globals
 objc.loadBundleFunctions(
     CoreServices.__bundle__,
     globals(),
-    [("MDItemSetAttribute", b"B@@@")],
+    [("MDItemSetAttribute", b"B@@@"), ("MDItemRemoveAttribute", b"B@@")],
 )
 
 
@@ -119,3 +126,12 @@ def get_mditem_metadata(
         )
     else:
         raise TypeError(f"Unknown attribute type: {attribute_type}")
+
+
+def remove_mditem_metadata(mditem: CoreServices.MDItemRef, attribute: str):
+    """Remove file metadata using undocumented function MDItemRemoveAttribute
+
+    mditem: MDItem object
+    attribute: metadata attribute to remove
+    """
+    MDItemRemoveAttribute(mditem, attribute)

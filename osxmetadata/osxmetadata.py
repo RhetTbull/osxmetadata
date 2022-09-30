@@ -16,9 +16,17 @@ from .attribute_data import (
     MDITEM_ATTRIBUTE_SHORT_NAMES,
     NSURL_RESOURCE_KEY_DATA,
 )
-from .finder_comment import kMDItemFinderComment, set_finder_comment
+from .finder_comment import (
+    kMDItemFinderComment,
+    set_finder_comment,
+)
 from .finder_tags import Tag, _kMDItemUserTags, get_finder_tags, set_finder_tags
-from .mditem import MDItemValueType, get_mditem_metadata, set_mditem_metadata
+from .mditem import (
+    MDItemValueType,
+    get_mditem_metadata,
+    set_mditem_metadata,
+    remove_mditem_metadata,
+)
 from .nsurl_metadata import get_nsurl_metadata, set_nsurl_metadata
 
 
@@ -110,17 +118,33 @@ class OSXMetaData:
             if self.__init:
                 if attribute in ["findercomment", kMDItemFinderComment]:
                     # finder comment cannot be set using MDItemSetAttribute
-                    set_finder_comment(self._url, value)
+                    if value:
+                        set_finder_comment(self._url, value)
+                    else:
+                        # Note: this does not exactly match the behavior of the Finder
+                        # When removing a comment in Finder, a subsequent read of kMDItemFinderComment
+                        # returns None (null in objc) but with this code, reading kMDItemFinderComment returns
+                        # an empty string; I've not figured out how to mirror the Finder behavior
+                        # attempting to set or remove kMDItemFinderComment directly has no effect
+                        # The Finder does remove the extended attribute com.apple.metadata:kMDItemFinderComment
+                        # so that is what this code does
+                        set_finder_comment(self._url, "")
+                        self._xattr.remove("com.apple.metadata:kMDItemFinderComment")
                 elif attribute in ["tags", _kMDItemUserTags, NSURLTagNamesKey]:
                     # handle Finder tags
                     set_finder_tags(self._url, value)
                 elif attribute in MDITEM_ATTRIBUTE_SHORT_NAMES:
                     # handle dynamic properties like self.keywords and self.comments
-                    set_mditem_metadata(
-                        self._mditem, MDITEM_ATTRIBUTE_SHORT_NAMES[attribute], value
-                    )
+                    attribute_name = MDITEM_ATTRIBUTE_SHORT_NAMES[attribute]
+                    if value is None:
+                        remove_mditem_metadata(self._mditem, attribute_name)
+                    else:
+                        set_mditem_metadata(self._mditem, attribute_name, value)
                 elif attribute in MDITEM_ATTRIBUTE_DATA:
-                    set_mditem_metadata(self._mditem, attribute, value)
+                    if value is None:
+                        remove_mditem_metadata(self._mditem, attribute)
+                    else:
+                        set_mditem_metadata(self._mditem, attribute, value)
                 elif attribute in NSURL_RESOURCE_KEY_DATA:
                     set_nsurl_metadata(self._url, attribute, value)
                 else:
