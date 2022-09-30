@@ -22,10 +22,17 @@ def test_nsurl_attributes_all(attribute_name, test_file):
 
 
 def test_nsurl_attribute_NSURLNameKey(test_file):
-    """Test that NSURLNameKey can be read and written"""
+    """Test that NSURLNameKey can be read"""
 
     md = OSXMetaData(test_file.name)
     assert md.get("NSURLNameKey") == pathlib.Path(test_file.name).name
+
+
+def test_nsurl_attribute_NSURLIsRegularFileKey(test_file):
+    """Test that NSURLIsRegularFileKey can be read"""
+
+    md = OSXMetaData(test_file.name)
+    assert md.get("NSURLIsRegularFileKey") is True
 
 
 def test_nsurl_attribute_NSURLTagNamesKey(test_file):
