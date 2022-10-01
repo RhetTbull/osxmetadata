@@ -13,7 +13,7 @@ from .constants import (
     FINDER_COLOR_RED,
     FINDER_COLOR_YELLOW,
 )
-from .finder_info import _kFinderStationaryPad
+from .finder_info import _kFinderColor, _kFinderInfo, _kFinderStationaryPad
 from .finder_tags import Tag, _kMDItemUserTags
 from .mditem import MDItemValueType
 from .osxmetadata import ALL_ATTRIBUTES, OSXMetaData
@@ -39,6 +39,8 @@ __all__ = [
     "OSXMetaData",
     "Tag",
     "__version__",
+    "_kFinderColor",
+    "_kFinderInfo",
     "_kFinderStationaryPad",
     "_kMDItemUserTags",
     *MDITEM_ATTRIBUTE_DATA.keys(),

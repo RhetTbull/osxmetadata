@@ -1,5 +1,17 @@
 """ Constants and definitions used by osxmetadata """
 
+FINDER_COLOR_NONE = 0
+FINDER_COLOR_GRAY = 1
+FINDER_COLOR_GREEN = 2
+FINDER_COLOR_PURPLE = 3
+FINDER_COLOR_BLUE = 4
+FINDER_COLOR_YELLOW = 5
+FINDER_COLOR_RED = 6
+FINDER_COLOR_ORANGE = 7
+
+_MIN_FINDER_COLOR = 0
+_MAX_FINDER_COLOR = 7
+
 # color labels
 _COLORNAMES = {
     "None": 0,
@@ -34,30 +46,28 @@ _COLORIDS = {
     7: "Orange",
 }
 
-FINDER_COLOR_NONE = 0
-FINDER_COLOR_GRAY = 1
-FINDER_COLOR_GREEN = 2
-FINDER_COLOR_PURPLE = 3
-FINDER_COLOR_BLUE = 4
-FINDER_COLOR_YELLOW = 5
-FINDER_COLOR_RED = 6
-FINDER_COLOR_ORANGE = 7
+__all__ = [
+    "FINDER_COLOR_NONE",
+    "FINDER_COLOR_GRAY",
+    "FINDER_COLOR_GREEN",
+    "FINDER_COLOR_PURPLE",
+    "FINDER_COLOR_BLUE",
+    "FINDER_COLOR_YELLOW",
+    "FINDER_COLOR_RED",
+    "FINDER_COLOR_ORANGE",
+    "_MIN_FINDER_COLOR",
+    "_MAX_FINDER_COLOR",
+    "_COLORNAMES",
+    "_COLORNAMES_LOWER",
+    "_COLORIDS",
+]
 
-# _MIN_FINDER_COLOR = 0
-# _MAX_FINDER_COLOR = 7
 
 # _VALID_COLORIDS = "01234567"
 # _MAX_FINDERCOMMENT = 750  # determined through trial & error with Finder
 # _MAX_WHEREFROM = (
 #     1024  # just picked something....todo: need to figure out what max length is
 # )
-
-# offset of tag color in com.apple.FinderInfo xattr
-# tag color is 3 bits
-_kCOLOR_OFFSET = 76
-
-# offset of stationary pad bit in com.apple.FinderInfo xattr
-_kSTATIONARYPAD_OFFSET = 68
 
 
 # FinderInfo = "com.apple.FinderInfo"

@@ -9,8 +9,11 @@ https://eclecticlight.co/2017/12/19/xattr-com-apple-finderinfo-information-for-t
 import bitstring
 import xattr
 
+from .constants import _MAX_FINDER_COLOR, _MIN_FINDER_COLOR, FINDER_COLOR_NONE
+
 _kFinderInfo = "com.apple.FinderInfo"
 _kFinderStationaryPad = "stationarypad"
+_kFinderColor = "findercolor"
 
 # offset of tag color in com.apple.FinderInfo xattr
 # tag color is 3 bits
@@ -20,9 +23,15 @@ _kCOLOR_OFFSET = 76
 _kSTATIONARYPAD_OFFSET = 68
 
 __all__ = [
-    "get_finderinfo_stationarypad",
-    "set_finderinfo_stationarypad",
+    "_kFinderColor",
+    "_kFinderInfo",
     "_kFinderStationaryPad",
+    "get_finderinfo_bytes",
+    "get_finderinfo_color",
+    "get_finderinfo_stationarypad",
+    "set_finderinfo_bytes",
+    "set_finderinfo_color",
+    "set_finderinfo_stationarypad",
 ]
 
 
@@ -40,9 +49,21 @@ def _get_finderinfo_bits(xattr_: xattr.xattr) -> bitstring.BitArray:
     return finderbits
 
 
-def _set_findinfo_bits(xattr_: xattr.xattr, bits: bitstring.BitArray):
+def _set_finderinfo_bits(xattr_: xattr.xattr, bits: bitstring.BitArray):
     """Set FinderInfo bits"""
     xattr_.set("com.apple.FinderInfo", bits.bytes)
+
+
+def get_finderinfo_bytes(xattr_: xattr.xattr) -> bytes:
+    """Get FinderInfo bytes"""
+    finderbits = _get_finderinfo_bits(xattr_)
+    return finderbits.bytes
+
+
+def set_finderinfo_bytes(xattr_: xattr.xattr, value: bytes):
+    """Set FinderInfo bytes"""
+    finderbits = bitstring.BitArray(value)
+    _set_finderinfo_bits(xattr_, finderbits)
 
 
 def get_finderinfo_stationarypad(xattr_: xattr.xattr) -> bool:
@@ -68,4 +89,39 @@ def set_finderinfo_stationarypad(xattr_: xattr.xattr, value: bool):
     # set stationary bits
     finderbits = _get_finderinfo_bits(xattr_)
     finderbits.overwrite(bit, _kSTATIONARYPAD_OFFSET)
-    _set_findinfo_bits(xattr_, finderbits)
+    _set_finderinfo_bits(xattr_, finderbits)
+
+
+def get_finderinfo_color(xattr_: xattr.xattr) -> int:
+    """get the tag color of a file set via com.apple.FinderInfo
+    Returns: color id as int, 0 if no color or FinderInfo not set"""
+
+    try:
+        finderbits = _get_finderinfo_bits(xattr_)
+        bits = finderbits[_kCOLOR_OFFSET : _kCOLOR_OFFSET + 3]
+        return bits.uint
+    except OSError as e:
+        # if the extended attribute is missing, the error will be OSError: [Errno 93] Attribute not found
+        return 0
+
+
+def set_finderinfo_color(xattr_: xattr.xattr, colorid: int):
+    """set tag color of filename to colorid
+
+    Args:
+        colorid: ID of tag color in range 0 to 7
+    """
+
+    if colorid is None:
+        colorid = FINDER_COLOR_NONE
+
+    if not _MIN_FINDER_COLOR <= colorid <= _MAX_FINDER_COLOR:
+        raise ValueError(f"colorid out of range {colorid}")
+
+    # color is encoded as 3 binary bits
+    bits = bitstring.BitArray(uint=colorid, length=3)
+
+    # set color bits
+    finderbits = _get_finderinfo_bits(xattr_)
+    finderbits.overwrite(bits, _kCOLOR_OFFSET)
+    _set_finderinfo_bits(xattr_, finderbits)

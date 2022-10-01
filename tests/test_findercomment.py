@@ -1,7 +1,5 @@
 """Test findercomment """
 
-from tempfile import TemporaryDirectory
-
 import pytest
 
 from osxmetadata import OSXMetaData, kMDItemFinderComment

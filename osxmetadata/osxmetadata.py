@@ -15,8 +15,14 @@ from .attribute_data import (
 )
 from .finder_comment import kMDItemFinderComment, set_or_remove_finder_comment
 from .finder_info import (
+    _kFinderColor,
+    _kFinderInfo,
     _kFinderStationaryPad,
+    get_finderinfo_bytes,
+    get_finderinfo_color,
     get_finderinfo_stationarypad,
+    set_finderinfo_bytes,
+    set_finderinfo_color,
     set_finderinfo_stationarypad,
 )
 from .finder_tags import _kMDItemUserTags, get_finder_tags, set_finder_tags
@@ -24,11 +30,15 @@ from .mditem import MDItemValueType, get_mditem_metadata, set_or_remove_mditem_m
 from .nsurl_metadata import get_nsurl_metadata, set_nsurl_metadata
 
 ALL_ATTRIBUTES = {
+    "finderinfo",
+    "tags",
     *list(MDITEM_ATTRIBUTE_DATA.keys()),
-    *list(NSURL_RESOURCE_KEY_DATA.keys()),
     *list(MDITEM_ATTRIBUTE_SHORT_NAMES.keys()),
-    _kMDItemUserTags,
+    *list(NSURL_RESOURCE_KEY_DATA.keys()),
+    _kFinderColor,
+    _kFinderInfo,
     _kFinderStationaryPad,
+    _kMDItemUserTags,
 }
 
 
@@ -131,8 +141,12 @@ class OSXMetaData:
             return get_mditem_metadata(self._mditem, attribute)
         elif attribute in NSURL_RESOURCE_KEY_DATA:
             return get_nsurl_metadata(self._url, attribute)
+        elif attribute in ["finderinfo", _kFinderInfo]:
+            return get_finderinfo_bytes(self._xattr)
         elif attribute == _kFinderStationaryPad:
             return get_finderinfo_stationarypad(self._xattr)
+        elif attribute == _kFinderColor:
+            return get_finderinfo_color(self._xattr)
         else:
             raise AttributeError(f"Invalid attribute: {attribute}")
 
@@ -162,8 +176,12 @@ class OSXMetaData:
                 set_or_remove_mditem_metadata(self._mditem, attribute, value)
             elif attribute in NSURL_RESOURCE_KEY_DATA:
                 set_nsurl_metadata(self._url, attribute, value)
+            elif attribute in ["finderinfo", _kFinderInfo]:
+                set_finderinfo_bytes(self._xattr, value)
             elif attribute == _kFinderStationaryPad:
                 set_finderinfo_stationarypad(self._xattr, bool(value))
+            elif attribute == _kFinderColor:
+                set_finderinfo_color(self._xattr, value)
             else:
                 raise ValueError(f"Invalid attribute: {attribute}")
         except (KeyError, AttributeError):
