@@ -1,4 +1,4 @@
-"""Read/write metadata in the com.apple.FinderInfo extended attribute such as Stationary Pad
+"""Read/write metadata in the com.apple.FinderInfo extended attribute such as Stationery Pad
 
 FinderInfo is a 256-bit bit field
 
@@ -12,26 +12,26 @@ import xattr
 from .constants import _MAX_FINDER_COLOR, _MIN_FINDER_COLOR, FINDER_COLOR_NONE
 
 _kFinderInfo = "com.apple.FinderInfo"
-_kFinderStationaryPad = "stationarypad"
+_kFinderStationeryPad = "stationerypad"
 _kFinderColor = "findercolor"
 
 # offset of tag color in com.apple.FinderInfo xattr
 # tag color is 3 bits
 _kCOLOR_OFFSET = 76
 
-# offset of stationary pad bit in com.apple.FinderInfo xattr
-_kSTATIONARYPAD_OFFSET = 68
+# offset of stationery pad bit in com.apple.FinderInfo xattr
+_kSTATIONERYPAD_OFFSET = 68
 
 __all__ = [
     "_kFinderColor",
     "_kFinderInfo",
-    "_kFinderStationaryPad",
+    "_kFinderStationeryPad",
     "get_finderinfo_bytes",
     "get_finderinfo_color",
-    "get_finderinfo_stationarypad",
+    "get_finderinfo_stationerypad",
     "set_finderinfo_bytes",
     "set_finderinfo_color",
-    "set_finderinfo_stationarypad",
+    "set_finderinfo_stationerypad",
 ]
 
 
@@ -66,29 +66,29 @@ def set_finderinfo_bytes(xattr_: xattr.xattr, value: bytes):
     _set_finderinfo_bits(xattr_, finderbits)
 
 
-def get_finderinfo_stationarypad(xattr_: xattr.xattr) -> bool:
-    """get the Stationary Pad bit from com.apple.FinderInfo
-    returns: True if Stationary Pad is set, False if not set"""
+def get_finderinfo_stationerypad(xattr_: xattr.xattr) -> bool:
+    """get the Stationery Pad bit from com.apple.FinderInfo
+    returns: True if Stationery Pad is set, False if not set"""
 
     try:
         finderbits = _get_finderinfo_bits(xattr_)
-        bit = finderbits.bin[_kSTATIONARYPAD_OFFSET]
+        bit = finderbits.bin[_kSTATIONERYPAD_OFFSET]
         return bool(int(bit))
     except Exception as e:
         return False
 
 
-def set_finderinfo_stationarypad(xattr_: xattr.xattr, value: bool):
-    """set the Stationary Pad flag of com.apple.FinderInfo"""
+def set_finderinfo_stationerypad(xattr_: xattr.xattr, value: bool):
+    """set the Stationery Pad flag of com.apple.FinderInfo"""
 
     value = 1 if value else 0
 
-    # stationary pad is encoded as a single bit
+    # stationery pad is encoded as a single bit
     bit = bitstring.BitArray(uint=value, length=1)
 
-    # set stationary bits
+    # set stationery bits
     finderbits = _get_finderinfo_bits(xattr_)
-    finderbits.overwrite(bit, _kSTATIONARYPAD_OFFSET)
+    finderbits.overwrite(bit, _kSTATIONERYPAD_OFFSET)
     _set_finderinfo_bits(xattr_, finderbits)
 
 

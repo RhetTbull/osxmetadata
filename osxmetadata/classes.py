@@ -17,7 +17,7 @@ from .constants import (
     _VALID_COLORIDS,
     FINDER_COLOR_NONE,
     _kCOLOR_OFFSET,
-    _kSTATIONARYPAD_OFFSET,
+    _kSTATIONERYPAD_OFFSET,
 )
 from .datetime_utils import (
     datetime_naive_to_utc,
@@ -190,7 +190,7 @@ class _AttributeFinderInfo:
         self._md = osxmetadata_obj
 
         # valid keys for the finderinfo dict
-        self.keys = ["color", "stationarypad"]
+        self.keys = ["color", "stationerypad"]
 
         self._constant = attribute.constant
 
@@ -216,9 +216,9 @@ class _AttributeFinderInfo:
 
         # check color tag stored in com.apple.FinderInfo
         color = self.get_finderinfo_color()
-        stationarypad = self.get_finderinfo_stationarypad()
+        stationerypad = self.get_finderinfo_stationerypad()
 
-        self.data = {"color": color, "stationarypad": stationarypad}
+        self.data = {"color": color, "stationerypad": stationerypad}
 
     def _write_data(self):
         # Overwrites the existing attribute values with the iterable of values provided.
@@ -232,11 +232,11 @@ class _AttributeFinderInfo:
             return
 
         colorid = self.data.get("color", None)
-        stationarypad = self.data.get("stationarypad", None)
+        stationerypad = self.data.get("stationerypad", None)
         if colorid is not None:
             self.set_finderinfo_color(colorid)
-        if stationarypad is not None:
-            self.set_finderinfo_stationarypad(stationarypad)
+        if stationerypad is not None:
+            self.set_finderinfo_stationerypad(stationerypad)
 
     @property
     def color(self):
@@ -248,13 +248,13 @@ class _AttributeFinderInfo:
         self.set_finderinfo_color(value)
 
     @property
-    def stationarypad(self):
+    def stationerypad(self):
         self._load_data()
-        return self.data["stationarypad"]
+        return self.data["stationerypad"]
 
-    @stationarypad.setter
-    def stationarypad(self, value):
-        self.set_finderinfo_stationarypad(value)
+    @stationerypad.setter
+    def stationerypad(self, value):
+        self.set_finderinfo_stationerypad(value)
 
     def asdict(self):
         return self.data
@@ -290,28 +290,28 @@ class _AttributeFinderInfo:
         finderbits.overwrite(bits, _kCOLOR_OFFSET)
         self._set_findinfo_bits(finderbits)
 
-    def get_finderinfo_stationarypad(self):
-        """get the Stationary Pad bit from com.apple.FinderInfo
-        returns: True if Stationary Pad is set, False if not set"""
+    def get_finderinfo_stationerypad(self):
+        """get the Stationery Pad bit from com.apple.FinderInfo
+        returns: True if Stationery Pad is set, False if not set"""
 
         try:
             finderbits = self._get_finderinfo_bits()
-            bit = finderbits.bin[_kSTATIONARYPAD_OFFSET]
+            bit = finderbits.bin[_kSTATIONERYPAD_OFFSET]
             return bool(int(bit))
         except Exception as e:
             return False
 
-    def set_finderinfo_stationarypad(self, value):
-        """set the Stationary Pad flag of com.apple.FinderInfo"""
+    def set_finderinfo_stationerypad(self, value):
+        """set the Stationery Pad flag of com.apple.FinderInfo"""
 
         value = 1 if value_to_bool(value) else 0
 
-        # stationary pad is encoded as a single bit
+        # stationery pad is encoded as a single bit
         bit = bitstring.BitArray(uint=value, length=1)
 
         # set color bits
         finderbits = self._get_finderinfo_bits()
-        finderbits.overwrite(bit, _kSTATIONARYPAD_OFFSET)
+        finderbits.overwrite(bit, _kSTATIONERYPAD_OFFSET)
         self._set_findinfo_bits(finderbits)
 
     def _get_finderinfo_bits(self) -> bitstring.BitArray:
@@ -371,30 +371,30 @@ class _AttributeFinderInfoColor(_AttributeFinderInfo):
         return not self.__eq__(other)
 
 
-class _AttributeFinderInfoStationaryPad(_AttributeFinderInfo):
+class _AttributeFinderInfoStationeryPad(_AttributeFinderInfo):
     def __init__(self, attribute, xattr_, osxmetadata_obj):
         super().__init__(attribute, xattr_, osxmetadata_obj)
 
     def set_value(self, value):
-        self.data = {"stationarypad": value_to_bool(value)}
+        self.data = {"stationerypad": value_to_bool(value)}
         self._write_data()
 
     def get_value(self):
         self._load_data()
-        return self.data.get("stationarypad", None)
+        return self.data.get("stationerypad", None)
 
     def __repr__(self):
         return repr(self.get_value())
 
     def __eq__(self, other):
         self._load_data()
-        return self.data.get("stationarypad") == other
+        return self.data.get("stationerypad") == other
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __bool__(self):
-        return bool(self.data.get("stationarypad", None))
+        return bool(self.data.get("stationerypad", None))
 
 
 class _AttributeTagsList(_AttributeList, _AttributeFinderInfo):

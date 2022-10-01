@@ -13,10 +13,10 @@ from .constants import (
     FINDER_COLOR_RED,
     FINDER_COLOR_YELLOW,
 )
-from .finder_info import _kFinderColor, _kFinderInfo, _kFinderStationaryPad
+from .finder_info import _kFinderColor, _kFinderInfo, _kFinderStationeryPad
 from .finder_tags import Tag, _kMDItemUserTags
 from .mditem import MDItemValueType
-from .osxmetadata import ALL_ATTRIBUTES, OSXMetaData
+from .osxmetadata import ALL_ATTRIBUTES, ASDICT_ATTRIBUTES, OSXMetaData
 
 # add metadata attribute constants such as kMDItemFinderComment and NSURLTagNamesKey to module namespace
 for constant in MDITEM_ATTRIBUTE_DATA.keys():
@@ -27,6 +27,7 @@ for constant in NSURL_RESOURCE_KEY_DATA.keys():
 
 __all__ = [
     "ALL_ATTRIBUTES",
+    "ASDICT_ATTRIBUTES",
     "FINDER_COLOR_BLUE",
     "FINDER_COLOR_GRAY",
     "FINDER_COLOR_GREEN",
@@ -35,13 +36,15 @@ __all__ = [
     "FINDER_COLOR_PURPLE",
     "FINDER_COLOR_RED",
     "FINDER_COLOR_YELLOW",
+    "MDITEM_ATTRIBUTE_DATA",
     "MDItemValueType",
+    "NSURL_RESOURCE_KEY_DATA",
     "OSXMetaData",
     "Tag",
     "__version__",
     "_kFinderColor",
     "_kFinderInfo",
-    "_kFinderStationaryPad",
+    "_kFinderStationeryPad",
     "_kMDItemUserTags",
     *MDITEM_ATTRIBUTE_DATA.keys(),
     *NSURL_RESOURCE_KEY_DATA.keys(),

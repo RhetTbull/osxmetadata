@@ -7,7 +7,7 @@ from collections import namedtuple  # pylint: disable=syntax-error
 from .classes import (
     _AttributeFinderInfo,
     _AttributeFinderInfoColor,
-    _AttributeFinderInfoStationaryPad,
+    _AttributeFinderInfoStationeryPad,
     _AttributeList,
     _AttributeTagsList,
     _AttributeOSXPhotosDetectedText,

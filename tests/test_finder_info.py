@@ -8,7 +8,7 @@ from osxmetadata import (
     Tag,
     _kFinderColor,
     _kFinderInfo,
-    _kFinderStationaryPad,
+    _kFinderStationeryPad,
 )
 from osxmetadata.constants import (
     FINDER_COLOR_BLUE,
@@ -17,18 +17,18 @@ from osxmetadata.constants import (
 )
 
 
-def test_stationarypad(test_file):
-    """test get/set stationarypad methods"""
+def test_stationerypad(test_file):
+    """test get/set stationerypad methods"""
 
     attribute = "com.apple.metadata:kMDItemComment"
     value = "This is my comment"
 
     md = OSXMetaData(test_file.name)
-    md.stationarypad = True
-    assert md.stationarypad == True
+    md.stationerypad = True
+    assert md.stationerypad == True
 
-    md.set(_kFinderStationaryPad, False)
-    assert md.get(_kFinderStationaryPad) == False
+    md.set(_kFinderStationeryPad, False)
+    assert md.get(_kFinderStationeryPad) == False
 
 
 def test_finderinfo(test_file):
@@ -42,7 +42,7 @@ def test_finderinfo(test_file):
         == b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         + b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
     )
-    md.stationarypad = True
+    md.stationerypad = True
     assert (
         md.finderinfo
         == b"\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00"
@@ -67,6 +67,6 @@ def test_findercolor(test_file):
 def test_all_attributes():
     """Test that all Finder Info attributes are in ALL_ATTRIBUTES"""
 
-    assert _kFinderStationaryPad in ALL_ATTRIBUTES
+    assert _kFinderStationeryPad in ALL_ATTRIBUTES
     assert _kFinderInfo in ALL_ATTRIBUTES
     assert _kFinderColor in ALL_ATTRIBUTES

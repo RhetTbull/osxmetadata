@@ -1,6 +1,9 @@
 """ OSXMetaData class to read and write various Mac OS X metadata 
     such as tags/keywords and Finder comments from files """
 
+import base64
+import datetime
+import json
 import pathlib
 import typing as t
 
@@ -8,6 +11,7 @@ import CoreServices
 import xattr
 from Foundation import NSURL, NSURLTagNamesKey
 
+from ._version import __version__
 from .attribute_data import (
     MDITEM_ATTRIBUTE_DATA,
     MDITEM_ATTRIBUTE_SHORT_NAMES,
@@ -17,13 +21,13 @@ from .finder_comment import kMDItemFinderComment, set_or_remove_finder_comment
 from .finder_info import (
     _kFinderColor,
     _kFinderInfo,
-    _kFinderStationaryPad,
+    _kFinderStationeryPad,
     get_finderinfo_bytes,
     get_finderinfo_color,
-    get_finderinfo_stationarypad,
+    get_finderinfo_stationerypad,
     set_finderinfo_bytes,
     set_finderinfo_color,
-    set_finderinfo_stationarypad,
+    set_finderinfo_stationerypad,
 )
 from .finder_tags import _kMDItemUserTags, get_finder_tags, set_finder_tags
 from .mditem import MDItemValueType, get_mditem_metadata, set_or_remove_mditem_metadata
@@ -37,8 +41,15 @@ ALL_ATTRIBUTES = {
     *list(NSURL_RESOURCE_KEY_DATA.keys()),
     _kFinderColor,
     _kFinderInfo,
-    _kFinderStationaryPad,
+    _kFinderStationeryPad,
     _kMDItemUserTags,
+}
+
+# Subset of attributes returned by asdict() and to_json() methods
+ASDICT_ATTRIBUTES = {
+    *list(MDITEM_ATTRIBUTE_DATA.keys()),
+    _kFinderStationeryPad,
+    _kFinderColor,
 }
 
 
@@ -124,6 +135,55 @@ class OSXMetaData:
         """
         self._xattr.remove(key)
 
+    def asdict(self, attributes: t.Set[str] = ASDICT_ATTRIBUTES) -> t.Dict[str, t.Any]:
+        """Return all MDItem metadata (or a subset defined by attributes) as a dict
+
+        Args:
+            attributes: set of attributes to include in dict
+
+        Returns:
+            dict of metadata
+        """
+        return {key: getattr(self, key) for key in attributes}
+
+    def to_json(
+        self, attributes: t.Set[str] = ASDICT_ATTRIBUTES, indent: int = 4
+    ) -> str:
+        """Return all MDItem metadata (or a subset defined by attributes) as a JSON string
+
+        Args:
+            attributes: set of attributes to include in JSON
+            indent: indent level for JSON output
+
+        Returns:
+            JSON string
+
+        Notes:
+            datetime objects are converted to ISO 8601 format
+            binary objects are converted to base64 encoded strings
+            the resulting JSON will include 3 additional keys: _version, _filepath, and _filename;
+            these are expected by the CLI backup/restore commands
+        """
+
+        dict_data = self.asdict(attributes)
+
+        # add fields that backup/restore expects
+        dict_data.update(
+            {
+                "_version": __version__,
+                "_filepath": self._posix_path,
+                "_filename": self._fname.name,
+            }
+        )
+
+        for key, value in dict_data.items():
+            if isinstance(value, datetime.datetime):
+                dict_data[key] = value.isoformat()
+            elif isinstance(value, bytes):
+                dict_data[key] = base64.b64encode(value).decode("ascii")
+
+        return json.dumps(dict_data, indent=indent)
+
     def __getattr__(self, attribute: str) -> MDItemValueType:
         """Get metadata attribute value
 
@@ -143,8 +203,8 @@ class OSXMetaData:
             return get_nsurl_metadata(self._url, attribute)
         elif attribute in ["finderinfo", _kFinderInfo]:
             return get_finderinfo_bytes(self._xattr)
-        elif attribute == _kFinderStationaryPad:
-            return get_finderinfo_stationarypad(self._xattr)
+        elif attribute == _kFinderStationeryPad:
+            return get_finderinfo_stationerypad(self._xattr)
         elif attribute == _kFinderColor:
             return get_finderinfo_color(self._xattr)
         else:
@@ -178,8 +238,8 @@ class OSXMetaData:
                 set_nsurl_metadata(self._url, attribute, value)
             elif attribute in ["finderinfo", _kFinderInfo]:
                 set_finderinfo_bytes(self._xattr, value)
-            elif attribute == _kFinderStationaryPad:
-                set_finderinfo_stationarypad(self._xattr, bool(value))
+            elif attribute == _kFinderStationeryPad:
+                set_finderinfo_stationerypad(self._xattr, bool(value))
             elif attribute == _kFinderColor:
                 set_finderinfo_color(self._xattr, value)
             else:
