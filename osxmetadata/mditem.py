@@ -17,7 +17,12 @@ import objc
 
 from .attribute_data import MDITEM_ATTRIBUTE_DATA
 
-__all__ = ["get_mditem_metadata", "remove_mditem_metadata", "set_mditem_metadata"]
+__all__ = [
+    "get_mditem_metadata",
+    "remove_mditem_metadata",
+    "set_mditem_metadata",
+    "set_or_remove_mditem_metadata",
+]
 
 # Absolute time in macOS is measured in seconds relative to the absolute reference date of Jan 1 2001 00:00:00 GMT.
 # Reference: https://developer.apple.com/documentation/corefoundation/1542812-cfdategetabsolutetime?language=objc
@@ -135,3 +140,22 @@ def remove_mditem_metadata(mditem: CoreServices.MDItemRef, attribute: str):
     attribute: metadata attribute to remove
     """
     MDItemRemoveAttribute(mditem, attribute)
+
+
+def set_or_remove_mditem_metadata(
+    mditem: CoreServices.MDItemRef,
+    attribute: str,
+    value: MDItemValueType,
+) -> bool:
+    """Set file metadata or remove metadata if value is None
+
+    file: path to file
+    attribute: metadata attribute to set
+    value: value to set attribute to; must match the type expected by the attribute (e.g. bool, str, List[str], float, datetime.datetime)
+
+    Returns True if successful, False otherwise.
+    """
+    if value is None:
+        remove_mditem_metadata(mditem, attribute)
+    else:
+        set_mditem_metadata(mditem, attribute, value)

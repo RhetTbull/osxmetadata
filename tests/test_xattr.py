@@ -1,6 +1,5 @@
 """Test osxmetadata get/set/remove xattr methods"""
 
-import json
 import plistlib
 
 import pytest

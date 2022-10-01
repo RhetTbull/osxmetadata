@@ -252,6 +252,14 @@ b'bplist00\xa1\x01Yapple.com\x08\n\x00\x00\x00\x00\x00\x00\x01\x01\x00\x00\x00\x
 
 For most use cases, it is recommended you do not directly access the Apple metadata related extended attributes and instead use the getter/setter methods provided by osxmetadata.
 
+## Finder Info
+
+The Finder keeps some legacy Finder info data about files in a bitstring stored in the `com.apple.FinderInfo` extended attribute. osxmetadata provides some attributes for working with this data.
+
+- `stationarypad`: True if the file is a stationary pad (file template) otherwise False; setting this attribute has the same effect as setting the `Stationary pad` checkbox in the Finder's `Get Info` window.
+- `findercolor`: The color of the file as an integer; setting this attribute has the same effect as applying a color label in the Finder's `Get Info` window. osxmetadata will set this attribute automatically when setting user tags; it is recommended you do not set this attribute directly.
+- `finderinfo`: The raw Finder info data as a bytes object; you should only manipulate this attribute if you know what you are doing.
+
 ## Command Line Usage
 
 Installs command line tool called `osxmetadata` which provides a simple interface to view/edit metadata supported by osxmetadata.

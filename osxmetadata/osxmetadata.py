@@ -13,14 +13,14 @@ from .attribute_data import (
     MDITEM_ATTRIBUTE_SHORT_NAMES,
     NSURL_RESOURCE_KEY_DATA,
 )
-from .finder_comment import kMDItemFinderComment, set_finder_comment
-from .finder_tags import _kMDItemUserTags, get_finder_tags, set_finder_tags
-from .mditem import (
-    MDItemValueType,
-    get_mditem_metadata,
-    remove_mditem_metadata,
-    set_mditem_metadata,
+from .finder_comment import kMDItemFinderComment, set_or_remove_finder_comment
+from .finder_info import (
+    _kFinderStationaryPad,
+    get_finderinfo_stationarypad,
+    set_finderinfo_stationarypad,
 )
+from .finder_tags import _kMDItemUserTags, get_finder_tags, set_finder_tags
+from .mditem import MDItemValueType, get_mditem_metadata, set_or_remove_mditem_metadata
 from .nsurl_metadata import get_nsurl_metadata, set_nsurl_metadata
 
 ALL_ATTRIBUTES = {
@@ -28,6 +28,7 @@ ALL_ATTRIBUTES = {
     *list(NSURL_RESOURCE_KEY_DATA.keys()),
     *list(MDITEM_ATTRIBUTE_SHORT_NAMES.keys()),
     _kMDItemUserTags,
+    _kFinderStationaryPad,
 }
 
 
@@ -44,9 +45,14 @@ class OSXMetaData:
 
         self._posix_path = self._fname.resolve().as_posix()
 
-        # create MDItemRef, NSURL, and xattr objects
+        # Create MDItemRef, NSURL, and xattr objects
         # MDItemRef is used for most attributes
         # NSURL and xattr are required for certain attributes like Finder tags
+        # Because many of the getter/setter functions require some combination of MDItemRef, NSURL, and xattr,
+        # they are created here and kept for the life of the object so that they don't have to be
+        # recreated for each attribute
+        # This does mean that if the file is moved or renamed, the object will still be pointing to the old file
+        # thus you should not rename or move a file while using an OSXMetaData object
         self._mditem: CoreServices.MDItemRef = CoreServices.MDItemCreate(
             None, self._posix_path
         )
@@ -125,6 +131,8 @@ class OSXMetaData:
             return get_mditem_metadata(self._mditem, attribute)
         elif attribute in NSURL_RESOURCE_KEY_DATA:
             return get_nsurl_metadata(self._url, attribute)
+        elif attribute == _kFinderStationaryPad:
+            return get_finderinfo_stationarypad(self._xattr)
         else:
             raise AttributeError(f"Invalid attribute: {attribute}")
 
@@ -136,40 +144,28 @@ class OSXMetaData:
             value: value to set
         """
         try:
-            if self.__init:
-                if attribute in ["findercomment", kMDItemFinderComment]:
-                    # finder comment cannot be set using MDItemSetAttribute
-                    if value:
-                        set_finder_comment(self._url, value)
-                    else:
-                        # Note: this does not exactly match the behavior of the Finder
-                        # When removing a comment in Finder, a subsequent read of kMDItemFinderComment
-                        # returns None (null in objc) but with this code, reading kMDItemFinderComment returns
-                        # an empty string; I've not figured out how to mirror the Finder behavior
-                        # attempting to set or remove kMDItemFinderComment directly has no effect
-                        # The Finder does remove the extended attribute com.apple.metadata:kMDItemFinderComment
-                        # so that is what this code does
-                        set_finder_comment(self._url, "")
-                        self._xattr.remove("com.apple.metadata:kMDItemFinderComment")
-                elif attribute in ["tags", _kMDItemUserTags]:
-                    # handle Finder tags
-                    set_finder_tags(self._url, value)
-                elif attribute in MDITEM_ATTRIBUTE_SHORT_NAMES:
-                    # handle dynamic properties like self.keywords and self.comments
-                    attribute_name = MDITEM_ATTRIBUTE_SHORT_NAMES[attribute]
-                    if value is None:
-                        remove_mditem_metadata(self._mditem, attribute_name)
-                    else:
-                        set_mditem_metadata(self._mditem, attribute_name, value)
-                elif attribute in MDITEM_ATTRIBUTE_DATA:
-                    if value is None:
-                        remove_mditem_metadata(self._mditem, attribute)
-                    else:
-                        set_mditem_metadata(self._mditem, attribute, value)
-                elif attribute in NSURL_RESOURCE_KEY_DATA:
-                    set_nsurl_metadata(self._url, attribute, value)
-                else:
-                    raise ValueError(f"Invalid attribute: {attribute}")
+            if not self.__init:
+                # during __init__ we don't want to call __setattr__ as it will
+                # cause an infinite loop
+                return super().__setattr__(attribute, value)
+            if attribute in ["findercomment", kMDItemFinderComment]:
+                # finder comment cannot be set using MDItemSetAttribute
+                set_or_remove_finder_comment(self._url, self._xattr, value)
+            elif attribute in ["tags", _kMDItemUserTags]:
+                # handle Finder tags
+                set_finder_tags(self._url, value)
+            elif attribute in MDITEM_ATTRIBUTE_SHORT_NAMES:
+                # handle dynamic properties like self.keywords and self.comments
+                attribute_name = MDITEM_ATTRIBUTE_SHORT_NAMES[attribute]
+                set_or_remove_mditem_metadata(self._mditem, attribute_name, value)
+            elif attribute in MDITEM_ATTRIBUTE_DATA:
+                set_or_remove_mditem_metadata(self._mditem, attribute, value)
+            elif attribute in NSURL_RESOURCE_KEY_DATA:
+                set_nsurl_metadata(self._url, attribute, value)
+            elif attribute == _kFinderStationaryPad:
+                set_finderinfo_stationarypad(self._xattr, bool(value))
+            else:
+                raise ValueError(f"Invalid attribute: {attribute}")
         except (KeyError, AttributeError):
             super().__setattr__(attribute, value)
 
@@ -198,9 +194,9 @@ class OSXMetaData:
         if key == _kMDItemUserTags:
             set_finder_tags(self._xattr, value)
         elif key == kMDItemFinderComment:
-            set_finder_comment(self._url, value)
+            set_or_remove_finder_comment(self._url, self._xattr, value)
         elif key in MDITEM_ATTRIBUTE_DATA:
-            set_mditem_metadata(self._mditem, key, value)
+            set_or_remove_mditem_metadata(self._mditem, key, value)
         elif key in NSURL_RESOURCE_KEY_DATA:
             set_nsurl_metadata(self._url, key, value)
         else:
