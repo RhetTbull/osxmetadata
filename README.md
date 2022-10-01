@@ -77,7 +77,7 @@ datetime.datetime(2022, 10, 1, 0, 0)
 >>>
 ```
 
-Somewhat contrary to the [Zen of Python](https://peps.python.org/pep-0020/), osxphotos provides more than one way to access metadata attributes.  You can get and set metadata attributes using the `get()`/`set()` getter/setter methods, using the attribute name as a dictionary key on the OSXMetaData object, or using the attribute name as an attribute on the `OSXMetaData()` object.  For example, the following are all equivalent:
+Somewhat contrary to the [Zen of Python](https://peps.python.org/pep-0020/), osxmetadata provides more than one way to access metadata attributes.  You can get and set metadata attributes using the `get()`/`set()` getter/setter methods, using the attribute name as a dictionary key on the OSXMetaData object, or using the attribute name as an attribute on the `OSXMetaData()` object.  For example, the following are all equivalent:
 
 - `OSXMetaData.get(attribute)` - get the value of the metadata attribute `attribute`
 - `OSXMetaData[attribute]` - get the value of the metadata attribute `attribute`
