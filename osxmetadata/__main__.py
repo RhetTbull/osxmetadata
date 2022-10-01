@@ -1,4 +1,4 @@
-# /usr/bin/env python3
+"""CLI for osxmetadata"""
 
 import datetime
 import glob
@@ -13,16 +13,11 @@ import sys
 import click
 
 import osxmetadata
+from osxmetadata import Tag
+from osxmetadata.attribute_data import MDITEM_ATTRIBUTE_DATA
 
 from ._version import __version__
-from .attributes import (
-    _LONG_NAME_WIDTH,
-    _SHORT_NAME_WIDTH,
-    ATTRIBUTE_DISPATCH,
-    ATTRIBUTES,
-)
 from .backup import load_backup_file, write_backup_file
-from .classes import _AttributeFinderInfo, _AttributeList, _AttributeTagsList
 from .constants import (
     _BACKUP_FILENAME,
     _COLORNAMES_LOWER,
@@ -30,7 +25,8 @@ from .constants import (
     _TAGS_NAMES,
     FINDER_COLOR_NONE,
 )
-from .findertags import Tag, tag_factory
+from .finder_info import _kFinderColor, _kFinderInfo, _kFinderStationeryPad
+from .finder_tags import Tag, _kMDItemUserTags
 
 # TODO: how is metadata on symlink handled?
 # should symlink be resolved before gathering metadata?
@@ -40,6 +36,37 @@ from .findertags import Tag, tag_factory
 #   Finder aliases inherit neither
 # TODO: add selective restore (e.g only restore files matching command line path)
 #   e.g osxmetadata -r meta.json *.pdf
+
+_SHORT_NAME_WIDTH = (
+    max(len(x["short_name"]) for x in MDITEM_ATTRIBUTE_DATA.values()) + 1
+)
+_LONG_NAME_WIDTH = max(len(x["name"]) for x in MDITEM_ATTRIBUTE_DATA.values()) + 1
+_CONSTANT_NAME_WIDTH = (
+    max(len(x["xattr_constant"]) for x in MDITEM_ATTRIBUTE_DATA.values()) + 1
+)
+
+
+def value_to_str(value) -> str:
+    """Convert a metadata value to str suitable for printing to terminal"""
+    if isinstance(value, str):
+        return value
+    elif value is None:
+        return "(null)"
+    if isinstance(value, datetime.datetime):
+        return value.isoformat()
+    elif isinstance(value, list):
+        if not value:
+            return "(empty list)"
+        if isinstance(value[0], str):
+            return ", ".join(value)
+        elif isinstance(value[0], Tag):
+            return ", ".join(f"{x.name}: {x.color}" for x in value)
+        elif isinstance(value[0], datetime.datetime):
+            return ", ".join(x.isoformat() for x in value)
+        elif isinstance(value[0], bytes):
+            return ", ".join(x.hex() for x in value)
+    else:
+        return str(value)
 
 
 # Click CLI object & context settings
@@ -60,21 +87,22 @@ class MyClickCommand(click.Command):
         formatter = click.HelpFormatter()
 
         # build help text from all the attribute names
-        # get set of attribute names
-        # (to eliminate the duplicate entries for short_constant and long costant)
-        # then sort and get the short constant, long constant, and help text
         # passed to click.HelpFormatter.write_dl for formatting
         attr_tuples = [("Short Name", "Description")]
-        attr_tuples.extend(
-            (
-                ATTRIBUTES[attr].name,
-                f"{ATTRIBUTES[attr].short_constant}, "
-                + f"{ATTRIBUTES[attr].constant}; {ATTRIBUTES[attr].help}",
-            )
-            for attr in sorted(
-                [attr for attr in {attr.name for attr in ATTRIBUTES.values()}]
-            )
-        )
+        for attr in sorted(set(MDITEM_ATTRIBUTE_DATA.keys())):
+
+            # get short and long name
+            short_name = MDITEM_ATTRIBUTE_DATA[attr]["short_name"]
+            long_name = MDITEM_ATTRIBUTE_DATA[attr]["name"]
+            constant = MDITEM_ATTRIBUTE_DATA[attr]["xattr_constant"]
+
+            # get help text
+            description = MDITEM_ATTRIBUTE_DATA[attr]["description"]
+            type_ = MDITEM_ATTRIBUTE_DATA[attr]["help_type"]
+            help_text = f"{long_name}; {constant}; {description}; {type_}"
+
+            # add to list
+            attr_tuples.append((short_name, help_text))
 
         formatter.write("\n\n")
         formatter.write_text(
@@ -381,7 +409,7 @@ def cli(
         )
         invalid_attr = False
         for attr in attributes:
-            if attr not in ATTRIBUTES:
+            if attr not in MDITEM_ATTRIBUTE_DATA:
                 click.echo(f"Invalid attribute {attr}", err=True)
                 invalid_attr = True
         if invalid_attr:
@@ -407,8 +435,8 @@ def cli(
     if mirror:
         for item in mirror:
             attr1, attr2 = item
-            attribute1 = ATTRIBUTES[attr1]
-            attribute2 = ATTRIBUTES[attr2]
+            attribute1 = MDITEM_ATTRIBUTE_DATA[attr1]
+            attribute2 = MDITEM_ATTRIBUTE_DATA[attr2]
 
             # avoid self mirroring
             if attribute1 == attribute2:
@@ -609,7 +637,7 @@ def process_single_file(
                 click.echo(f"No metadata to wipe from {fpath}")
         for attr in attr_list:
             try:
-                attribute = ATTRIBUTES[attr]
+                attribute = MDITEM_ATTRIBUTE_DATA[attr]
                 if verbose:
                     click.echo(f"  Wiping {attr} from {fpath}")
                 md.clear_attribute(attribute.name)
@@ -630,7 +658,7 @@ def process_single_file(
 
     if clear:
         for attr in clear:
-            attribute = ATTRIBUTES[attr]
+            attribute = MDITEM_ATTRIBUTE_DATA[attr]
             if verbose:
                 click.echo(f"Clearing {attr}")
             md.clear_attribute(attribute.name)
@@ -640,7 +668,7 @@ def process_single_file(
         attr_dict = {}
         for item in set_:
             attr, val = item
-            attribute = ATTRIBUTES[attr]
+            attribute = MDITEM_ATTRIBUTE_DATA[attr]
 
             if attr in _TAGS_NAMES:
                 val = tag_factory(val)
@@ -675,7 +703,7 @@ def process_single_file(
         attr_dict = {}
         for item in append:
             attr, val = item
-            attribute = ATTRIBUTES[attr]
+            attribute = MDITEM_ATTRIBUTE_DATA[attr]
 
             if not attribute.append:
                 click.echo(
@@ -704,7 +732,7 @@ def process_single_file(
         attr_dict = {}
         for item in update:
             attr, val = item
-            attribute = ATTRIBUTES[attr]
+            attribute = MDITEM_ATTRIBUTE_DATA[attr]
 
             if not attribute.update:
                 click.echo(
@@ -731,7 +759,7 @@ def process_single_file(
         # remove value from attribute
         # actually implemented with discard so no error raised if not present
         for attr, val in remove:
-            attribute = ATTRIBUTES[attr]
+            attribute = MDITEM_ATTRIBUTE_DATA[attr]
             if not attribute.list:
                 click.echo(
                     f"remove is not a valid operation for single-value attributes",
@@ -758,8 +786,8 @@ def process_single_file(
             if verbose:
                 click.echo(f"Mirroring {attr1} {attr2}")
 
-            attribute1 = ATTRIBUTES[attr1]
-            attribute2 = ATTRIBUTES[attr2]
+            attribute1 = MDITEM_ATTRIBUTE_DATA[attr1]
+            attribute2 = MDITEM_ATTRIBUTE_DATA[attr2]
 
             if attribute1.name == "tags":
                 tags = md.get_attribute(attr1)
@@ -790,7 +818,7 @@ def process_single_file(
             data["_filepath"] = fpath.resolve().as_posix()
             data["_filename"] = fpath.name
         for attr in get:
-            attribute = ATTRIBUTES[attr]
+            attribute = MDITEM_ATTRIBUTE_DATA[attr]
             if json_:
                 try:
                     if attribute.name == "tags":
@@ -828,20 +856,29 @@ def process_single_file(
             click.echo(json_str)
         else:
             click.echo(f"{fpath}:")
-            attribute_list = md.list_metadata()
-            for attr in attribute_list:
+            for attr in md.asdict():
                 try:
-                    attribute_names = ATTRIBUTE_DISPATCH[attr]
-                    for name in attribute_names:
-                        attribute = ATTRIBUTES[name]
-                        value = md.get_attribute_str(attribute.name)
+                    value = md.get(attr)
+                    if value is None or value == "" or value == []:
+                        continue
+                    value = value_to_str(value)
+                    if attr in MDITEM_ATTRIBUTE_DATA:
+                        attribute = MDITEM_ATTRIBUTE_DATA[attr]
+                        short_name = attribute["short_name"]
+                        name = attribute["name"]
+                    elif attr in [_kFinderInfo, _kFinderColor, _kFinderStationeryPad]:
+                        short_name = attr
+                        name = attr
+                    elif attr == _kMDItemUserTags:
+                        short_name = "tags"
+                        name = _kMDItemUserTags
+                    else:
                         click.echo(
-                            f"{attribute.name:{_SHORT_NAME_WIDTH}}{attribute.constant:{_LONG_NAME_WIDTH}} = {value}"
+                            f"{'UNKNOWN ATTRIBUTE':{_SHORT_NAME_WIDTH}}{attr:{_LONG_NAME_WIDTH}} = THIS ATTRIBUTE NOT HANDLED",
+                            err=True,
                         )
-                except KeyError:
                     click.echo(
-                        f"{'UNKNOWN':{_SHORT_NAME_WIDTH}}{attr:{_LONG_NAME_WIDTH}} = THIS ATTRIBUTE NOT HANDLED",
-                        err=True,
+                        f"{short_name:{_SHORT_NAME_WIDTH}}{name:{_LONG_NAME_WIDTH}} = {value}"
                     )
                 except Exception as e:
                     click.echo(

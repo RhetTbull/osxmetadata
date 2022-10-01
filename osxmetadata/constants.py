@@ -63,6 +63,8 @@ __all__ = [
 ]
 
 
+_BACKUP_FILENAME = ".osxmetadata.json"
+
 # _VALID_COLORIDS = "01234567"
 # _MAX_FINDERCOMMENT = 750  # determined through trial & error with Finder
 # _MAX_WHEREFROM = (
@@ -75,15 +77,14 @@ __all__ = [
 # OSXPhotosDetectedText = "osxphotos.metadata:detected_text"
 
 # Special handling for Finder comments
-# _FINDER_COMMENT_NAMES = [
-#     "findercomment",
-#     "kMDItemFinderComment",
-#     "com.apple.metadata:kMDItemFinderComment",
-# ]
-# _TAGS_NAMES = ["tags", "_kMDItemUserTags", "com.apple.metadata:_kMDItemUserTags"]
-# _FINDERINFO_NAMES = ["finderinfo", "com.apple.FinderInfo"]
+_FINDER_COMMENT_NAMES = [
+    "findercomment",
+    "kMDItemFinderComment",
+    "com.apple.metadata:kMDItemFinderComment",
+]
+_TAGS_NAMES = ["tags", "_kMDItemUserTags", "com.apple.metadata:_kMDItemUserTags"]
+_FINDERINFO_NAMES = ["finderinfo", "com.apple.FinderInfo"]
 
-# _BACKUP_FILENAME = ".osxmetadata.json"
 
 # __all__ = [
 #     "FinderInfo",

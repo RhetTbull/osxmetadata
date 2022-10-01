@@ -50,6 +50,7 @@ ASDICT_ATTRIBUTES = {
     *list(MDITEM_ATTRIBUTE_DATA.keys()),
     _kFinderStationeryPad,
     _kFinderColor,
+    _kMDItemUserTags,
 }
 
 

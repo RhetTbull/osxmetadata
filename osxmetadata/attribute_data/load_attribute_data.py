@@ -29,20 +29,25 @@ def load_mditem_attribute_data(files) -> t.Dict:
             for item in file_data:
                 data[item["name"]] = item
 
-    # add python types (e.g. CFString -> str)
+    # add python types (e.g. CFString -> str) and help text types
     # the types used in the JSON files are the CF types with these counts
     # {'CFArray of CFStrings': 26, 'CFString': 61, 'CFNumber': 35, 'CFBoolean': 8, 'CFDate': 8}
     for key, value in data.items():
         if value["type"] == "CFString":
             data[key]["python_type"] = str
+            data[key]["help_type"] = "string"
         elif value["type"] == "CFNumber":
             data[key]["python_type"] = float
+            data[key]["help_type"] = "number"
         elif value["type"] == "CFBoolean":
             data[key]["python_type"] = bool
+            data[key]["help_type"] = "boolean"
         elif value["type"] == "CFDate":
             data[key]["python_type"] = datetime.datetime
+            data[key]["help_type"] = "date/time"
         elif value["type"] == "CFArray of CFStrings":
             data[key]["python_type"] = list
+            data[key]["help_type"] = "list of strings"
         else:
             raise ValueError(f"Unknown type {value['type']}")
 
@@ -91,6 +96,7 @@ MDITEM_ATTRIBUTE_DATA["kMDItemDownloadedDate"] = {
     "version": "10.7",
     "type": "CFDate",
     "python_type": datetime.datetime,
+    "help_type": "date/time",
     "short_name": "downloadeddate",
     "xattr_constant": "com.apple.metadata:kMDItemDownloadedDate",
 }
