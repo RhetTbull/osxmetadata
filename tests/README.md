@@ -2,11 +2,11 @@
 
 ## Running Tests
 
-Tests require pytest:
-`pip install pytest`
+Tests require pytest which will be installed by poetry.  To run tests, use:
 
-To run the tests, do the following from the main source folder:
-`python -m pytest tests/`
+`poetry run pytest --doctest-glob=README.md tests/ README.md -v`
+
+The `--doctest-glob=README.md` option is required to run the doctests in the main README.md file.
 
 ## Test Data
 

@@ -94,6 +94,7 @@ This allows you to use osxmetadata in accordance with your own code style prefer
 Supported attribute names include all attributes defined for [MDItem](https://developer.apple.com/documentation/coreservices/file_metadata/mditem) and all resource keys defined for [NSURL](https://developer.apple.com/documentation/foundation/nsurl?language=objc) as well as the following additional attributes:
 
 - `_kMDItemUserTags` - list of Finder tags
+- `kMDItemDownloadedDate` - date the file was downloaded
 
 Additionally, osxmetadata defines a "shortcut name" attribute for each MDItem attribute that can be used as a shortcut `OSXMetaData` class attribute.  The shortcut name is the lowercase value of text following `kMDItem` for each attribute. For example, `kMDItemAuthors` has a short name of `authors` so you can set the authors like this:
 
@@ -130,6 +131,8 @@ True
 True
 >>>
 ```
+
+The class attributes are handled dynamically which, unfortunately, means that IDEs like PyCharm and Visual Studio Code cannot provide tab-completion for them.
 
 ## Finder Tags
 
@@ -191,6 +194,64 @@ Valid color constants (exported by osxmetadata):
 - `FINDER_COLOR_RED` = 6
 - `FINDER_COLOR_ORANGE` = 7
 
+## Finder Comments
+
+Finder comments can be access via the `kMDItemFinderComment` attribute or the `findercomment` shortcut attribute. Apple provides a public API for getting Finder comments but does not provide a programmatic method for setting Finder comments and I have not been able to find a private API for doing so. osxmetadata works around this by send AppleScript events to the Finder to set the Finder comment. This means that setting Finder comments is slower than setting other attributes and may not work in all circumstances. The first time you set a Finder comment, your terminal app may need to prompt you to allow AppleScript to control the Finder. If you include osxmetadata in a standalone app, for example, one created with [py2app](https://py2app.readthedocs.io/en/latest/), you will need to include the `com.apple.security.automation.apple-events` entitlement and the `NSAppleEventsUsageDescription` key in your app's `Info.plist` file. See the [Apple Developer Documentation](https://developer.apple.com/documentation/bundleresources/information_property_list/nsappleeventsusagedescription?language=objc) for more information.
+
+```pycon
+>>> from osxmetadata import *
+>>> md = OSXMetaData("test_file.txt")
+>>> md.kMDItemFinderComment = "Hello World!"
+>>> md.kMDItemFinderComment
+'Hello World!'
+>>> md.findercomment
+'Hello World!'
+>>>
+```
+
+## Dates/Times
+
+Metadata attributes which return date/times such as `kMDItemDueDate` or `kMDItemDownloadedDate` return a `datetime.datetime` object.  The `datetime.datetime` object is timezone-naive (does not contain timezone) and returns the time in the local timezone.  Internally, Apple appears to store these as [CFDate](https://developer.apple.com/documentation/corefoundation/cfdate?language=objc) objects in the UTC timezone but when retrieved, they are returned in the local time.  You may pass a timezone-aware datetime object to set these attributes and it will be converted appropriately.
+
+```pycon
+>>> from osxmetadata import *
+>>> md = OSXMetaData("test_file.txt")
+>>> import datetime
+>>> md.kMDItemDueDate = datetime.datetime(2022, 10, 1)
+>>> md.kMDItemDueDate
+datetime.datetime(2022, 10, 1, 0, 0)
+>>> md.kMDItemDownloadedDate = datetime.datetime(2022, 10, 1, tzinfo=datetime.timezone.utc)
+>>> 
+```
+
+## Extended Attributes
+
+In addition to `MDItem` and `NSURL` metadata attributes, osxmetadata can also read & write metadata saved in extended attributes. For many MDItem attributes, Apple stores the same data in both the MDItem and extended attribute (with name `com.apple.metadata:AttributeName`).  For example, the `kMDItemWhereFroms` attribute can be accessed both via MDItemCopyAttribute (exposed via osxmetadata's `get()` method) and via the `com.apple.metadata:kMDItemWhereFroms` extended attribute.  The extended attribute is a binary plist (BPLIST) and can be read using the `xattr` command line tool.  The `get_xattr()` method will return the value of the extended attribute and the `set_xattr()` method will set it.  Extended attributes can be removed with the `remove_xattr()` method.  `get_xattr()` provides for an optional callable argument, `decode`, which will be called on the returned value.  `set_xattr()` provides an optional callable argument `encode`. This is useful for encoding/decoding binary plist data.  For example, to decode the `com.apple.metadata:kMDItemWhereFroms` extended attribute, you can use the `plistlib.loads()` function:
+
+```pycon
+>>> from osxmetadata import *
+>>> import plistlib
+>>> from plistlib import FMT_BINARY
+>>> from functools import partial
+>>> md = OSXMetaData("test_file.txt")
+>>> md.kMDItemWhereFroms = ["apple.com"]
+>>> md.kMDItemWhereFroms
+['apple.com']
+>>> decode = partial(plistlib.loads, fmt=FMT_BINARY)
+>>> encode = partial(plistlib.dumps, fmt=FMT_BINARY)
+>>> md.get_xattr("com.apple.metadata:kMDItemWhereFroms")
+b'bplist00\xa1\x01Yapple.com\x08\n\x00\x00\x00\x00\x00\x00\x01\x01\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14'
+>>> md.get_xattr("com.apple.metadata:kMDItemWhereFroms", decode=decode)
+['apple.com']
+>>> md.set_xattr("com.apple.metadata:kMDItemWhereFroms", ["google.com"], encode=encode)
+>>> md.get_xattr("com.apple.metadata:kMDItemWhereFroms", decode=decode)
+['google.com']
+>>> md.remove_xattr("com.apple.metadata:kMDItemWhereFroms")
+>>>
+```
+
+For most use cases, it is recommended you do not directly access the Apple metadata related extended attributes and instead use the getter/setter methods provided by osxmetadata.
+
 ## Command Line Usage
 
 Installs command line tool called `osxmetadata` which provides a simple interface to view/edit metadata supported by osxmetadata.
@@ -200,7 +261,9 @@ If you only care about the command line tool, I recommend installing with [pipx]
 The command line tool can also be run via `python -m osxmetadata`.  Running it with no arguments or with --help option will print a help message:
 
 ```
+
 TODO: put text here
+
 ```
 
 ## Notes on backup/restore

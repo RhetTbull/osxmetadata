@@ -82,6 +82,18 @@ def load_nsurl_resource_key_data() -> t.Dict:
 # all attribute data
 MDITEM_ATTRIBUTE_DATA = load_mditem_attribute_data(MDITEM_METADATA_FILES)
 
+# Add kMDItemDownloadedDate which isn't in the normal MDItem reference but is
+# referenced in the MDImporter reference here:
+# https://developer.apple.com/documentation/coreservices/kmditemdownloadeddate?language=objc
+MDITEM_ATTRIBUTE_DATA["kMDItemDownloadedDate"] = {
+    "name": "kMDItemDownloadedDate",
+    "description": "Date the item was downloaded.",
+    "version": "10.7",
+    "type": "CFDate",
+    "python_type": datetime.datetime,
+    "short_name": "downloadeddate",
+    "xattr_constant": "com.apple.metadata:kMDItemDownloadedDate",
+}
 # specific types of attribute data
 MDITEM_ATTRIBUTE_AUDIO = load_mditem_attribute_data(["audio_attributes.json"])
 MDITEM_ATTRIBUTE_COMMON = load_mditem_attribute_data(["common_attributes.json"])
