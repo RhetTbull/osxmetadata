@@ -15,7 +15,7 @@ import CoreFoundation
 import CoreServices
 import objc
 
-from .attribute_data import MDITEM_ATTRIBUTE_DATA
+from .attribute_data import MDITEM_ATTRIBUTE_DATA, MDIMPORTER_ATTRIBUTE_DATA
 
 __all__ = [
     "get_mditem_metadata",
@@ -92,7 +92,6 @@ def set_mditem_metadata(
             None, value, len(value), CoreFoundation.kCFTypeArrayCallBacks
         )
     elif isinstance(value, datetime.datetime):
-        # TODO: need to handle timezone?
         value = CoreFoundation.CFDateCreate(None, value.timestamp() - MACOS_TIME_DELTA)
     return MDItemSetAttribute(
         mditem,
@@ -112,11 +111,17 @@ def get_mditem_metadata(
     Returns value of attribute
     """
     value = CoreServices.MDItemCopyAttribute(mditem, attribute)
-    if not (attribute_data := MDITEM_ATTRIBUTE_DATA.get(attribute)):
-        raise ValueError(f"Unknown attribute: {attribute}")
-    attribute_type = attribute_data["python_type"]
     if value is None:
         return None
+    if attribute in MDITEM_ATTRIBUTE_DATA:
+        attribute_data = MDITEM_ATTRIBUTE_DATA[attribute]
+    elif attribute in MDIMPORTER_ATTRIBUTE_DATA:
+        attribute_data = MDIMPORTER_ATTRIBUTE_DATA[attribute]
+    else:
+        raise ValueError(f"Unknown attribute: {attribute}")
+
+    # Some attributes don't have a documented type
+    attribute_type = attribute_data.get("python_type")
     if attribute_type == bool:
         return bool(value)
     elif attribute_type == str:
@@ -129,8 +134,15 @@ def get_mditem_metadata(
         return datetime.datetime.fromtimestamp(
             CoreFoundation.CFDateGetAbsoluteTime(value) + MACOS_TIME_DELTA
         )
+    elif attribute_type == "list[datetime]":
+        return [
+            datetime.datetime.fromtimestamp(
+                CoreFoundation.CFDateGetAbsoluteTime(x) + MACOS_TIME_DELTA
+            )
+            for x in value
+        ]
     else:
-        raise TypeError(f"Unknown attribute type: {attribute_type}")
+        return value
 
 
 def remove_mditem_metadata(mditem: CoreServices.MDItemRef, attribute: str):

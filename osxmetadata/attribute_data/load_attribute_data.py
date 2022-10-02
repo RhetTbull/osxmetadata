@@ -17,6 +17,8 @@ MDITEM_METADATA_FILES = [
 
 NSURL_RESOURCE_KEY_FILES = ["nsurl_resource_keys.json"]
 
+MDIMPORTER_CONSTANT_FILES = ["mdimporter_constants.json"]
+
 
 def load_mditem_attribute_data(files) -> t.Dict:
     """Load attribute metadata from JSON files"""
@@ -84,8 +86,21 @@ def load_nsurl_resource_key_data() -> t.Dict:
     return data
 
 
+def load_mdimporter_constant_data() -> t.Dict:
+    """Load MDImporter constants from JSON files"""
+    parent = pathlib.Path(__file__).parent
+    data = {}
+    for filename in MDIMPORTER_CONSTANT_FILES:
+        with open(parent / filename, "r") as f:
+            file_data = json.load(f)
+            for item in file_data:
+                data[item["name"]] = item
+    return data
+
+
 # all attribute data
 MDITEM_ATTRIBUTE_DATA = load_mditem_attribute_data(MDITEM_METADATA_FILES)
+
 
 # Add kMDItemDownloadedDate which isn't in the normal MDItem reference but is
 # referenced in the MDImporter reference here:
@@ -95,11 +110,12 @@ MDITEM_ATTRIBUTE_DATA["kMDItemDownloadedDate"] = {
     "description": "Date the item was downloaded.",
     "version": "10.7",
     "type": "CFDate",
-    "python_type": datetime.datetime,
-    "help_type": "date/time",
+    "python_type": "list[datetime]",
+    "help_type": "list of date/time",
     "short_name": "downloadeddate",
     "xattr_constant": "com.apple.metadata:kMDItemDownloadedDate",
 }
+
 # specific types of attribute data
 MDITEM_ATTRIBUTE_AUDIO = load_mditem_attribute_data(["audio_attributes.json"])
 MDITEM_ATTRIBUTE_COMMON = load_mditem_attribute_data(["common_attributes.json"])
@@ -138,6 +154,9 @@ MDITEM_ATTRIBUTE_READ_ONLY = {
 
 NSURL_RESOURCE_KEY_DATA = load_nsurl_resource_key_data()
 
+MDIMPORTER_ATTRIBUTE_DATA = load_mdimporter_constant_data()
+
+
 __all__ = [
     "MDITEM_ATTRIBUTE_DATA",
     "MDITEM_ATTRIBUTE_READ_ONLY",
@@ -148,4 +167,5 @@ __all__ = [
     "MDITEM_ATTRIBUTE_IMAGE",
     "MDITEM_ATTRIBUTE_VIDEO",
     "NSURL_RESOURCE_KEY_DATA",
+    "MDIMPORTER_ATTRIBUTE_DATA",
 ]

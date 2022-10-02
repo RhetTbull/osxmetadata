@@ -91,10 +91,10 @@ As are the following:
 
 This allows you to use osxmetadata in accordance with your own code style preferences.
 
-Supported attribute names include all attributes defined for [MDItem](https://developer.apple.com/documentation/coreservices/file_metadata/mditem) and all resource keys defined for [NSURL](https://developer.apple.com/documentation/foundation/nsurl?language=objc) as well as the following additional attributes:
+Supported attribute names include all attributes defined for [MDItem](https://developer.apple.com/documentation/coreservices/file_metadata/mditem) and all resource keys defined for [NSURL](https://developer.apple.com/documentation/foundation/nsurl?language=objc). Additionally, the metadata constants defined in the [MDImporter](https://developer.apple.com/documentation/coreservices/file_metadata/mdimporter?language=objc) are supported as well as the following additional attributes:
 
 - `_kMDItemUserTags` - list of Finder tags
-- `kMDItemDownloadedDate` - date the file was downloaded
+- `kMDItemDownloadedDate` - list of datetime objects for when the file was downloaded
 
 Additionally, osxmetadata defines a "shortcut name" attribute for each MDItem attribute that can be used as a shortcut `OSXMetaData` class attribute.  The shortcut name is the lowercase value of text following `kMDItem` for each attribute. For example, `kMDItemAuthors` has a short name of `authors` so you can set the authors like this:
 

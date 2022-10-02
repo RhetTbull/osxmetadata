@@ -1,0 +1,178 @@
+[
+    {
+        "name": "kMDItemApplicationCategories",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemCameraOwner",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemContentTypeTree",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemDateAdded",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemDownloadedDate",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemEditors",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemExecutableArchitectures",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemExecutablePlatform",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemFocalLength35mm",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemGPSAreaInformation",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemGPSDOP",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemGPSDateStamp",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemGPSDestBearing",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemGPSDestDistance",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemGPSDestLatitude",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemGPSDestLongitude",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemGPSDifferental",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemGPSMapDatum",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemGPSMeasureMode",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemGPSProcessingMethod",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemGPSStatus",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemHTMLContent",
+        "version": "macOS 10.11+"
+    },
+    {
+        "name": "kMDItemIsApplicationManaged",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemIsLikelyJunk",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDItemLensModel",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDLabelAddedNotification",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDLabelBundleURL",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDLabelChangedNotification",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDLabelContentChangeDate",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDLabelDisplayName",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDLabelIconData",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDLabelIconUUID",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDLabelIsMutuallyExclusiveSetMember",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDLabelKind",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDLabelKindIsMutuallyExclusiveSetKey",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDLabelKindVisibilityKey",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDLabelLocalDomain",
+        "version": "macOS 10.7+ Mac Catalyst 13.0+"
+    },
+    {
+        "name": "kMDLabelRemovedNotification",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDLabelSetsFinderColor",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDLabelUUID",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDLabelUserDomain",
+        "version": "macOS 10.7+ Mac Catalyst 13.0+"
+    },
+    {
+        "name": "kMDLabelVisibility",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDPrivateVisibility",
+        "version": "macOS 10.7+"
+    },
+    {
+        "name": "kMDPublicVisibility",
+        "version": "macOS 10.7+"
+    }
+]

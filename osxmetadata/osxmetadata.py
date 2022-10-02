@@ -16,6 +16,7 @@ from .attribute_data import (
     MDITEM_ATTRIBUTE_DATA,
     MDITEM_ATTRIBUTE_SHORT_NAMES,
     NSURL_RESOURCE_KEY_DATA,
+    MDIMPORTER_ATTRIBUTE_DATA,
 )
 from .finder_comment import kMDItemFinderComment, set_or_remove_finder_comment
 from .finder_info import (
@@ -39,6 +40,7 @@ ALL_ATTRIBUTES = {
     *list(MDITEM_ATTRIBUTE_DATA.keys()),
     *list(MDITEM_ATTRIBUTE_SHORT_NAMES.keys()),
     *list(NSURL_RESOURCE_KEY_DATA.keys()),
+    *list(MDIMPORTER_ATTRIBUTE_DATA.keys()),
     _kFinderColor,
     _kFinderInfo,
     _kFinderStationeryPad,
@@ -48,6 +50,7 @@ ALL_ATTRIBUTES = {
 # Subset of attributes returned by asdict() and to_json() methods
 ASDICT_ATTRIBUTES = {
     *list(MDITEM_ATTRIBUTE_DATA.keys()),
+    *list(MDIMPORTER_ATTRIBUTE_DATA.keys()),
     _kFinderStationeryPad,
     _kFinderColor,
     _kMDItemUserTags,
@@ -198,7 +201,9 @@ class OSXMetaData:
             return get_mditem_metadata(
                 self._mditem, MDITEM_ATTRIBUTE_SHORT_NAMES[attribute]
             )
-        elif attribute in MDITEM_ATTRIBUTE_DATA:
+        elif (
+            attribute in MDITEM_ATTRIBUTE_DATA or attribute in MDIMPORTER_ATTRIBUTE_DATA
+        ):
             return get_mditem_metadata(self._mditem, attribute)
         elif attribute in NSURL_RESOURCE_KEY_DATA:
             return get_nsurl_metadata(self._url, attribute)

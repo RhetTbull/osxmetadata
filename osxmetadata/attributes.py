@@ -26,7 +26,6 @@ from .datetime_utils import (
 # _CONSTANT_WIDTH = 21 + 5  # currently longest is kMDItemDownloadedDate
 
 
-
 def validate_attribute_value(attribute, value):
     """validate that value is compatible with attribute.type_
     and convert value to correct type
@@ -112,7 +111,7 @@ def validate_attribute_value(attribute, value):
         else:
             raise TypeError(f"Unknown type: {type(val)}")
         new_values.append(new_val)
-    
+
     if attribute.list:
         return new_values
     else:

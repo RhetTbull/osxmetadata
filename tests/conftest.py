@@ -68,5 +68,7 @@ def value_for_type(
         return datetime.datetime(1995, 5, 31, 0, 0, 0)
     elif type_ == list:
         return ["a", "b"]
+    elif type_ == "list[datetime]":
+        return [datetime.datetime(1995, 5, 31, 0, 0, 0)]
     else:
         raise ValueError(f"Unknown type: {type_}")

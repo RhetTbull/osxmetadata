@@ -1,6 +1,7 @@
 """Load metadata about metadata attributes from JSON files"""
 
 from .load_attribute_data import (
+    MDIMPORTER_ATTRIBUTE_DATA,
     MDITEM_ATTRIBUTE_AUDIO,
     MDITEM_ATTRIBUTE_COMMON,
     MDITEM_ATTRIBUTE_DATA,
@@ -13,6 +14,7 @@ from .load_attribute_data import (
 )
 
 __all__ = [
+    "MDIMPORTER_ATTRIBUTE_DATA",
     "MDITEM_ATTRIBUTE_AUDIO",
     "MDITEM_ATTRIBUTE_COMMON",
     "MDITEM_ATTRIBUTE_DATA",

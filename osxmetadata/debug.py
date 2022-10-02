@@ -13,7 +13,7 @@ if not _DEBUG:
 
 def _get_logger():
     """Used only for testing
-    
+
     Returns:
         logging.Logger object -- logging.Logger object for osxmetadata
     """
@@ -21,7 +21,7 @@ def _get_logger():
 
 
 def _set_debug(debug):
-    """ Enable or disable debug logging """
+    """Enable or disable debug logging"""
     global _DEBUG
     _DEBUG = debug
     if debug:
@@ -31,5 +31,5 @@ def _set_debug(debug):
 
 
 def _debug():
-    """ returns True if debugging turned on (via _set_debug), otherwise, false """
+    """returns True if debugging turned on (via _set_debug), otherwise, false"""
     return _DEBUG

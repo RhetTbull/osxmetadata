@@ -2,7 +2,11 @@
     such as tags/keywords and Finder comments from files """
 
 from ._version import __version__
-from .attribute_data import MDITEM_ATTRIBUTE_DATA, NSURL_RESOURCE_KEY_DATA
+from .attribute_data import (
+    MDITEM_ATTRIBUTE_DATA,
+    NSURL_RESOURCE_KEY_DATA,
+    MDIMPORTER_ATTRIBUTE_DATA,
+)
 from .constants import (
     FINDER_COLOR_BLUE,
     FINDER_COLOR_GRAY,
@@ -20,6 +24,8 @@ from .osxmetadata import ALL_ATTRIBUTES, ASDICT_ATTRIBUTES, OSXMetaData
 
 # add metadata attribute constants such as kMDItemFinderComment and NSURLTagNamesKey to module namespace
 for constant in MDITEM_ATTRIBUTE_DATA.keys():
+    globals()[constant] = constant
+for constant in MDIMPORTER_ATTRIBUTE_DATA.keys():
     globals()[constant] = constant
 for constant in NSURL_RESOURCE_KEY_DATA.keys():
     globals()[constant] = constant
@@ -46,6 +52,7 @@ __all__ = [
     "_kFinderInfo",
     "_kFinderStationeryPad",
     "_kMDItemUserTags",
+    *MDIMPORTER_ATTRIBUTE_DATA.keys(),
     *MDITEM_ATTRIBUTE_DATA.keys(),
     *NSURL_RESOURCE_KEY_DATA.keys(),
 ]
