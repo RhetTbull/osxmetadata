@@ -15,6 +15,7 @@ import click
 
 import osxmetadata
 from osxmetadata import (
+    ALL_ATTRIBUTES,
     OSXMetaData,
     Tag,
     _kFinderColor,
@@ -55,6 +56,25 @@ _SHORT_NAME_WIDTH = (
 _LONG_NAME_WIDTH = max(len(x["name"]) for x in MDITEM_ATTRIBUTE_DATA.values()) + 1
 
 
+def get_writeable_attributes() -> t.List[str]:
+    """Return a list of writeable attributes"""
+    no_write = ["kMDItemContentCreationDate", "kMDItemContentModificationDate"]
+    write = [
+        *MDITEM_ATTRIBUTE_DATA.keys(),
+        _kFinderColor,
+        _kFinderStationeryPad,
+        _kMDItemUserTags,
+    ]
+    return [
+        attr
+        for attr in write
+        if attr not in MDITEM_ATTRIBUTE_READ_ONLY and attr not in no_write
+    ]
+
+
+WRITABLE_ATTRIBUTES = get_writeable_attributes()
+
+
 def value_to_str(value) -> str:
     """Convert a metadata value to str suitable for printing to terminal"""
     if isinstance(value, str):
@@ -81,21 +101,8 @@ def value_to_str(value) -> str:
 def get_attributes_to_wipe(mdobj: OSXMetaData) -> t.List[str]:
     """Get list of non-null metadata attributes on a file that can be wiped"""
 
-    # attributes not to wipe that are in MDITEM_ATTRIBUTE_DATA
-    no_wipe = ["kMDItemContentCreationDate", "kMDItemContentModificationDate"]
-    wipe = [
-        *MDITEM_ATTRIBUTE_DATA.keys(),
-        _kFinderColor,
-        _kFinderStationeryPad,
-        _kMDItemUserTags,
-    ]
-    attributes = [
-        attr
-        for attr in wipe
-        if attr not in MDITEM_ATTRIBUTE_READ_ONLY and attr not in no_wipe
-    ]
     attribute_list = []
-    for attr in attributes:
+    for attr in WRITABLE_ATTRIBUTES:
         if value := mdobj.get(attr):
             attribute_list.append(attr)
     return attribute_list
@@ -131,10 +138,10 @@ class MyClickCommand(click.Command):
             # get help text
             description = MDITEM_ATTRIBUTE_DATA[attr]["description"]
             type_ = MDITEM_ATTRIBUTE_DATA[attr]["help_type"]
-            help_text = f"{long_name}; {constant}; {description}; {type_}"
+            attr_help = f"{long_name}; {constant}; {description}; {type_}"
 
             # add to list
-            attr_tuples.append((short_name, help_text))
+            attr_tuples.append((short_name, attr_help))
 
         formatter.write("\n\n")
         formatter.write_text(
@@ -334,7 +341,7 @@ COPY_FROM_OPTION = click.option(
     "--copyfrom",
     "-f",
     metavar="SOURCE_FILE",
-    help="Copy attributes from file SOURCE_FILE.",
+    help="Copy attributes from file SOURCE_FILE (only updates destination attributes that are not null in SOURCE_FILE).",
     type=click.Path(exists=True),
     nargs=1,
     multiple=False,
@@ -431,7 +438,7 @@ def cli(
         )
         invalid_attr = False
         for attr in attributes:
-            if attr not in MDITEM_ATTRIBUTE_DATA:
+            if attr not in ALL_ATTRIBUTES:
                 click.echo(f"Invalid attribute {attr}", err=True)
                 invalid_attr = True
         if invalid_attr:
@@ -671,17 +678,22 @@ def process_single_file(
         if verbose:
             click.echo(f"Copying attributes from {copyfrom}")
         src_md = osxmetadata.OSXMetaData(copyfrom)
-        for attr in src_md.list_metadata():
-            if verbose:
-                click.echo(f"  Copying {attr}")
-            md.set_attribute(attr, src_md.get_attribute(attr))
+        for attr in WRITABLE_ATTRIBUTES:
+            if value := src_md.get(attr):
+                if verbose:
+                    click.echo(f"  Copying {attr}")
+                md.set(attr, value)
 
     if clear:
         for attr in clear:
-            attribute = MDITEM_ATTRIBUTE_DATA[attr]
             if verbose:
                 click.echo(f"Clearing {attr}")
-            md.clear_attribute(attribute.name)
+            if not md.get(attr):
+                if verbose:
+                    click.echo(f"  {attr} is already empty on {fpath}")
+                continue
+            md.set(attr, None)
+
     if set_:
         # set data
         # check attribute is valid
