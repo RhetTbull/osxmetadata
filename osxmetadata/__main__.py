@@ -15,6 +15,7 @@ import click
 
 import osxmetadata
 from osxmetadata import (
+    OSXMetaData,
     Tag,
     _kFinderColor,
     _kFinderInfo,
@@ -77,10 +78,10 @@ def value_to_str(value) -> str:
         return str(value)
 
 
-def get_attributes_to_wipe(filepath: str) -> t.List[str]:
+def get_attributes_to_wipe(mdobj: OSXMetaData) -> t.List[str]:
     """Get list of non-null metadata attributes on a file that can be wiped"""
 
-    # attributes not to wipe
+    # attributes not to wipe that are in MDITEM_ATTRIBUTE_DATA
     no_wipe = ["kMDItemContentCreationDate", "kMDItemContentModificationDate"]
     wipe = [
         *MDITEM_ATTRIBUTE_DATA.keys(),
@@ -93,10 +94,9 @@ def get_attributes_to_wipe(filepath: str) -> t.List[str]:
         for attr in wipe
         if attr not in MDITEM_ATTRIBUTE_READ_ONLY and attr not in no_wipe
     ]
-    md = osxmetadata.OSXMetaData(filepath)
     attribute_list = []
     for attr in attributes:
-        if value := md.get(attr):
+        if value := mdobj.get(attr):
             attribute_list.append(attr)
     return attribute_list
 
@@ -650,7 +650,7 @@ def process_single_file(
     md = osxmetadata.OSXMetaData(fpath)
 
     if wipe:
-        attr_list = get_attributes_to_wipe(fpath)
+        attr_list = get_attributes_to_wipe(md)
         if verbose:
             if attr_list:
                 click.echo(f"Wiping metadata from {fpath}")
