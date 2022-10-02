@@ -9,14 +9,14 @@ import typing as t
 
 import CoreServices
 import xattr
-from Foundation import NSURL, NSURLTagNamesKey
+from Foundation import NSURL
 
 from ._version import __version__
 from .attribute_data import (
+    MDIMPORTER_ATTRIBUTE_DATA,
     MDITEM_ATTRIBUTE_DATA,
     MDITEM_ATTRIBUTE_SHORT_NAMES,
     NSURL_RESOURCE_KEY_DATA,
-    MDIMPORTER_ATTRIBUTE_DATA,
 )
 from .finder_comment import kMDItemFinderComment, set_or_remove_finder_comment
 from .finder_info import (
@@ -55,6 +55,12 @@ ASDICT_ATTRIBUTES = {
     _kFinderColor,
     _kMDItemUserTags,
 }
+
+
+class OSXMetaDataAttributeError(Exception):
+    """Raised when an attribute is not supported or attempting to set read-only attribute"""
+
+    pass
 
 
 class OSXMetaData:
@@ -183,6 +189,9 @@ class OSXMetaData:
         for key, value in dict_data.items():
             if isinstance(value, datetime.datetime):
                 dict_data[key] = value.isoformat()
+            elif isinstance(value, (list, tuple)):
+                if value and isinstance(value[0], datetime.datetime):
+                    dict_data[key] = [v.isoformat() for v in value]
             elif isinstance(value, bytes):
                 dict_data[key] = base64.b64encode(value).decode("ascii")
 
@@ -248,10 +257,14 @@ class OSXMetaData:
                 set_finderinfo_stationerypad(self._xattr, bool(value))
             elif attribute == _kFinderColor:
                 set_finderinfo_color(self._xattr, value)
+            elif attribute in ALL_ATTRIBUTES:
+                raise OSXMetaDataAttributeError(f"Attribute {attribute} is read-only")
             else:
-                raise ValueError(f"Invalid attribute: {attribute}")
+                raise OSXMetaDataAttributeError(f"Invalid attribute: {attribute}")
         except (KeyError, AttributeError):
             super().__setattr__(attribute, value)
+        except OSXMetaDataAttributeError as e:
+            raise AttributeError(e) from e
 
     def __getitem__(self, key: str) -> MDItemValueType:
         """Get metadata attribute value
@@ -283,5 +296,7 @@ class OSXMetaData:
             set_or_remove_mditem_metadata(self._mditem, key, value)
         elif key in NSURL_RESOURCE_KEY_DATA:
             set_nsurl_metadata(self._url, key, value)
+        elif key in ALL_ATTRIBUTES:
+            raise KeyError(f"Attribute {key} is read-only")
         else:
             raise KeyError(f"Invalid key: {key}")

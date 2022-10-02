@@ -13,9 +13,10 @@ import typing as t
 
 import CoreFoundation
 import CoreServices
+import Foundation
 import objc
 
-from .attribute_data import MDITEM_ATTRIBUTE_DATA, MDIMPORTER_ATTRIBUTE_DATA
+from .attribute_data import MDIMPORTER_ATTRIBUTE_DATA, MDITEM_ATTRIBUTE_DATA
 
 __all__ = [
     "get_mditem_metadata",
@@ -72,6 +73,18 @@ def value_to_boolean(value: str) -> bool:
         return bool(int(value))
     else:
         raise ValueError(f"Invalid boolean value: {value}")
+
+
+def CFDate_to_datetime(cfdate: CoreFoundation.CFDateRef) -> datetime.datetime:
+    """Convert CFDate to datetime.datetime"""
+    return datetime.datetime.fromtimestamp(
+        CoreFoundation.CFDateGetAbsoluteTime(cfdate) + MACOS_TIME_DELTA
+    )
+
+
+def NSDate_to_datetime(nsdate: Foundation.NSDate) -> datetime.datetime:
+    """Convert NSDate to datetime.datetime"""
+    return datetime.datetime.fromtimestamp(nsdate.timeIntervalSince1970())
 
 
 def set_mditem_metadata(
@@ -131,19 +144,15 @@ def get_mditem_metadata(
     elif attribute_type == list:
         return [str(x) for x in value]
     elif attribute_type == datetime.datetime:
-        return datetime.datetime.fromtimestamp(
-            CoreFoundation.CFDateGetAbsoluteTime(value) + MACOS_TIME_DELTA
-        )
+        return CFDate_to_datetime(value)
     elif attribute_type == "list[datetime]":
-        return [
-            datetime.datetime.fromtimestamp(
-                CoreFoundation.CFDateGetAbsoluteTime(x) + MACOS_TIME_DELTA
-            )
-            for x in value
-        ]
+        return [CFDate_to_datetime(x) for x in value]
     elif "__NSCFArray" in repr(type(value)):
         # this is a hack but works for MDImporter attributes that don't have a documented type
         return [str(x) for x in value]
+    elif "__NSTaggedDate" in repr(type(value)):
+        # this is a hack but works for MDImporter attributes that don't have a documented type
+        return NSDate_to_datetime(value)
     else:
         return value
 

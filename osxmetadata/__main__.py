@@ -14,10 +14,14 @@ import click
 
 import osxmetadata
 from osxmetadata import Tag
-from osxmetadata.attribute_data import MDIMPORTER_ATTRIBUTE_DATA, MDITEM_ATTRIBUTE_DATA
+from osxmetadata.attribute_data import (
+    MDIMPORTER_ATTRIBUTE_DATA,
+    MDITEM_ATTRIBUTE_DATA,
+    MDITEM_ATTRIBUTE_READ_ONLY,
+)
 
 from ._version import __version__
-from .backup import load_backup_file, write_backup_file
+from .backup import load_backup_file, write_backup_file, get_backup_dict
 from .constants import (
     _BACKUP_FILENAME,
     _COLORNAMES_LOWER,
@@ -41,9 +45,6 @@ _SHORT_NAME_WIDTH = (
     max(len(x["short_name"]) for x in MDITEM_ATTRIBUTE_DATA.values()) + 1
 )
 _LONG_NAME_WIDTH = max(len(x["name"]) for x in MDITEM_ATTRIBUTE_DATA.values()) + 1
-_CONSTANT_NAME_WIDTH = (
-    max(len(x["xattr_constant"]) for x in MDITEM_ATTRIBUTE_DATA.values()) + 1
-)
 
 
 def value_to_str(value) -> str:
@@ -290,14 +291,6 @@ RESTORE_OPTION = click.option(
     required=False,
     default=False,
 )
-ALL_OPTION = click.option(
-    "--all",
-    "-A",
-    "all_",
-    is_flag=True,
-    help="Process all extended attributes including those not known to osxmetadata. "
-    "Use with --backup/--restore to backup/restore all extended attributes. ",
-)
 VERBOSE_OPTION = click.option(
     "--verbose",
     "-V",
@@ -355,7 +348,6 @@ PATTERN_OPTION = click.option(
 @MIRROR_OPTION
 @BACKUP_OPTION
 @RESTORE_OPTION
-@ALL_OPTION
 @VERBOSE_OPTION
 @COPY_FROM_OPTION
 @FILES_ONLY_OPTION
@@ -379,7 +371,6 @@ def cli(
     mirror,
     backup,
     restore,
-    all_,
     verbose,
     copyfrom,
     files_only,
@@ -482,7 +473,6 @@ def cli(
                 restore,
                 walk,
                 files_only,
-                all_,
             )
 
         if walk and os.path.isdir(filename):
@@ -519,7 +509,6 @@ def cli(
                     restore,
                     walk,
                     files_only,
-                    all_,
                 )
 
 
@@ -542,7 +531,6 @@ def process_files(
     restore,
     walk,
     files_only,
-    all_,
 ):
     """process list of files, calls process_single_file to process each file
     options processed in this order: wipe, copyfrom, clear, set, append, remove, mirror, get, list
@@ -567,7 +555,7 @@ def process_files(
                 if verbose:
                     click.echo(f"  Restoring attribute data for {fpath}")
                 md = osxmetadata.OSXMetaData(fpath)
-                md._restore_attributes(attr_dict, all_=all_)
+                md._restore_attributes(attr_dict)
             except FileNotFoundError:
                 click.echo(
                     f"Missing backup file {backup_file} for {fpath}, skipping restore",
@@ -597,11 +585,13 @@ def process_files(
         )
 
         if backup:
+            # TODO: this is ripe for refactoring with a sqlite database
+            # Currently, the code writes the entire backup database each time a file is processed
             if verbose:
                 click.echo(f"  Backing up attribute data for {fpath}")
             # load the file if it exists, merge new data, then write out the file again
             backup_data = load_backup_file(backup_file) if backup_file.is_file() else {}
-            backup_dict = osxmetadata.OSXMetaData(fpath).asdict(all_=all_)
+            backup_dict = get_backup_dict(fpath)
             backup_data[pathlib.Path(fpath).name] = backup_dict
             write_backup_file(backup_file, backup_data)
 
