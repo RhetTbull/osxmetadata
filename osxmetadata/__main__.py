@@ -14,7 +14,7 @@ import click
 
 import osxmetadata
 from osxmetadata import Tag
-from osxmetadata.attribute_data import MDITEM_ATTRIBUTE_DATA
+from osxmetadata.attribute_data import MDIMPORTER_ATTRIBUTE_DATA, MDITEM_ATTRIBUTE_DATA
 
 from ._version import __version__
 from .backup import load_backup_file, write_backup_file
@@ -54,7 +54,7 @@ def value_to_str(value) -> str:
         return "(null)"
     if isinstance(value, datetime.datetime):
         return value.isoformat()
-    elif isinstance(value, list):
+    elif isinstance(value, (list, tuple)):
         if not value:
             return "(empty list)"
         if isinstance(value[0], str):
@@ -63,8 +63,8 @@ def value_to_str(value) -> str:
             return ", ".join(f"{x.name}: {x.color}" for x in value)
         elif isinstance(value[0], datetime.datetime):
             return ", ".join(x.isoformat() for x in value)
-        elif isinstance(value[0], bytes):
-            return ", ".join(x.hex() for x in value)
+        else:
+            return ", ".join(str(x) for x in value)
     else:
         return str(value)
 
@@ -865,6 +865,10 @@ def process_single_file(
                     if attr in MDITEM_ATTRIBUTE_DATA:
                         attribute = MDITEM_ATTRIBUTE_DATA[attr]
                         short_name = attribute["short_name"]
+                        name = attribute["name"]
+                    elif attr in MDIMPORTER_ATTRIBUTE_DATA:
+                        attribute = MDIMPORTER_ATTRIBUTE_DATA[attr]
+                        short_name = attribute["name"]
                         name = attribute["name"]
                     elif attr in [_kFinderInfo, _kFinderColor, _kFinderStationeryPad]:
                         short_name = attr

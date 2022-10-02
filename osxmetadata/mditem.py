@@ -141,6 +141,9 @@ def get_mditem_metadata(
             )
             for x in value
         ]
+    elif "__NSCFArray" in repr(type(value)):
+        # this is a hack but works for MDImporter attributes that don't have a documented type
+        return [str(x) for x in value]
     else:
         return value
 
