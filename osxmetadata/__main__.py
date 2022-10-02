@@ -9,11 +9,18 @@ import os
 import os.path
 import pathlib
 import sys
+import typing as t
 
 import click
 
 import osxmetadata
-from osxmetadata import Tag
+from osxmetadata import (
+    Tag,
+    _kFinderColor,
+    _kFinderInfo,
+    _kFinderStationeryPad,
+    _kMDItemUserTags,
+)
 from osxmetadata.attribute_data import (
     MDIMPORTER_ATTRIBUTE_DATA,
     MDITEM_ATTRIBUTE_DATA,
@@ -21,7 +28,7 @@ from osxmetadata.attribute_data import (
 )
 
 from ._version import __version__
-from .backup import load_backup_file, write_backup_file, get_backup_dict
+from .backup import get_backup_dict, load_backup_file, write_backup_file
 from .constants import (
     _BACKUP_FILENAME,
     _COLORNAMES_LOWER,
@@ -68,6 +75,30 @@ def value_to_str(value) -> str:
             return ", ".join(str(x) for x in value)
     else:
         return str(value)
+
+
+def get_attributes_to_wipe(filepath: str) -> t.List[str]:
+    """Get list of non-null metadata attributes on a file that can be wiped"""
+
+    # attributes not to wipe
+    no_wipe = ["kMDItemContentCreationDate", "kMDItemContentModificationDate"]
+    wipe = [
+        *MDITEM_ATTRIBUTE_DATA.keys(),
+        _kFinderColor,
+        _kFinderStationeryPad,
+        _kMDItemUserTags,
+    ]
+    attributes = [
+        attr
+        for attr in wipe
+        if attr not in MDITEM_ATTRIBUTE_READ_ONLY and attr not in no_wipe
+    ]
+    md = osxmetadata.OSXMetaData(filepath)
+    attribute_list = []
+    for attr in attributes:
+        if value := md.get(attr):
+            attribute_list.append(attr)
+    return attribute_list
 
 
 # Click CLI object & context settings
@@ -619,7 +650,7 @@ def process_single_file(
     md = osxmetadata.OSXMetaData(fpath)
 
     if wipe:
-        attr_list = md.list_metadata()
+        attr_list = get_attributes_to_wipe(fpath)
         if verbose:
             if attr_list:
                 click.echo(f"Wiping metadata from {fpath}")
@@ -627,11 +658,10 @@ def process_single_file(
                 click.echo(f"No metadata to wipe from {fpath}")
         for attr in attr_list:
             try:
-                attribute = MDITEM_ATTRIBUTE_DATA[attr]
                 if verbose:
                     click.echo(f"  Wiping {attr} from {fpath}")
-                md.clear_attribute(attribute.name)
-            except KeyError:
+                md.set(attr, None)
+            except AttributeError:
                 if verbose:
                     click.echo(
                         f"  Unknown attribute {attr} on {fpath}, skipping", err=True

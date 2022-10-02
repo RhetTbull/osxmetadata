@@ -128,7 +128,7 @@ MDITEM_ATTRIBUTE_SHORT_NAMES = {
     item["short_name"]: item["name"] for item in MDITEM_ATTRIBUTE_DATA.values()
 }
 
-# Some attributes are read-only
+# Some MDItem attributes are read-only
 MDITEM_ATTRIBUTE_READ_ONLY = {
     "kMDItemAttributeChangeDate",
     "kMDItemContentType",
