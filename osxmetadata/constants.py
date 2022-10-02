@@ -63,7 +63,6 @@ __all__ = [
 ]
 
 
-_BACKUP_FILENAME = ".osxmetadata.json"
 
 # _VALID_COLORIDS = "01234567"
 # _MAX_FINDERCOMMENT = 750  # determined through trial & error with Finder

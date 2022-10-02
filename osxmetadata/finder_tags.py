@@ -15,6 +15,7 @@ from collections import namedtuple
 import xattr
 from Foundation import NSURL
 
+from .constants import _COLORIDS, _COLORNAMES_LOWER, _MAX_FINDER_COLOR
 from .nsurl_metadata import set_nsurl_metadata
 
 NSURLTagNamesKey = "NSURLTagNamesKey"
@@ -83,3 +84,48 @@ def set_finder_tags(url: NSURL, tags: t.Optional[t.List[Tag]]):
     # convert to list of strings in format name\ncolor
     tag_values = [f"{tag.name}\n{tag.color}" for tag in tags] if tags else []
     set_nsurl_metadata(url, NSURLTagNamesKey, tag_values)
+
+
+def tag_factory(tag_str: str) -> Tag:
+    """Creates a Tag namedtuple from a string in format 'name,color'
+
+    Args:
+        tag_str: (str) tag value in format: 'name,color' where name is the name of the tag and color specifies the color ID;
+
+    Returns:
+        Tag namedtuple
+
+    Notes:
+        The comma and color are optional; if not provided Tag will use color assigned in Finder or FINDER_COLOR_NONE if no color
+            e.g. tag_factory("foo") -> Tag("foo", 0)
+                 tag_factory("test,6") -> Tag("test", 6)
+    """
+
+    values = tag_str.split(",")
+    if len(values) > 2:
+        raise ValueError(f"More than one value found after comma: {tag_str}")
+    name = values[0]
+    name = name.lstrip().rstrip()
+
+    if len(values) == 1:
+        # got name only, check to see if name is also a color and if so assign it
+        # TODO: this might not be right/desired in different locale settings
+        # but I'm not sure yet how to get the non-English color names used by Finder
+        try:
+            colorid = _COLORNAMES_LOWER[name.lower()]
+            return Tag(_COLORIDS[colorid], colorid)
+        except KeyError:
+            return Tag(name, 0)
+    elif len(values) == 2:
+        # got a color, is it a name or number
+        color = values[1].lstrip().rstrip().lower()
+        try:
+            colorid = _COLORNAMES_LOWER[color]
+        except KeyError as e:
+            colorid = int(color)
+            if colorid not in range(_MAX_FINDER_COLOR + 1):
+                raise ValueError(
+                    f"color must be in range 0 to {_MAX_FINDER_COLOR} inclusive: {colorid}"
+                ) from e
+
+        return Tag(name, colorid)

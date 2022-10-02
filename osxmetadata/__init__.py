@@ -3,9 +3,10 @@
 
 from ._version import __version__
 from .attribute_data import (
-    MDITEM_ATTRIBUTE_DATA,
-    NSURL_RESOURCE_KEY_DATA,
     MDIMPORTER_ATTRIBUTE_DATA,
+    MDITEM_ATTRIBUTE_DATA,
+    MDITEM_ATTRIBUTE_READ_ONLY,
+    NSURL_RESOURCE_KEY_DATA,
 )
 from .constants import (
     FINDER_COLOR_BLUE,
@@ -42,7 +43,9 @@ __all__ = [
     "FINDER_COLOR_PURPLE",
     "FINDER_COLOR_RED",
     "FINDER_COLOR_YELLOW",
+    "MDIMPORTER_ATTRIBUTE_DATA",
     "MDITEM_ATTRIBUTE_DATA",
+    "MDITEM_ATTRIBUTE_READ_ONLY",
     "MDItemValueType",
     "NSURL_RESOURCE_KEY_DATA",
     "OSXMetaData",

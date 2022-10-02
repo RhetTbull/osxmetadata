@@ -8,12 +8,10 @@ import logging
 import os
 import os.path
 import pathlib
-import sys
 import typing as t
 
 import click
 
-import osxmetadata
 from osxmetadata import (
     ALL_ATTRIBUTES,
     OSXMetaData,
@@ -22,24 +20,19 @@ from osxmetadata import (
     _kFinderInfo,
     _kFinderStationeryPad,
     _kMDItemUserTags,
-)
-from osxmetadata.attribute_data import (
+    __version__,
     MDIMPORTER_ATTRIBUTE_DATA,
     MDITEM_ATTRIBUTE_DATA,
     MDITEM_ATTRIBUTE_READ_ONLY,
 )
-
-from ._version import __version__
-from .backup import get_backup_dict, load_backup_file, write_backup_file
-from .constants import (
-    _BACKUP_FILENAME,
+from osxmetadata.backup import get_backup_dict, load_backup_file, write_backup_file
+from osxmetadata.constants import (
     _COLORNAMES_LOWER,
     _FINDERINFO_NAMES,
     _TAGS_NAMES,
     FINDER_COLOR_NONE,
 )
-from .finder_info import _kFinderColor, _kFinderInfo, _kFinderStationeryPad
-from .finder_tags import Tag, _kMDItemUserTags
+from osxmetadata.finder_tags import tag_factory
 
 # TODO: how is metadata on symlink handled?
 # should symlink be resolved before gathering metadata?
@@ -54,6 +47,8 @@ _SHORT_NAME_WIDTH = (
     max(len(x["short_name"]) for x in MDITEM_ATTRIBUTE_DATA.values()) + 1
 )
 _LONG_NAME_WIDTH = max(len(x["name"]) for x in MDITEM_ATTRIBUTE_DATA.values()) + 1
+
+_BACKUP_FILENAME = ".osxmetadata.json"
 
 
 def get_writeable_attributes() -> t.List[str]:
@@ -112,9 +107,6 @@ def get_attributes_to_wipe(mdobj: OSXMetaData) -> t.List[str]:
 class CLI_Obj:
     def __init__(self, debug=False, files=None):
         self.debug = debug
-        if debug:
-            osxmetadata.debug._set_debug(True)
-
         self.files = files
 
 
@@ -592,7 +584,7 @@ def process_files(
                 attr_dict = backup_data[pathlib.Path(fpath).name]
                 if verbose:
                     click.echo(f"  Restoring attribute data for {fpath}")
-                md = osxmetadata.OSXMetaData(fpath)
+                md = OSXMetaData(fpath)
                 md._restore_attributes(attr_dict)
             except FileNotFoundError:
                 click.echo(
@@ -654,7 +646,7 @@ def process_single_file(
     options processed in this order: wipe, copyfrom, clear, set, append, remove, mirror, get, list
     Note: expects all attributes passed in parameters to be validated as valid attributes"""
 
-    md = osxmetadata.OSXMetaData(fpath)
+    md = OSXMetaData(fpath)
 
     if wipe:
         attr_list = get_attributes_to_wipe(md)
@@ -677,7 +669,7 @@ def process_single_file(
     if copyfrom:
         if verbose:
             click.echo(f"Copying attributes from {copyfrom}")
-        src_md = osxmetadata.OSXMetaData(copyfrom)
+        src_md = OSXMetaData(copyfrom)
         for attr in WRITABLE_ATTRIBUTES:
             if value := src_md.get(attr):
                 if verbose:
