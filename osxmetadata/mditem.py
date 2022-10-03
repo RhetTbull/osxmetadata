@@ -16,13 +16,18 @@ import CoreServices
 import Foundation
 import objc
 
-from .attribute_data import MDIMPORTER_ATTRIBUTE_DATA, MDITEM_ATTRIBUTE_DATA
+from .attribute_data import (
+    MDIMPORTER_ATTRIBUTE_DATA,
+    MDITEM_ATTRIBUTE_DATA,
+    MDITEM_ATTRIBUTE_SHORT_NAMES,
+)
 
 __all__ = [
     "get_mditem_metadata",
     "remove_mditem_metadata",
     "set_mditem_metadata",
     "set_or_remove_mditem_metadata",
+    "str_to_mditem_type",
 ]
 
 # Absolute time in macOS is measured in seconds relative to the absolute reference date of Jan 1 2001 00:00:00 GMT.
@@ -183,3 +188,43 @@ def set_or_remove_mditem_metadata(
         remove_mditem_metadata(mditem, attribute)
     else:
         set_mditem_metadata(mditem, attribute, value)
+
+
+def str_to_mditem_type(attribute: str, value: str) -> MDItemValueType:
+    """Convert string to type expected by MDItem attribute
+
+    Args:
+        attribute: name of attribute
+        value: string value to convert
+
+    Returns: value converted to type expected by set_mditem_metadata
+
+    Raises:
+        ValueError: if value cannot be converted to expected type
+
+    Notes:
+        For example, kMDItemDueDate expects a datetime.datetime so this function will convert
+        a string to a datetime.datetime using datetime.datetime.fromisoformat
+    """
+    if attribute in MDITEM_ATTRIBUTE_DATA:
+        attribute_data = MDITEM_ATTRIBUTE_DATA[attribute]
+    elif attribute in MDITEM_ATTRIBUTE_SHORT_NAMES:
+        attribute_data = MDITEM_ATTRIBUTE_DATA[MDITEM_ATTRIBUTE_SHORT_NAMES[attribute]]
+    else:
+        raise ValueError(f"Unknown attribute: {value}")
+
+    attribute_type = attribute_data.get("python_type")
+    if attribute_type == str:
+        return value
+    if attribute_type == bool:
+        return bool(value)
+    elif attribute_type == float:
+        return float(value)
+    elif attribute_type == list:
+        return [value]
+    elif attribute_type == datetime.datetime:
+        return datetime.datetime.fromisoformat(value)
+    elif attribute_type == "list[datetime]":
+        return [datetime.datetime.fromisoformat(value)]
+    else:
+        return value

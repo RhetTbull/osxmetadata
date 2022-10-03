@@ -9,7 +9,12 @@ https://eclecticlight.co/2017/12/19/xattr-com-apple-finderinfo-information-for-t
 import bitstring
 import xattr
 
-from .constants import _MAX_FINDER_COLOR, _MIN_FINDER_COLOR, FINDER_COLOR_NONE
+from .constants import (
+    _COLORNAMES_LOWER,
+    _MAX_FINDER_COLOR,
+    _MIN_FINDER_COLOR,
+    FINDER_COLOR_NONE,
+)
 
 _kFinderInfo = "com.apple.FinderInfo"
 _kFinderStationeryPad = "stationerypad"
@@ -32,6 +37,7 @@ __all__ = [
     "set_finderinfo_bytes",
     "set_finderinfo_color",
     "set_finderinfo_stationerypad",
+    "str_to_finder_color",
 ]
 
 
@@ -125,3 +131,29 @@ def set_finderinfo_color(xattr_: xattr.xattr, colorid: int):
     finderbits = _get_finderinfo_bits(xattr_)
     finderbits.overwrite(bits, _kCOLOR_OFFSET)
     _set_finderinfo_bits(xattr_, finderbits)
+
+
+def str_to_finder_color(color: str) -> int:
+    """Convert a string to a Finder color ID
+
+    Args:
+        color: string name of color or integer color ID
+
+    Returns:
+        int Finder color ID
+
+    Raises:
+        ValueError: if color is not a valid color name
+    """
+
+    color = color.lower()
+    try:
+        colorid = int(color)
+        if not _MIN_FINDER_COLOR <= colorid <= _MAX_FINDER_COLOR:
+            raise ValueError(f"colorid out of range {colorid}")
+        return colorid
+    except ValueError as e:
+        try:
+            return _COLORNAMES_LOWER[color]
+        except KeyError as e:
+            raise ValueError(f"invalid color name {color}") from e

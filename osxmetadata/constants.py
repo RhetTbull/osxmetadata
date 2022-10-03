@@ -82,7 +82,6 @@ _FINDER_COMMENT_NAMES = [
     "com.apple.metadata:kMDItemFinderComment",
 ]
 _TAGS_NAMES = ["tags", "_kMDItemUserTags", "com.apple.metadata:_kMDItemUserTags"]
-_FINDERINFO_NAMES = ["finderinfo", "com.apple.FinderInfo"]
 
 
 # __all__ = [

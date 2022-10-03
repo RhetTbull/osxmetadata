@@ -14,25 +14,23 @@ import click
 
 from osxmetadata import (
     ALL_ATTRIBUTES,
+    MDIMPORTER_ATTRIBUTE_DATA,
+    MDITEM_ATTRIBUTE_DATA,
+    MDITEM_ATTRIBUTE_READ_ONLY,
+    MDITEM_ATTRIBUTE_SHORT_NAMES,
     OSXMetaData,
     Tag,
+    __version__,
     _kFinderColor,
     _kFinderInfo,
     _kFinderStationeryPad,
     _kMDItemUserTags,
-    __version__,
-    MDIMPORTER_ATTRIBUTE_DATA,
-    MDITEM_ATTRIBUTE_DATA,
-    MDITEM_ATTRIBUTE_READ_ONLY,
 )
 from osxmetadata.backup import get_backup_dict, load_backup_file, write_backup_file
-from osxmetadata.constants import (
-    _COLORNAMES_LOWER,
-    _FINDERINFO_NAMES,
-    _TAGS_NAMES,
-    FINDER_COLOR_NONE,
-)
+from osxmetadata.constants import _COLORNAMES_LOWER, _TAGS_NAMES, FINDER_COLOR_NONE
+from osxmetadata.finder_info import str_to_finder_color
 from osxmetadata.finder_tags import tag_factory
+from osxmetadata.mditem import str_to_mditem_type
 
 # TODO: how is metadata on symlink handled?
 # should symlink be resolved before gathering metadata?
@@ -93,6 +91,20 @@ def value_to_str(value) -> str:
         return str(value)
 
 
+def str_to_bool(value: str) -> bool:
+    """Convert str value to bool:
+
+    Args:
+        value: str value to convert to bool
+
+    Returns: True if str value is "True" or "true", or non-zero int; False otherwise
+    """
+    try:
+        return bool(int(value))
+    except ValueError:
+        return value.lower() == "true"
+
+
 def get_attributes_to_wipe(mdobj: OSXMetaData) -> t.List[str]:
     """Get list of non-null metadata attributes on a file that can be wiped"""
 
@@ -101,6 +113,82 @@ def get_attributes_to_wipe(mdobj: OSXMetaData) -> t.List[str]:
         if value := mdobj.get(attr):
             attribute_list.append(attr)
     return attribute_list
+
+
+def validate_attribute_names(attributes: t.Union[t.Tuple[str], t.Tuple[str, str]]):
+    """Validate attribute names as returned by click option parsing:
+
+    Args:
+        attributes: tuple of attribute names or tuple of attribute name and value
+
+    Returns:
+        True if valid, raises click.BadParameter if not
+    """
+
+    for attr in attributes:
+        if isinstance(attr, tuple):
+            attr = attr[0]
+        if attr not in ALL_ATTRIBUTES:
+            raise click.BadParameter(f"invalid attribute name: {attr}")
+
+
+def md_set_metadata_with_error(
+    mdobj: OSXMetaData, metadata: t.Tuple[t.Tuple[str, str]], verbose: bool
+) -> t.Optional[str]:
+    """Set metadata for OSXMetaData object, return error message if any
+
+    Args:
+        mdbobj: OSXMetaData object
+        metadata: tuple of tuples of (attribute, value) as returned by click parser
+        verbose: if True, print metadata being set
+
+    Returns:
+        None if successful, else error message
+    """
+
+    attr_dict = {}
+    for item in metadata:
+        attr, val = item
+
+        if attr in _TAGS_NAMES:
+            val = [tag_factory(val)]
+        elif attr == _kFinderColor:
+            val = str_to_finder_color(val)
+        elif attr == _kFinderStationeryPad:
+            val = str_to_bool(val)
+        elif attr in MDITEM_ATTRIBUTE_DATA:
+            val = str_to_mditem_type(attr, val)
+        elif attr in MDITEM_ATTRIBUTE_SHORT_NAMES:
+            attr = MDITEM_ATTRIBUTE_SHORT_NAMES[attr]
+            val = str_to_mditem_type(attr, val)
+        else:
+            raise ValueError(f"invalid attribute: {attr}")
+
+        # str_to_mditem_type returns list for list-type attributes but unroll it here
+        # so that both list and non-list attributes are handled the same way
+        # the logic below will handle list attributes correctly
+        # this allows the user to use --set to set multiple values for list attributes
+        # e.g. --set authors "John Doe" --set authors "Jane Doe"
+        if attr in attr_dict:
+            attr_dict[attr].append(*val) if isinstance(val, list) else attr_dict[
+                attr
+            ].append(val)
+        else:
+            attr_dict[attr] = [*val] if isinstance(val, list) else [val]
+
+    for attribute, value in attr_dict.items():
+        # if we got a list of values and attribute takes a list, set the list
+        # otherwise, set the first value in the list
+        if verbose:
+            click.echo(f"Setting {attribute}={value}")
+        if attribute in MDITEM_ATTRIBUTE_DATA and MDITEM_ATTRIBUTE_DATA[attribute][
+            "python_type"
+        ] in [list, "list[datetime]"]:
+            mdobj.set(attribute, value)
+        elif attribute in _TAGS_NAMES:
+            mdobj.set(attribute, value)
+        else:
+            mdobj.set(attribute, value[0])
 
 
 # Click CLI object & context settings
@@ -677,6 +765,7 @@ def process_single_file(
                 md.set(attr, value)
 
     if clear:
+        validate_attribute_names(clear)
         for attr in clear:
             if verbose:
                 click.echo(f"Clearing {attr}")
@@ -687,39 +776,9 @@ def process_single_file(
             md.set(attr, None)
 
     if set_:
-        # set data
-        # check attribute is valid
-        attr_dict = {}
-        for item in set_:
-            attr, val = item
-            attribute = MDITEM_ATTRIBUTE_DATA[attr]
-
-            if attr in _TAGS_NAMES:
-                val = tag_factory(val)
-            elif attr in _FINDERINFO_NAMES:
-                val = _AttributeFinderInfo._str_to_value_dict(val)
-
-            if verbose:
-                click.echo(f"Setting {attr}={val}")
-            try:
-                attr_dict[attribute].append(val)
-            except KeyError:
-                attr_dict[attribute] = [val]
-
-        for attribute, value in attr_dict.items():
-            if attribute.list:
-                # attribute expects a list so pass value (which is a list)
-                md.set_attribute(attribute.name, value)
-            elif len(value) == 1:
-                # expected one and got one
-                md.set_attribute(attribute.name, value[0])
-            else:
-                click.echo(
-                    f"attribute {attribute.name} expects only a single value but {len(value)} provided",
-                    err=True,
-                )
-                ctx.get_help()
-                ctx.exit(2)
+        validate_attribute_names(set_)
+        if error := md_set_metadata_with_error(md, set_, verbose):
+            click.echo(error, err=True)
 
     if append:
         # append data
@@ -734,10 +793,9 @@ def process_single_file(
                     f"append is not a valid operation for attribute {attribute.name}",
                     err=True,
                 )
-                ctx.get_help()
                 ctx.exit(2)
 
-            if attr in [*_TAGS_NAMES, *_FINDERINFO_NAMES]:
+            if attr in _TAGS_NAMES:
                 val = tag_factory(val)
 
             if verbose:
@@ -748,7 +806,8 @@ def process_single_file(
                 attr_dict[attribute] = [val]
 
         for attribute, value in attr_dict.items():
-            md.append_attribute(attribute.name, value)
+            # md.append_attribute(attribute.name, value)
+            print(f"append {attribute} {value}")
 
     if update:
         # update data

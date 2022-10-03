@@ -109,7 +109,7 @@ MDITEM_ATTRIBUTE_DATA["kMDItemDownloadedDate"] = {
     "name": "kMDItemDownloadedDate",
     "description": "Date the item was downloaded.",
     "version": "10.7",
-    "type": "CFDate",
+    "type": "CFArray of CFDates",
     "python_type": "list[datetime]",
     "help_type": "list of date/time",
     "short_name": "downloadeddate",
