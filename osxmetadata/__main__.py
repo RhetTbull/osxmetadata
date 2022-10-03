@@ -105,14 +105,40 @@ def str_to_bool(value: str) -> bool:
         return value.lower() == "true"
 
 
-def get_attributes_to_wipe(mdobj: OSXMetaData) -> t.List[str]:
+def get_attributes_to_wipe(md: OSXMetaData) -> t.List[str]:
     """Get list of non-null metadata attributes on a file that can be wiped"""
 
     attribute_list = []
     for attr in WRITABLE_ATTRIBUTES:
-        if value := mdobj.get(attr):
+        if value := md.get(attr):
             attribute_list.append(attr)
     return attribute_list
+
+
+def md_wipe_metadata(md: OSXMetaData, filepath: str, verbose: bool = False):
+    """Wipe metadata attributes on a file
+
+    Args:
+        md: OSXMetaData object for file
+        attributes: list of attributes to wipe
+        verbose: if True, print verbose output
+    """
+    attr_list = get_attributes_to_wipe(md)
+    if verbose:
+        if attr_list:
+            click.echo(f"Wiping metadata from {filepath}")
+        else:
+            click.echo(f"No metadata to wipe from {filepath}")
+    for attr in attr_list:
+        try:
+            if verbose:
+                click.echo(f"  Wiping {attr} from {filepath}")
+            md.set(attr, None)
+        except AttributeError:
+            if verbose:
+                click.echo(
+                    f"  Unknown attribute {attr} on {filepath}, skipping", err=True
+                )
 
 
 def validate_attribute_names(attributes: t.Union[t.Tuple[str], t.Tuple[str, str]]):
@@ -132,13 +158,52 @@ def validate_attribute_names(attributes: t.Union[t.Tuple[str], t.Tuple[str, str]
             raise click.BadParameter(f"invalid attribute name: {attr}")
 
 
+def md_copyfrom_metadata(md: OSXMetaData, copyfrom: str, verbose: bool = False):
+    """Copy metadata attributes to a file from another file
+
+    Args:
+        md: OSXMetaData object for destination file
+        copyfrom: path to source file
+        verbose: if True, print verbose output
+    """
+    if verbose:
+        click.echo(f"Copying attributes from {copyfrom}")
+    src_md = OSXMetaData(copyfrom)
+    for attr in WRITABLE_ATTRIBUTES:
+        if value := src_md.get(attr):
+            if verbose:
+                click.echo(f"  Copying {attr}")
+            md.set(attr, value)
+
+
+def md_clear_metadata(
+    md: OSXMetaData, filepath: str, attributes: t.List[str], verbose: bool = False
+):
+    """Clear metadata attributes on a file
+
+    Args:
+        md: OSXMetaData object for file
+        attributes: list of attributes to clear
+        verbose: if True, print verbose output
+    """
+    validate_attribute_names(attributes)
+    for attr in attributes:
+        if verbose:
+            click.echo(f"Clearing {attr}")
+        if not md.get(attr):
+            if verbose:
+                click.echo(f"  {attr} is already empty on {filepath}")
+            continue
+        md.set(attr, None)
+
+
 def md_set_metadata_with_error(
-    mdobj: OSXMetaData, metadata: t.Tuple[t.Tuple[str, str]], verbose: bool
+    md: OSXMetaData, metadata: t.Tuple[t.Tuple[str, str]], verbose: bool
 ) -> t.Optional[str]:
     """Set metadata for OSXMetaData object, return error message if any
 
     Args:
-        mdbobj: OSXMetaData object
+        md: OSXMetaData object
         metadata: tuple of tuples of (attribute, value) as returned by click parser
         verbose: if True, print metadata being set
 
@@ -184,11 +249,11 @@ def md_set_metadata_with_error(
         if attribute in MDITEM_ATTRIBUTE_DATA and MDITEM_ATTRIBUTE_DATA[attribute][
             "python_type"
         ] in [list, "list[datetime]"]:
-            mdobj.set(attribute, value)
+            md.set(attribute, value)
         elif attribute in _TAGS_NAMES:
-            mdobj.set(attribute, value)
+            md.set(attribute, value)
         else:
-            mdobj.set(attribute, value[0])
+            md.set(attribute, value[0])
 
 
 # Click CLI object & context settings
@@ -737,43 +802,15 @@ def process_single_file(
     md = OSXMetaData(fpath)
 
     if wipe:
-        attr_list = get_attributes_to_wipe(md)
-        if verbose:
-            if attr_list:
-                click.echo(f"Wiping metadata from {fpath}")
-            else:
-                click.echo(f"No metadata to wipe from {fpath}")
-        for attr in attr_list:
-            try:
-                if verbose:
-                    click.echo(f"  Wiping {attr} from {fpath}")
-                md.set(attr, None)
-            except AttributeError:
-                if verbose:
-                    click.echo(
-                        f"  Unknown attribute {attr} on {fpath}, skipping", err=True
-                    )
+        md_wipe_metadata(md, fpath, verbose)
 
     if copyfrom:
-        if verbose:
-            click.echo(f"Copying attributes from {copyfrom}")
-        src_md = OSXMetaData(copyfrom)
-        for attr in WRITABLE_ATTRIBUTES:
-            if value := src_md.get(attr):
-                if verbose:
-                    click.echo(f"  Copying {attr}")
-                md.set(attr, value)
+        # TODO: add option to clear existing attributes if copyfrom does not have them
+        # TODO: doesn't appear to copy wherefrom
+        md_copyfrom_metadata(md, copyfrom, verbose)
 
     if clear:
-        validate_attribute_names(clear)
-        for attr in clear:
-            if verbose:
-                click.echo(f"Clearing {attr}")
-            if not md.get(attr):
-                if verbose:
-                    click.echo(f"  {attr} is already empty on {fpath}")
-                continue
-            md.set(attr, None)
+        md_clear_metadata(md, fpath, clear, verbose)
 
     if set_:
         validate_attribute_names(set_)
@@ -864,7 +901,7 @@ def process_single_file(
         for item in mirror:
             # mirror value of each attribute
             # validation that attributes are compatible
-            # will have occured prior to call to process_file
+            # will have occurred prior to call to process_file
             attr1, attr2 = item
             if verbose:
                 click.echo(f"Mirroring {attr1} {attr2}")
