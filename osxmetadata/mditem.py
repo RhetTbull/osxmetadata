@@ -191,7 +191,7 @@ def set_or_remove_mditem_metadata(
 
 
 def str_to_mditem_type(attribute: str, value: str) -> MDItemValueType:
-    """Convert string to type expected by MDItem attribute
+    """Convert string to type expected by MDItem attribute;
 
     Args:
         attribute: name of attribute
@@ -205,6 +205,9 @@ def str_to_mditem_type(attribute: str, value: str) -> MDItemValueType:
     Notes:
         For example, kMDItemDueDate expects a datetime.datetime so this function will convert
         a string to a datetime.datetime using datetime.datetime.fromisoformat
+
+        Caller is responsible for knowing if attribute is a list-type attribute; this method returns
+        a single value, not a list for all attributes.
     """
     if attribute in MDITEM_ATTRIBUTE_DATA:
         attribute_data = MDITEM_ATTRIBUTE_DATA[attribute]
@@ -221,10 +224,12 @@ def str_to_mditem_type(attribute: str, value: str) -> MDItemValueType:
     elif attribute_type == float:
         return float(value)
     elif attribute_type == list:
-        return [value]
+        # caller is responsible for knowing if attribute is a list-type attribute
+        return value
     elif attribute_type == datetime.datetime:
         return datetime.datetime.fromisoformat(value)
     elif attribute_type == "list[datetime]":
-        return [datetime.datetime.fromisoformat(value)]
+        # caller is responsible for knowing if attribute is a list-type attribute
+        return datetime.datetime.fromisoformat(value)
     else:
         return value

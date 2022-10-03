@@ -216,7 +216,7 @@ def md_set_metadata_with_error(
         attr, val = item
 
         if attr in _TAGS_NAMES:
-            val = [tag_factory(val)]
+            val = tag_factory(val)
         elif attr == _kFinderColor:
             val = str_to_finder_color(val)
         elif attr == _kFinderStationeryPad:
@@ -229,17 +229,10 @@ def md_set_metadata_with_error(
         else:
             raise ValueError(f"invalid attribute: {attr}")
 
-        # str_to_mditem_type returns list for list-type attributes but unroll it here
-        # so that both list and non-list attributes are handled the same way
-        # the logic below will handle list attributes correctly
-        # this allows the user to use --set to set multiple values for list attributes
-        # e.g. --set authors "John Doe" --set authors "Jane Doe"
         if attr in attr_dict:
-            attr_dict[attr].append(*val) if isinstance(val, list) else attr_dict[
-                attr
-            ].append(val)
+            attr_dict[attr].append(val)
         else:
-            attr_dict[attr] = [*val] if isinstance(val, list) else [val]
+            attr_dict[attr] = [val]
 
     for attribute, value in attr_dict.items():
         # if we got a list of values and attribute takes a list, set the list
@@ -254,6 +247,58 @@ def md_set_metadata_with_error(
             md.set(attribute, value)
         else:
             md.set(attribute, value[0])
+
+
+def md_append_metadata_with_error(
+    md: OSXMetaData, metadata: t.List[t.Tuple[str, str]], verbose: bool
+) -> t.Optional[str]:
+    """Append metadata attributes on a file
+
+    Args:
+        md: OSXMetaData object for file
+        metadata: list of tuples of (attribute, value) as returned by click parser
+        verbose: if True, print verbose output
+
+    Returns:
+        None if successful, else error message
+
+    Raises:
+        ValueError: if attribute is invalid
+    """
+    validate_attribute_names(metadata)
+    for attr, val in metadata:
+        if verbose:
+            click.echo(f"Appending {attr}={val}")
+
+        if attr in _TAGS_NAMES:
+            value = tag_factory(val)
+        elif attr in MDITEM_ATTRIBUTE_DATA:
+            value = str_to_mditem_type(attr, val)
+        elif attr in MDITEM_ATTRIBUTE_SHORT_NAMES:
+            attr = MDITEM_ATTRIBUTE_SHORT_NAMES[attr]
+            value = str_to_mditem_type(attr, val)
+        else:
+            raise ValueError(f"invalid attribute: {attr}")
+
+        # TODO: how about a get_attribute_type() function?
+        attr_type = (
+            list
+            if attr in _TAGS_NAMES
+            else MDITEM_ATTRIBUTE_DATA[attr]["python_type"]
+            if attr in MDITEM_ATTRIBUTE_DATA
+            else None
+        )
+        if attr_type not in [list, "list[datetime]"]:
+            return f"Attribute {attr} does not support appending"
+
+        new_value = md.get(attr) or []
+        print(f"attr={attr}, new_value={new_value}")
+        if value not in new_value:
+            print(f"appending {value}")
+            new_value.append(value)
+            md.set(attr, new_value)
+        elif verbose:
+            click.echo(f"  {attr} already contains {val}")
 
 
 # Click CLI object & context settings
@@ -818,33 +863,9 @@ def process_single_file(
             click.echo(error, err=True)
 
     if append:
-        # append data
-        # check attribute is valid
-        attr_dict = {}
-        for item in append:
-            attr, val = item
-            attribute = MDITEM_ATTRIBUTE_DATA[attr]
-
-            if not attribute.append:
-                click.echo(
-                    f"append is not a valid operation for attribute {attribute.name}",
-                    err=True,
-                )
-                ctx.exit(2)
-
-            if attr in _TAGS_NAMES:
-                val = tag_factory(val)
-
-            if verbose:
-                click.echo(f"Appending {attr}={val}")
-            try:
-                attr_dict[attribute].append(val)
-            except KeyError:
-                attr_dict[attribute] = [val]
-
-        for attribute, value in attr_dict.items():
-            # md.append_attribute(attribute.name, value)
-            print(f"append {attribute} {value}")
+        if error := md_append_metadata_with_error(md, append, verbose):
+            click.echo(error, err=True)
+            ctx.exit(2)
 
     if update:
         # update data
