@@ -140,17 +140,17 @@ def get_mditem_metadata(
 
     # Some attributes don't have a documented type
     attribute_type = attribute_data.get("python_type")
-    if attribute_type == bool:
+    if attribute_type == "bool":
         return bool(value)
-    elif attribute_type == str:
+    elif attribute_type == "str":
         return str(value)
-    elif attribute_type == float:
+    elif attribute_type == "float":
         return float(value)
-    elif attribute_type == list:
+    elif attribute_type == "list":
         return [str(x) for x in value]
-    elif attribute_type == datetime.datetime:
+    elif attribute_type == "datetime.datetime":
         return CFDate_to_datetime(value)
-    elif attribute_type == "list[datetime]":
+    elif attribute_type == "list[datetime.datetime]":
         return [CFDate_to_datetime(x) for x in value]
     elif "__NSCFArray" in repr(type(value)):
         # this is a hack but works for MDImporter attributes that don't have a documented type
@@ -217,18 +217,18 @@ def str_to_mditem_type(attribute: str, value: str) -> MDItemValueType:
         raise ValueError(f"Unknown attribute: {value}")
 
     attribute_type = attribute_data.get("python_type")
-    if attribute_type == str:
+    if attribute_type == "str":
         return value
-    if attribute_type == bool:
+    if attribute_type == "bool":
         return bool(value)
-    elif attribute_type == float:
+    elif attribute_type == "float":
         return float(value)
-    elif attribute_type == list:
+    elif attribute_type == "list":
         # caller is responsible for knowing if attribute is a list-type attribute
         return value
-    elif attribute_type == datetime.datetime:
+    elif attribute_type == "datetime.datetime":
         return datetime.datetime.fromisoformat(value)
-    elif attribute_type == "list[datetime]":
+    elif attribute_type == "list[datetime.datetime]":
         # caller is responsible for knowing if attribute is a list-type attribute
         return datetime.datetime.fromisoformat(value)
     else:

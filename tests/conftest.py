@@ -58,17 +58,17 @@ def value_for_type(
     type_: type,
 ) -> t.Union[str, float, bool, datetime.datetime, t.List[str]]:
     """Get test value for a given metadata attribute type"""
-    if type_ == str:
+    if type_ == "str":
         return "Hello World"
-    elif type_ == float:
+    elif type_ == "float":
         return 42.0
-    elif type_ == bool:
+    elif type_ == "bool":
         return True
-    elif type_ == datetime.datetime:
+    elif type_ == "datetime.datetime":
         return datetime.datetime(1995, 5, 31, 0, 0, 0)
-    elif type_ == list:
+    elif type_ == "list":
         return ["a", "b"]
-    elif type_ == "list[datetime]":
+    elif type_ == "list[datetime.datetime]":
         return [datetime.datetime(1995, 5, 31, 0, 0, 0)]
     else:
         raise ValueError(f"Unknown type: {type_}")

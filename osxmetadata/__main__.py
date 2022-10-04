@@ -68,6 +68,49 @@ def get_writeable_attributes() -> t.List[str]:
 WRITABLE_ATTRIBUTES = get_writeable_attributes()
 
 
+def get_attribute_type(attr: str) -> t.Optional[str]:
+    """Get the type of an attribute
+
+    Args:
+        attr: attribute name
+
+    Returns:
+        type of attribute as string or None if type is not known
+    """
+    if attr in MDITEM_ATTRIBUTE_SHORT_NAMES:
+        attr = MDITEM_ATTRIBUTE_SHORT_NAMES[attr]
+    return (
+        "list"
+        if attr in _TAGS_NAMES
+        else MDITEM_ATTRIBUTE_DATA[attr]["python_type"]
+        if attr in MDITEM_ATTRIBUTE_DATA
+        else None
+    )
+
+
+def get_attribute_name(attr: str) -> str:
+    """Get the long name of an attribute
+
+    Args:
+        attr: attribute name
+
+    Returns:
+        long name of attribute or attr if long name is not known
+    """
+    if attr in MDITEM_ATTRIBUTE_SHORT_NAMES:
+        return MDITEM_ATTRIBUTE_SHORT_NAMES[attr]
+    elif attr in MDITEM_ATTRIBUTE_DATA:
+        return attr
+    elif attr in MDIMPORTER_ATTRIBUTE_DATA:
+        return attr
+    elif attr in _TAGS_NAMES:
+        return _kMDItemUserTags
+    elif attr in [_kFinderColor, _kFinderStationeryPad]:
+        return attr
+    else:
+        raise ValueError(f"Unknown attribute: {attr}")
+
+
 def value_to_str(value) -> str:
     """Convert a metadata value to str suitable for printing to terminal"""
     if isinstance(value, str):
@@ -155,7 +198,7 @@ def validate_attribute_names(attributes: t.Union[t.Tuple[str], t.Tuple[str, str]
         if isinstance(attr, tuple):
             attr = attr[0]
         if attr not in ALL_ATTRIBUTES:
-            raise click.BadParameter(f"invalid attribute name: {attr}")
+            raise click.BadParameter(f"Invalid attribute name: {attr}")
 
 
 def md_copyfrom_metadata(md: OSXMetaData, copyfrom: str, verbose: bool = False):
@@ -215,6 +258,9 @@ def md_set_metadata_with_error(
     for item in metadata:
         attr, val = item
 
+        # Convert attribute shortcut name to long name if necessary
+        attr = get_attribute_name(attr)
+
         if attr in _TAGS_NAMES:
             val = tag_factory(val)
         elif attr == _kFinderColor:
@@ -223,11 +269,8 @@ def md_set_metadata_with_error(
             val = str_to_bool(val)
         elif attr in MDITEM_ATTRIBUTE_DATA:
             val = str_to_mditem_type(attr, val)
-        elif attr in MDITEM_ATTRIBUTE_SHORT_NAMES:
-            attr = MDITEM_ATTRIBUTE_SHORT_NAMES[attr]
-            val = str_to_mditem_type(attr, val)
         else:
-            raise ValueError(f"invalid attribute: {attr}")
+            return f"Invalid attribute: {attr}"
 
         if attr in attr_dict:
             attr_dict[attr].append(val)
@@ -241,12 +284,14 @@ def md_set_metadata_with_error(
             click.echo(f"Setting {attribute}={value}")
         if attribute in MDITEM_ATTRIBUTE_DATA and MDITEM_ATTRIBUTE_DATA[attribute][
             "python_type"
-        ] in [list, "list[datetime]"]:
+        ] in ["list", "list[datetime.datetime]"]:
             md.set(attribute, value)
         elif attribute in _TAGS_NAMES:
             md.set(attribute, value)
         else:
             md.set(attribute, value[0])
+
+    return None
 
 
 def md_append_metadata_with_error(
@@ -261,44 +306,60 @@ def md_append_metadata_with_error(
 
     Returns:
         None if successful, else error message
-
-    Raises:
-        ValueError: if attribute is invalid
     """
     validate_attribute_names(metadata)
     for attr, val in metadata:
         if verbose:
             click.echo(f"Appending {attr}={val}")
 
+        # Convert attribute shortcut name to long name if necessary
+        attr = get_attribute_name(attr)
+
         if attr in _TAGS_NAMES:
             value = tag_factory(val)
         elif attr in MDITEM_ATTRIBUTE_DATA:
             value = str_to_mditem_type(attr, val)
-        elif attr in MDITEM_ATTRIBUTE_SHORT_NAMES:
-            attr = MDITEM_ATTRIBUTE_SHORT_NAMES[attr]
-            value = str_to_mditem_type(attr, val)
         else:
-            raise ValueError(f"invalid attribute: {attr}")
+            # other types like _kFinderColor cannot be appended to 
+            return f"Invalid attribute: {attr}"
 
-        # TODO: how about a get_attribute_type() function?
-        attr_type = (
-            list
-            if attr in _TAGS_NAMES
-            else MDITEM_ATTRIBUTE_DATA[attr]["python_type"]
-            if attr in MDITEM_ATTRIBUTE_DATA
-            else None
-        )
-        if attr_type not in [list, "list[datetime]"]:
+        attr_type = get_attribute_type(attr)
+
+        if attr_type in ["list", "list[datetime.datetime]"]:
+            new_value = md.get(attr) or []
+            if value not in new_value:
+                new_value.append(value)
+                md.set(attr, new_value)
+            elif verbose:
+                click.echo(f"  {attr} already contains {val}")
+        elif attr_type == "str":
+            new_value = md.get(attr) or ""
+            md.set(attr, new_value + value)
+        else:
             return f"Attribute {attr} does not support appending"
 
-        new_value = md.get(attr) or []
-        print(f"attr={attr}, new_value={new_value}")
-        if value not in new_value:
-            print(f"appending {value}")
-            new_value.append(value)
-            md.set(attr, new_value)
-        elif verbose:
-            click.echo(f"  {attr} already contains {val}")
+    return None
+
+
+def validate_mirror_attributes_with_error(mirror: t.Tuple[t.Tuple[str, str]]):
+    """Validate mirror attributes"""
+    for item in mirror:
+        attr1, attr2 = item
+
+        validate_attribute_names((attr1, attr2))
+        attr1 = get_attribute_name(attr1)
+        attr2 = get_attribute_name(attr2)
+
+        # avoid self mirroring
+        if attr1 == attr2:
+            return f"cannot mirror the same attribute: {attr1} {attr2}"
+
+        # check type compatibility
+        if get_attribute_type(attr1) != get_attribute_type(attr2):
+            # can only mirror compatible attributes
+            return f"Cannot mirror {attr1}, {attr2}: incompatible types"
+
+    return None
 
 
 # Click CLI object & context settings
@@ -463,17 +524,7 @@ APPEND_OPTION = click.option(
     "--append",
     "-a",
     metavar="ATTRIBUTE VALUE",
-    help="Append VALUE to ATTRIBUTE.",
-    nargs=2,
-    multiple=True,
-    required=False,
-)
-UPDATE_OPTION = click.option(
-    "--update",
-    "-u",
-    metavar="ATTRIBUTE VALUE",
-    help="Update ATTRIBUTE with VALUE; for multi-valued attributes, "
-    "this adds VALUE to the attribute if not already in the list.",
+    help="Append VALUE to ATTRIBUTE; for multi-valued attributes, appends only if VALUE is not already present.",
     nargs=2,
     multiple=True,
     required=False,
@@ -572,7 +623,6 @@ PATTERN_OPTION = click.option(
 @APPEND_OPTION
 @GET_OPTION
 @REMOVE_OPTION
-@UPDATE_OPTION
 @MIRROR_OPTION
 @BACKUP_OPTION
 @RESTORE_OPTION
@@ -595,7 +645,6 @@ def cli(
     append,
     get,
     remove,
-    update,
     mirror,
     backup,
     restore,
@@ -626,58 +675,31 @@ def cli(
             + list(get)
             + list(itertools.chain(*mirror))
         )
-        invalid_attr = False
-        for attr in attributes:
-            if attr not in ALL_ATTRIBUTES:
-                click.echo(f"Invalid attribute {attr}", err=True)
-                invalid_attr = True
-        if invalid_attr:
-            # click.echo("")  # add a new line before rest of help text
-            # click.echo(ctx.get_help())
-            ctx.exit(2)
+        try:
+            validate_attribute_names(attributes)
+        except click.BadParameter as e:
+            click.echo(e)
+            ctx.exit(1)
 
     # check that json_ only used with get or list_
     if json_ and not any([get, list_]):
         click.echo("--json can only be used with --get or --list", err=True)
         # click.echo("")  # add a new line before rest of help text
         # click.echo(ctx.get_help())
-        ctx.exit(2)
+        ctx.exit(1)
 
     # can't backup and restore at once
     if backup and restore:
         click.echo("--backup and --restore cannot be used together", err=True)
         # click.echo("")  # add a new line before rest of help text
         # click.echo(ctx.get_help())
-        ctx.exit(2)
+        ctx.exit(1)
 
     # check compatible types for mirror
     if mirror:
-        for item in mirror:
-            attr1, attr2 = item
-            attribute1 = MDITEM_ATTRIBUTE_DATA[attr1]
-            attribute2 = MDITEM_ATTRIBUTE_DATA[attr2]
-
-            # avoid self mirroring
-            if attribute1 == attribute2:
-                click.echo(
-                    f"cannot mirror the same attribute: {attribute1.name} {attribute2.name}",
-                    err=True,
-                )
-                ctx.get_help()
-                ctx.exit(2)
-
-            # check type compatibility
-            if (
-                attribute1.list != attribute2.list
-                or attribute1.type_ != attribute2.type_
-            ):
-                # can only mirror compatible attributes
-                click.echo(
-                    f"Cannot mirror {attr1}, {attr2}: incompatible types", err=True
-                )
-                # click.echo("")  # add a new line before rest of help text
-                # click.echo(ctx.get_help())
-                ctx.exit(2)
+        if error := validate_mirror_attributes_with_error(mirror):
+            click.echo(error, err=True)
+            ctx.exit(1)
 
     # loop through each file, process it, then do backup or restore if needed
     for filename in files:
@@ -688,7 +710,6 @@ def cli(
                 json_,
                 set_,
                 append,
-                update,
                 remove,
                 clear,
                 get,
@@ -724,7 +745,6 @@ def cli(
                     json_,
                     set_,
                     append,
-                    update,
                     remove,
                     clear,
                     get,
@@ -746,7 +766,6 @@ def process_files(
     json_,
     set_,
     append,
-    update,
     remove,
     clear,
     get,
@@ -801,7 +820,6 @@ def process_files(
             json_,
             set_,
             append,
-            update,
             remove,
             clear,
             get,
@@ -830,7 +848,6 @@ def process_single_file(
     json_,
     set_,
     append,
-    update,
     remove,
     clear,
     get,
@@ -865,36 +882,7 @@ def process_single_file(
     if append:
         if error := md_append_metadata_with_error(md, append, verbose):
             click.echo(error, err=True)
-            ctx.exit(2)
-
-    if update:
-        # update data
-        # check attribute is valid
-        attr_dict = {}
-        for item in update:
-            attr, val = item
-            attribute = MDITEM_ATTRIBUTE_DATA[attr]
-
-            if not attribute.update:
-                click.echo(
-                    f"update is not a valid operation for attribute {attribute.name}",
-                    err=True,
-                )
-                ctx.get_help()
-                ctx.exit(2)
-
-            if attr in [*_TAGS_NAMES, *_FINDERINFO_NAMES]:
-                val = tag_factory(val)
-
-            if verbose:
-                click.echo(f"Updating {attr}={val}")
-            try:
-                attr_dict[attribute].append(val)
-            except KeyError:
-                attr_dict[attribute] = [val]
-
-        for attribute, value in attr_dict.items():
-            md.update_attribute(attribute.name, value)
+            ctx.exit(1)
 
     if remove:
         # remove value from attribute
@@ -907,7 +895,7 @@ def process_single_file(
                     err=True,
                 )
                 ctx.get_help()
-                ctx.exit(2)
+                ctx.exit(1)
 
             if attr in [*_TAGS_NAMES, *_FINDERINFO_NAMES]:
                 val = tag_factory(val)
