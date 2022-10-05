@@ -229,7 +229,6 @@ def md_clear_metadata(
         attributes: list of attributes to clear
         verbose: if True, print verbose output
     """
-    validate_attribute_names(attributes)
     for attr in attributes:
         if verbose:
             click.echo(f"Clearing {attr}")
@@ -279,17 +278,13 @@ def md_set_metadata_with_error(
 
     for attribute, value in attr_dict.items():
         # if we got a list of values and attribute takes a list, set the list
-        # otherwise, set the first value in the list
+        # otherwise, set the last value in the list
         if verbose:
             click.echo(f"Setting {attribute}={value}")
-        if attribute in MDITEM_ATTRIBUTE_DATA and MDITEM_ATTRIBUTE_DATA[attribute][
-            "python_type"
-        ] in ["list", "list[datetime.datetime]"]:
-            md.set(attribute, value)
-        elif attribute in _TAGS_NAMES:
+        if get_attribute_type(attribute) in ["list", "list[datetime.datetime]"]:
             md.set(attribute, value)
         else:
-            md.set(attribute, value[0])
+            md.set(attribute, value[-1])
 
     return None
 
@@ -307,7 +302,6 @@ def md_append_metadata_with_error(
     Returns:
         None if successful, else error message
     """
-    validate_attribute_names(metadata)
     for attr, val in metadata:
         if verbose:
             click.echo(f"Appending {attr}={val}")
@@ -320,7 +314,7 @@ def md_append_metadata_with_error(
         elif attr in MDITEM_ATTRIBUTE_DATA:
             value = str_to_mditem_type(attr, val)
         else:
-            # other types like _kFinderColor cannot be appended to 
+            # other types like _kFinderColor cannot be appended to
             return f"Invalid attribute: {attr}"
 
         attr_type = get_attribute_type(attr)
@@ -339,6 +333,42 @@ def md_append_metadata_with_error(
             return f"Attribute {attr} does not support appending"
 
     return None
+
+
+def md_remove_metadata_with_error(
+    md: OSXMetaData, metadata: t.List[t.Tuple[str, str]], verbose: bool
+) -> t.Optional[str]:
+    """ "Remove metadata attributes on a file
+
+    Args:
+        md: OSXMetaData object for file
+        metadata: list of tuples of (attribute, value) as returned by click parser
+        verbose: if True, print verbose output
+
+    Returns:
+        None if successful, else error message
+    """
+    for attr, val in metadata:
+        attr_type = get_attribute_type(attr)
+        if attr_type not in ["list", "list[datetime.datetime]"]:
+            return f"remove is not a valid operation for single-value attribute {attr}"
+
+        if attr in [*_TAGS_NAMES]:
+            val = tag_factory(val)
+        elif attr in MDITEM_ATTRIBUTE_DATA or attr in MDITEM_ATTRIBUTE_SHORT_NAMES:
+            val = str_to_mditem_type(attr, val)
+        else:
+            return f"Invalid attribute: {attr}"
+
+        new_value = md.get(attr) or []
+        new_value = [v for v in new_value if v != val]
+
+        if verbose:
+            click.echo(f"Removing {val} from {attr}")
+        try:
+            md.set(attr, new_value)
+        except KeyError as e:
+            raise e
 
 
 def validate_mirror_attributes_with_error(mirror: t.Tuple[t.Tuple[str, str]]):
@@ -446,7 +476,7 @@ class MyClickCommand(click.Command):
 
 # All the command line options defined here
 FILES_ARGUMENT = click.argument(
-    "files", metavar="FILE", nargs=-1, type=click.Path(exists=True)
+    "files", metavar="FILE", nargs=-1, type=click.Path(exists=True), required=True
 )
 HELP_OPTION = click.option(
     # add this only so I can show help text via echo_via_pager
@@ -662,23 +692,18 @@ def cli(
     if debug:
         logging.disable(logging.NOTSET)
 
-    if not files:
-        click.echo(ctx.get_help())
-        ctx.exit()
-
-    # validate values for --set, --clear, --append, --get, --remove, --mirror
-    if any([set_, append, remove, clear, get, mirror]):
-        attributes = (
-            [a[0] for a in set_]
-            + [a[0] for a in append]
-            + list(clear)
-            + list(get)
-            + list(itertools.chain(*mirror))
-        )
+    # validate values for --set, --clear, --append, --get, --remove
+    for attributes in [set_, append, remove, clear, get]:
         try:
             validate_attribute_names(attributes)
         except click.BadParameter as e:
             click.echo(e)
+            ctx.exit(1)
+
+    # check compatible types for mirror
+    if mirror:
+        if error := validate_mirror_attributes_with_error(mirror):
+            click.echo(error, err=True)
             ctx.exit(1)
 
     # check that json_ only used with get or list_
@@ -694,12 +719,6 @@ def cli(
         # click.echo("")  # add a new line before rest of help text
         # click.echo(ctx.get_help())
         ctx.exit(1)
-
-    # check compatible types for mirror
-    if mirror:
-        if error := validate_mirror_attributes_with_error(mirror):
-            click.echo(error, err=True)
-            ctx.exit(1)
 
     # loop through each file, process it, then do backup or restore if needed
     for filename in files:
@@ -875,7 +894,6 @@ def process_single_file(
         md_clear_metadata(md, fpath, clear, verbose)
 
     if set_:
-        validate_attribute_names(set_)
         if error := md_set_metadata_with_error(md, set_, verbose):
             click.echo(error, err=True)
 
@@ -885,26 +903,9 @@ def process_single_file(
             ctx.exit(1)
 
     if remove:
-        # remove value from attribute
-        # actually implemented with discard so no error raised if not present
-        for attr, val in remove:
-            attribute = MDITEM_ATTRIBUTE_DATA[attr]
-            if not attribute.list:
-                click.echo(
-                    f"remove is not a valid operation for single-value attributes",
-                    err=True,
-                )
-                ctx.get_help()
-                ctx.exit(1)
-
-            if attr in [*_TAGS_NAMES, *_FINDERINFO_NAMES]:
-                val = tag_factory(val)
-            if verbose:
-                click.echo(f"Removing {attr}")
-            try:
-                md.discard_attribute(attribute.name, val)
-            except KeyError as e:
-                raise e
+        if error := md_remove_metadata_with_error(md, remove, verbose):
+            click.echo(error, err=True)
+            ctx.exit(1)
 
     if mirror:
         for item in mirror:
