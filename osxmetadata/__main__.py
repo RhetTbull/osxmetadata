@@ -480,7 +480,7 @@ def md_list_metadata_with_error(md: OSXMetaData, json_: bool) -> t.Optional[str]
 
     # print in readable format, not json
     click.echo(f"{md.path}:")
-    for attr in md.asdict():
+    for attr in sorted(md.asdict()):
         try:
             value = md.get(attr)
             if value is None or value == "" or value == []:
@@ -1053,7 +1053,6 @@ def process_single_file(
 
     if copyfrom:
         # TODO: add option to clear existing attributes if copyfrom does not have them
-        # TODO: doesn't appear to copy wherefrom
         md_copyfrom_metadata(md, copyfrom, verbose)
 
     if clear:
