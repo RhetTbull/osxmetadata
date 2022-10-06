@@ -256,12 +256,13 @@ def md_set_metadata_with_error(
     attr_dict = {}
     for item in metadata:
         attr, val = item
+        val = val or None
 
         # Convert attribute shortcut name to long name if necessary
         attr = get_attribute_name(attr)
 
         if attr in _TAGS_NAMES:
-            val = tag_factory(val)
+            val = tag_factory(val) if val else None
         elif attr == _kFinderColor:
             val = str_to_finder_color(val)
         elif attr == _kFinderStationeryPad:
@@ -282,6 +283,8 @@ def md_set_metadata_with_error(
         if verbose:
             click.echo(f"Setting {attribute}={value}")
         if get_attribute_type(attribute) in ["list", "list[datetime.datetime]"]:
+            # filter out any None values ([None] should be [])
+            value = [v for v in value if v is not None]
             md.set(attribute, value)
         else:
             md.set(attribute, value[-1])
@@ -353,7 +356,7 @@ def md_remove_metadata_with_error(
         if attr_type not in ["list", "list[datetime.datetime]"]:
             return f"remove is not a valid operation for single-value attribute {attr}"
 
-        if attr in [*_TAGS_NAMES]:
+        if attr in _TAGS_NAMES:
             val = tag_factory(val)
         elif attr in MDITEM_ATTRIBUTE_DATA or attr in MDITEM_ATTRIBUTE_SHORT_NAMES:
             val = str_to_mditem_type(attr, val)
@@ -369,6 +372,62 @@ def md_remove_metadata_with_error(
             md.set(attr, new_value)
         except KeyError as e:
             raise e
+
+
+def md_mirror_metadata_with_error(
+    md: OSXMetaData, metadata: t.List[str], verbose: bool
+) -> t.Optional[str]:
+    """Mirror metadata attributes on a file
+
+    Args:
+        md: OSXMetaData object for file
+        metadata: list of attributes to mirror
+        verbose: if True, print verbose output
+
+    Returns:
+        None if successful, else error message
+    """
+    for item in metadata:
+        # mirror value of each attribute
+        # validation that attributes are compatible
+        # will have occurred prior to call to process_file
+        attr1, attr2 = item
+        if verbose:
+            click.echo(f"Mirroring {attr1} {attr2}")
+
+        attr_type1 = get_attribute_type(attr1)
+        attr_type2 = get_attribute_type(attr2)
+
+        if attr_type1 != attr_type2:
+            return f"Attributes {attr1} and {attr2} are not compatible"
+
+        if attr_type1 in ["list", "list[datetime.datetime]"]:
+            value1 = md.get(attr1) or []
+            value2 = md.get(attr2) or []
+            if attr1 in _TAGS_NAMES and attr2 not in _TAGS_NAMES:
+                # might be mirroring a keyword to a tag
+                # convert non-tags to tags
+                value2_tags = [tag_factory(v) for v in value2]
+                value1 = value1 + value2_tags
+                value2 = value2 + [v.name for v in value1 if v.name not in value2]
+                md.set(attr1, value1)
+                md.set(attr2, value2)
+            elif attr2 in _TAGS_NAMES and attr1 not in _TAGS_NAMES:
+                # might be mirroring a tag to a keyword
+                # convert tags to non-tags
+                value1_tags = [tag_factory(v) for v in value1]
+                value2 = value2 + value1_tags
+                value1 = value1 + [v.name for v in value2 if v.name not in value1]
+                md.set(attr1, value1)
+                md.set(attr2, value2)
+            elif value1 != value2:
+                new_value = value1 + [v for v in value2 if v not in value1]
+                md.set(attr1, new_value)
+                md.set(attr2, new_value)
+        else:
+            md.set(attr1, md.get(attr2))
+
+        return None
 
 
 def validate_mirror_attributes_with_error(mirror: t.Tuple[t.Tuple[str, str]]):
@@ -477,16 +536,6 @@ class MyClickCommand(click.Command):
 # All the command line options defined here
 FILES_ARGUMENT = click.argument(
     "files", metavar="FILE", nargs=-1, type=click.Path(exists=True), required=True
-)
-HELP_OPTION = click.option(
-    # add this only so I can show help text via echo_via_pager
-    "--help",
-    "-h",
-    "help_",
-    help="Show this message and exit.",
-    is_flag=True,
-    default=False,
-    required=False,
 )
 WALK_OPTION = click.option(
     "--walk",
@@ -641,7 +690,6 @@ PATTERN_OPTION = click.option(
 
 @click.command(cls=MyClickCommand)
 @click.version_option(__version__, "--version", "-v")
-@HELP_OPTION
 @DEBUG_OPTION
 @FILES_ARGUMENT
 @WALK_OPTION
@@ -663,7 +711,6 @@ PATTERN_OPTION = click.option(
 @click.pass_context
 def cli(
     ctx,
-    help_,
     debug,
     files,
     walk,
@@ -684,10 +731,6 @@ def cli(
     pattern,
 ):
     """Read/write metadata from file(s)."""
-
-    if help_:
-        click.echo_via_pager(ctx.get_help())
-        ctx.exit(0)
 
     if debug:
         logging.disable(logging.NOTSET)
@@ -908,38 +951,9 @@ def process_single_file(
             ctx.exit(1)
 
     if mirror:
-        for item in mirror:
-            # mirror value of each attribute
-            # validation that attributes are compatible
-            # will have occurred prior to call to process_file
-            attr1, attr2 = item
-            if verbose:
-                click.echo(f"Mirroring {attr1} {attr2}")
-
-            attribute1 = MDITEM_ATTRIBUTE_DATA[attr1]
-            attribute2 = MDITEM_ATTRIBUTE_DATA[attr2]
-
-            if attribute1.name == "tags":
-                tags = md.get_attribute(attr1)
-                attr1_values = [tag.name for tag in tags]
-                md.update_attribute(attr2, attr1_values)
-                md.set_attribute(attr1, [Tag(val) for val in md.get_attribute(attr2)])
-            elif attribute2.name == "tags":
-                attr1_values = md.get_attribute(attr1)
-                md.update_attribute(attr2, [Tag(val) for val in attr1_values])
-                tags = md.get_attribute(attr2)
-                attr2_values = [tag.name for tag in tags]
-                md.set_attribute(attr1, attr2_values)
-            elif attribute1.list:
-                # merge the two lists, assume attribute2 also a list due to
-                # previous validation
-                # update attr2 with any new values from attr1
-                # then set attr1 = attr2
-                attr1_values = md.get_attribute(attr1)
-                md.update_attribute(attr2, attr1_values)
-                md.set_attribute(attr1, md.get_attribute(attr2))
-            else:
-                md.set_attribute(attr1, md.get_attribute(attr2))
+        if error := md_mirror_metadata_with_error(md, mirror, verbose):
+            click.echo(error, err=True)
+            ctx.exit(1)
 
     if get:
         data = {}
