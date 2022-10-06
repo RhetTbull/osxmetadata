@@ -197,6 +197,11 @@ class OSXMetaData:
 
         return json.dumps(dict_data, indent=indent)
 
+    @property
+    def path(self) -> str:
+        """Return path to file"""
+        return self._posix_path
+
     def __getattr__(self, attribute: str) -> MDItemValueType:
         """Get metadata attribute value
 

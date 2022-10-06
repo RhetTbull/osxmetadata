@@ -2,7 +2,6 @@
 
 import datetime
 import glob
-import itertools
 import json
 import logging
 import os
@@ -40,6 +39,9 @@ from osxmetadata.mditem import str_to_mditem_type
 #   Finder aliases inherit neither
 # TODO: add selective restore (e.g only restore files matching command line path)
 #   e.g osxmetadata -r meta.json *.pdf
+
+# TODO: fix output of str_to_mditem_type to be more helpful: ValueError: Invalid isoformat string: '2022-10-6'
+# also wrap in try/except and print error message
 
 _SHORT_NAME_WIDTH = (
     max(len(x["short_name"]) for x in MDITEM_ATTRIBUTE_DATA.values()) + 1
@@ -199,6 +201,38 @@ def validate_attribute_names(attributes: t.Union[t.Tuple[str], t.Tuple[str, str]
             attr = attr[0]
         if attr not in ALL_ATTRIBUTES:
             raise click.BadParameter(f"Invalid attribute name: {attr}")
+
+
+def get_attribute_names(attribute: str) -> t.Tuple[str, str]:
+    """Get the name and short name for a metadata attribute
+
+    Args:
+        attribute: attribute name or short name
+
+    Returns:
+        tuple of attribute name and short name
+    """
+    if attribute in MDITEM_ATTRIBUTE_DATA:
+        attribute = MDITEM_ATTRIBUTE_DATA[attribute]
+        short_name = attribute["short_name"]
+        name = attribute["name"]
+    elif attribute in MDITEM_ATTRIBUTE_SHORT_NAMES:
+        short_name = attribute
+        name = MDITEM_ATTRIBUTE_SHORT_NAMES[attribute]
+    elif attribute in MDIMPORTER_ATTRIBUTE_DATA:
+        attribute = MDIMPORTER_ATTRIBUTE_DATA[attribute]
+        short_name = attribute["name"]
+        name = attribute["name"]
+    elif attribute in [_kFinderInfo, _kFinderColor, _kFinderStationeryPad]:
+        short_name = attribute
+        name = attribute
+    elif attribute in _TAGS_NAMES:
+        short_name = "tags"
+        name = _kMDItemUserTags
+    else:
+        raise ValueError(f"Unknown attribute: {attribute}")
+
+    return name, short_name
 
 
 def md_copyfrom_metadata(md: OSXMetaData, copyfrom: str, verbose: bool = False):
@@ -375,22 +409,19 @@ def md_remove_metadata_with_error(
 
 
 def md_mirror_metadata_with_error(
-    md: OSXMetaData, metadata: t.List[str], verbose: bool
+    md: OSXMetaData, attributes: t.Tuple[t.Tuple[str, str]], verbose: bool
 ) -> t.Optional[str]:
     """Mirror metadata attributes on a file
 
     Args:
         md: OSXMetaData object for file
-        metadata: list of attributes to mirror
+        attributes: tuple of attribute tuples to mirror as returned by click parser for --mirror
         verbose: if True, print verbose output
 
     Returns:
         None if successful, else error message
     """
-    for item in metadata:
-        # mirror value of each attribute
-        # validation that attributes are compatible
-        # will have occurred prior to call to process_file
+    for item in attributes:
         attr1, attr2 = item
         if verbose:
             click.echo(f"Mirroring {attr1} {attr2}")
@@ -428,6 +459,97 @@ def md_mirror_metadata_with_error(
             md.set(attr1, md.get(attr2))
 
         return None
+
+
+def md_list_metadata_with_error(md: OSXMetaData, json_: bool) -> t.Optional[str]:
+    """List metadata attributes on a file
+
+    Args:
+        md: OSXMetaData object for file
+        json_: if True, print output as JSON
+        verbose: if True, print verbose output
+
+    Returns:
+        None if successful, else error message
+    """
+    if json_:
+        json_str = md.to_json()
+        click.echo(json_str)
+        return
+
+    # print in readable format, not json
+    click.echo(f"{md.path}:")
+    for attr in md.asdict():
+        try:
+            value = md.get(attr)
+            if value is None or value == "" or value == []:
+                continue
+            value = value_to_str(value)
+        except Exception as e:
+            click.echo(
+                f"{'Error loading attribute':{_SHORT_NAME_WIDTH}}{attr:{_LONG_NAME_WIDTH}}: {e}",
+                err=True,
+            )
+        else:
+            try:
+                name, short_name = get_attribute_names(attr)
+            except ValueError:
+                click.echo(
+                    f"{'UNKNOWN ATTRIBUTE':{_SHORT_NAME_WIDTH}}{attr:{_LONG_NAME_WIDTH}} = THIS ATTRIBUTE NOT HANDLED",
+                    err=True,
+                )
+            else:
+                click.echo(
+                    f"{short_name:{_SHORT_NAME_WIDTH}}{name:{_LONG_NAME_WIDTH}} = {value}"
+                )
+
+
+def md_get_metadata_with_error(
+    md: OSXMetaData, attributes: t.Tuple[str], json_: bool
+) -> t.Optional[str]:
+    """Get metadata attribute on a file
+
+    Args:
+        md: OSXMetaData object for file
+        attributes: tuple of attributes to get as returned by click parser for --get
+        json_: if True, print output as JSON
+
+    Returns:
+        None if successful, else error message
+    """
+    data = {}
+    if json_:
+        data["_version"] = __version__
+        data["_filepath"] = md.path
+        data["_filename"] = os.path.basename(md.path)
+    for attr in attributes:
+        try:
+            value = md.get(attr)
+            attr_type = get_attribute_type(attr)
+            if json_ and attr_type in ["list", "list[datetime.datetime]"]:
+                # preserve lists for json output and convert datetimes if needed
+                if attr_type == "list[datetime.datetime]":
+                    # value could be 'None' if attribute not set
+                    value = [v.isoformat() for v in value] if value else []
+            else:
+                value = value_to_str(value)
+        except Exception as e:
+            return f"Error loading attribute {attr}: {e}"
+        else:
+            try:
+                name, short_name = get_attribute_names(attr)
+            except ValueError:
+                return f"UNKNOWN ATTRIBUTE {attr}: THIS ATTRIBUTE NOT HANDLED"
+            else:
+                if json_:
+                    data[name] = value
+                else:
+                    click.echo(
+                        f"{short_name:{_SHORT_NAME_WIDTH}}{name:{_LONG_NAME_WIDTH}} = {value}"
+                    )
+    if json_:
+        json_str = json.dumps(data)
+        click.echo(json_str)
 
 
 def validate_mirror_attributes_with_error(mirror: t.Tuple[t.Tuple[str, str]]):
@@ -956,83 +1078,14 @@ def process_single_file(
             ctx.exit(1)
 
     if get:
-        data = {}
-        if json_:
-            data["_version"] = __version__
-            data["_filepath"] = fpath.resolve().as_posix()
-            data["_filename"] = fpath.name
-        for attr in get:
-            attribute = MDITEM_ATTRIBUTE_DATA[attr]
-            if json_:
-                try:
-                    if attribute.name == "tags":
-                        tags = md.get_attribute(attribute.name)
-                        value = [[tag.name, tag.color] for tag in tags]
-                        data[attribute.constant] = value
-                    elif (
-                        attribute.name == "finderinfo"
-                        or attribute.type_ != datetime.datetime
-                    ):
-                        data[attribute.constant] = md.get_attribute(attribute.name)
-                    else:
-                        # need to convert datetime.datetime to string to serialize
-                        value = md.get_attribute(attribute.name)
-                        if type(value) == list:
-                            value = [v.isoformat() for v in value]
-                        else:
-                            value = value.isoformat()
-                        data[attribute.constant] = value
-                except KeyError:
-                    # unknown attribute, ignore it
-                    pass
-            else:
-                value = md.get_attribute_str(attribute.name)
-                click.echo(
-                    f"{attribute.name:{_SHORT_NAME_WIDTH}}{attribute.constant:{_LONG_NAME_WIDTH}} = {value}"
-                )
-        if json_:
-            json_str = json.dumps(data)
-            click.echo(json_str)
+        if error := md_get_metadata_with_error(md, get, json_):
+            click.echo(error, err=True)
+            ctx.exit(1)
 
     if list_:
-        if json_:
-            json_str = md.to_json()
-            click.echo(json_str)
-        else:
-            click.echo(f"{fpath}:")
-            for attr in md.asdict():
-                try:
-                    value = md.get(attr)
-                    if value is None or value == "" or value == []:
-                        continue
-                    value = value_to_str(value)
-                    if attr in MDITEM_ATTRIBUTE_DATA:
-                        attribute = MDITEM_ATTRIBUTE_DATA[attr]
-                        short_name = attribute["short_name"]
-                        name = attribute["name"]
-                    elif attr in MDIMPORTER_ATTRIBUTE_DATA:
-                        attribute = MDIMPORTER_ATTRIBUTE_DATA[attr]
-                        short_name = attribute["name"]
-                        name = attribute["name"]
-                    elif attr in [_kFinderInfo, _kFinderColor, _kFinderStationeryPad]:
-                        short_name = attr
-                        name = attr
-                    elif attr == _kMDItemUserTags:
-                        short_name = "tags"
-                        name = _kMDItemUserTags
-                    else:
-                        click.echo(
-                            f"{'UNKNOWN ATTRIBUTE':{_SHORT_NAME_WIDTH}}{attr:{_LONG_NAME_WIDTH}} = THIS ATTRIBUTE NOT HANDLED",
-                            err=True,
-                        )
-                    click.echo(
-                        f"{short_name:{_SHORT_NAME_WIDTH}}{name:{_LONG_NAME_WIDTH}} = {value}"
-                    )
-                except Exception as e:
-                    click.echo(
-                        f"{'Error loading attribute':{_SHORT_NAME_WIDTH}}{attr:{_LONG_NAME_WIDTH}}: {e}",
-                        err=True,
-                    )
+        if error := md_list_metadata_with_error(md, json_):
+            click.echo(error, err=True)
+            ctx.exit(1)
 
 
 if __name__ == "__main__":
