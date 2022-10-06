@@ -1061,6 +1061,7 @@ def process_single_file(
     if set_:
         if error := md_set_metadata_with_error(md, set_, verbose):
             click.echo(error, err=True)
+            ctx.exit(1)
 
     if append:
         if error := md_append_metadata_with_error(md, append, verbose):
