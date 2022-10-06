@@ -160,7 +160,7 @@ def get_attributes_to_wipe(md: OSXMetaData) -> t.List[str]:
     return attribute_list
 
 
-def md_wipe_metadata(md: OSXMetaData, filepath: str, verbose: bool = False):
+def md_wipe_metadata(md: OSXMetaData, verbose: bool = False):
     """Wipe metadata attributes on a file
 
     Args:
@@ -169,6 +169,7 @@ def md_wipe_metadata(md: OSXMetaData, filepath: str, verbose: bool = False):
         verbose: if True, print verbose output
     """
     attr_list = get_attributes_to_wipe(md)
+    filepath = md.path
     if verbose:
         if attr_list:
             click.echo(f"Wiping metadata from {filepath}")
@@ -254,7 +255,7 @@ def md_copyfrom_metadata(md: OSXMetaData, copyfrom: str, verbose: bool = False):
 
 
 def md_clear_metadata(
-    md: OSXMetaData, filepath: str, attributes: t.List[str], verbose: bool = False
+    md: OSXMetaData, tr, attributes: t.List[str], verbose: bool = False
 ):
     """Clear metadata attributes on a file
 
@@ -268,7 +269,7 @@ def md_clear_metadata(
             click.echo(f"Clearing {attr}")
         if not md.get(attr):
             if verbose:
-                click.echo(f"  {attr} is already empty on {filepath}")
+                click.echo(f"  {attr} is already empty on {md.path}")
             continue
         md.set(attr, None)
 
@@ -1048,7 +1049,7 @@ def process_single_file(
     md = OSXMetaData(fpath)
 
     if wipe:
-        md_wipe_metadata(md, fpath, verbose)
+        md_wipe_metadata(md, verbose)
 
     if copyfrom:
         # TODO: add option to clear existing attributes if copyfrom does not have them
