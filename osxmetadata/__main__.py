@@ -48,7 +48,7 @@ _SHORT_NAME_WIDTH = (
 )
 _LONG_NAME_WIDTH = max(len(x["name"]) for x in MDITEM_ATTRIBUTE_DATA.values()) + 1
 
-_BACKUP_FILENAME = ".osxmetadata.json"
+BACKUP_FILENAME = ".osxmetadata.json"
 
 
 def get_writeable_attributes() -> t.List[str]:
@@ -86,6 +86,10 @@ def get_attribute_type(attr: str) -> t.Optional[str]:
         if attr in _TAGS_NAMES
         else MDITEM_ATTRIBUTE_DATA[attr]["python_type"]
         if attr in MDITEM_ATTRIBUTE_DATA
+        else "int"
+        if attr == _kFinderColor
+        else "bool"
+        if attr == _kFinderStationeryPad
         else None
     )
 
@@ -574,6 +578,64 @@ def validate_mirror_attributes_with_error(mirror: t.Tuple[t.Tuple[str, str]]):
     return None
 
 
+def md_backup_metadata(filepath: str, backup_file: str, verbose: bool):
+    """Backup metadata from file
+
+    Args:
+        filepath: path to file
+        backup_file: path to backup file
+        verbose: if True, print verbose output
+    """
+    # TODO: this is ripe for refactoring with a sqlite database
+    # Currently, the code writes the entire backup database each time a file is processed
+    if verbose:
+        click.echo(f"  Backing up attribute data for {filepath}")
+    # load the file if it exists, merge new data, then write out the file again
+    backup_data = load_backup_file(backup_file) if backup_file.is_file() else {}
+    backup_dict = get_backup_dict(filepath)
+    backup_data[pathlib.Path(filepath).name] = backup_dict
+    write_backup_file(backup_file, backup_data)
+
+
+def md_restore_metadata(filepath: str, backup_file: str, verbose: bool):
+    """Restore metadata from backup file
+
+    Args:
+        filepath: path to file to restore metadata for
+        backup_file: path to backup file
+        verbose: if True, print verbose output
+    """
+
+    try:
+        backup_data = load_backup_file(backup_file)
+        attr_dict = backup_data[pathlib.Path(filepath).name]
+        if verbose:
+            click.echo(f"  Restoring attribute data for {filepath}")
+        md = OSXMetaData(filepath)
+        for attr, value in attr_dict.items():
+            if attr not in WRITABLE_ATTRIBUTES:
+                continue
+            if not value:
+                # TODO: should values be set to None on restore if they were None in the backup?
+                continue
+            attr_type = get_attribute_type(attr)
+            if attr in _TAGS_NAMES:
+                value = [Tag(v[0], v[1]) for v in value]
+            if attr_type == "datetime.datetime":
+                value = datetime.datetime.fromisoformat(value)
+            elif attr_type == "list[datetime.datetime]":
+                value = [datetime.datetime.fromisoformat(v) for v in value]
+            md.set(attr, value)
+    except FileNotFoundError:
+        click.echo(
+            f"Missing backup file {backup_file} for {filepath}, skipping restore",
+            err=True,
+        )
+    except KeyError:
+        if verbose:
+            click.echo(f"  Skipping restore for file {filepath}: not in backup file")
+
+
 # Click CLI object & context settings
 class CLI_Obj:
     def __init__(self, debug=False, files=None):
@@ -905,7 +967,6 @@ def cli(
                 copyfrom,
                 backup,
                 restore,
-                walk,
                 files_only,
             )
 
@@ -940,7 +1001,6 @@ def cli(
                     copyfrom,
                     backup,
                     restore,
-                    walk,
                     files_only,
                 )
 
@@ -961,7 +1021,6 @@ def process_files(
     copyfrom,
     backup,
     restore,
-    walk,
     files_only,
 ):
     """process list of files, calls process_single_file to process each file
@@ -970,7 +1029,7 @@ def process_files(
     """
     for filename in files:
         fpath = pathlib.Path(filename).resolve()
-        backup_file = pathlib.Path(pathlib.Path(filename).parent) / _BACKUP_FILENAME
+        backup_file = pathlib.Path(pathlib.Path(filename).parent) / BACKUP_FILENAME
 
         if files_only and fpath.is_dir():
             if verbose:
@@ -981,23 +1040,7 @@ def process_files(
             click.echo(f"Processing file: {fpath}")
 
         if restore:
-            try:
-                backup_data = load_backup_file(backup_file)
-                attr_dict = backup_data[pathlib.Path(fpath).name]
-                if verbose:
-                    click.echo(f"  Restoring attribute data for {fpath}")
-                md = OSXMetaData(fpath)
-                md._restore_attributes(attr_dict)
-            except FileNotFoundError:
-                click.echo(
-                    f"Missing backup file {backup_file} for {fpath}, skipping restore",
-                    err=True,
-                )
-            except KeyError:
-                if verbose:
-                    click.echo(
-                        f"  Skipping restore for file {fpath}: not in backup file"
-                    )
+            md_restore_metadata(fpath, backup_file, verbose)
 
         process_single_file(
             ctx,
@@ -1016,15 +1059,7 @@ def process_files(
         )
 
         if backup:
-            # TODO: this is ripe for refactoring with a sqlite database
-            # Currently, the code writes the entire backup database each time a file is processed
-            if verbose:
-                click.echo(f"  Backing up attribute data for {fpath}")
-            # load the file if it exists, merge new data, then write out the file again
-            backup_data = load_backup_file(backup_file) if backup_file.is_file() else {}
-            backup_dict = get_backup_dict(fpath)
-            backup_data[pathlib.Path(fpath).name] = backup_dict
-            write_backup_file(backup_file, backup_data)
+            md_backup_metadata(fpath, backup_file, verbose)
 
 
 def process_single_file(

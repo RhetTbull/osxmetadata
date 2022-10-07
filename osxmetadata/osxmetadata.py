@@ -56,6 +56,7 @@ ASDICT_ATTRIBUTES = {
     _kMDItemUserTags,
 }
 
+# TODO: Need a wipe() method to remove all metadata from a file
 
 class OSXMetaDataAttributeError(Exception):
     """Raised when an attribute is not supported or attempting to set read-only attribute"""
