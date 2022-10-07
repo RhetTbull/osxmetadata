@@ -57,7 +57,7 @@ def snooze():
     """Sleep for a bit to allow Finder to update metadata"""
 
     def _sleep():
-        time.sleep(0.1)
+        time.sleep(0.5)
 
     return _sleep
 

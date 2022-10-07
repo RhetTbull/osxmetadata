@@ -78,7 +78,7 @@ def test_finder_comments_dir(test_dir, snooze):
 
     attribute = kMDItemFinderComment
 
-    md = OSXMetaData(test_dir.name)
+    md = OSXMetaData(test_dir)
     fc = "This is my new comment"
     md.set(attribute, fc)
     snooze()

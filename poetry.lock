@@ -122,6 +122,14 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
+name = "cogapp"
+version = "3.3.0"
+description = "Cog: A content generator for executing Python snippets in source files."
+category = "dev"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[[package]]
 name = "colorama"
 version = "0.4.5"
 description = "Cross-platform colored terminal text."
@@ -993,7 +1001,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "3a7d73b31532953d9e6cb8ada35bb9d8ed36dca1db8d6af241fd10262487c4c5"
+content-hash = "10b0f270d1725c64cd5eef3903198b74ef7ca0942cb456b54c1c0c8c20108b0b"
 
 [metadata.files]
 altgraph = [
@@ -1102,6 +1110,10 @@ click = [
 cloudpickle = [
     {file = "cloudpickle-2.2.0-py3-none-any.whl", hash = "sha256:7428798d5926d8fcbfd092d18d01a2a03daf8237d8fcdc8095d256b8490796f0"},
     {file = "cloudpickle-2.2.0.tar.gz", hash = "sha256:3f4219469c55453cfe4737e564b67c2a149109dabf7f242478948b895f61106f"},
+]
+cogapp = [
+    {file = "cogapp-3.3.0-py2.py3-none-any.whl", hash = "sha256:8b5b5f6063d8ee231961c05da010cb27c30876b2279e23ad0eae5f8f09460d50"},
+    {file = "cogapp-3.3.0.tar.gz", hash = "sha256:1be95183f70282422d594fa42426be6923070a4bd8335621f6347f3aeee81db0"},
 ]
 colorama = [
     {file = "colorama-0.4.5-py2.py3-none-any.whl", hash = "sha256:854bf444933e37f5824ae7bfc1e98d5bce2ebe4160d46b5edf346a89358e99da"},
