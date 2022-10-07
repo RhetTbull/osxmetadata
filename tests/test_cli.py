@@ -433,8 +433,8 @@ def test_cli_backup_restore(test_dir):
     assert result.exit_code == 0
 
     # test the backup file was written and is readable
-    backup_file = BACKUP_FILENAME
-    assert os.path.isfile(backup_file)
+    backup_file = dirname / BACKUP_FILENAME
+    assert backup_file.is_file()
     backup_data = load_backup_file(backup_file)
     assert backup_data[test_file.name]["stationerypad"] == True
 
@@ -452,3 +452,96 @@ def test_cli_backup_restore(test_dir):
     assert md.wherefroms == ["http://www.apple.com"]
     assert md.downloadeddate == [datetime.datetime(2019, 1, 1, 0, 0, 0)]
     assert md.stationerypad
+
+
+def test_cli_backup_walk_pattern(test_dir):
+    """test --backup --walk with --pattern"""
+
+    dirname = pathlib.Path(test_dir)
+    os.makedirs(dirname / "temp" / "subfolder1")
+    os.makedirs(dirname / "temp" / "subfolder2")
+    (dirname / "temp" / "temp1.txt").touch()
+    (dirname / "temp" / "subfolder1" / "sub1.txt").touch()
+    (dirname / "temp" / "subfolder1" / "sub1.pdf").touch()
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--set", "tags", "test", "--walk", "--pattern", "*.pdf", "--backup", test_dir],
+    )
+    assert result.exit_code == 0
+
+    md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.pdf")
+    assert md.tags == [Tag("test", 0)]
+
+    backup_file = dirname / "temp" / "subfolder1" / BACKUP_FILENAME
+    assert backup_file.is_file()
+    backup_data = load_backup_file(backup_file)
+    assert backup_data["sub1.pdf"][_kMDItemUserTags] == [["test", 0]]
+    assert backup_data.get("sub1.txt") is None
+
+
+def test_cli_order(test_dir):
+    """Test order CLI options are executed
+
+    Order of execution should be:
+    restore, wipe, copyfrom, clear, set, append, remove, mirror, get, list, backup
+    """
+
+    dirname = pathlib.Path(test_dir)
+    test_file = dirname / "test_file.txt"
+    test_file.touch()
+
+    md = OSXMetaData(test_file.name)
+    md.tags = [Tag("test", 0)]
+    md.authors = ["John Doe", "Jane Doe"]
+    md.wherefroms = ["http://www.apple.com"]
+    md.downloadeddate = [datetime.datetime(2019, 1, 1, 0, 0, 0)]
+    md.findercomment = "Hello World"
+
+    runner = CliRunner()
+
+    # first, create backup file for --restore
+    runner.invoke(cli, ["--backup", test_file])
+
+    # wipe the data
+    runner.invoke(cli, ["--wipe", test_file])
+
+    # restore the data and check order of operations
+    result = runner.invoke(
+        cli,
+        [
+            "--get",
+            "comment",
+            "--set",
+            "authors",
+            "John Smith",
+            "--restore",
+            "--set",
+            "title",
+            "Test Title",
+            "--clear",
+            "title",
+            "--append",
+            "tags",
+            "test2",
+            "--set",
+            "comment",
+            "foo",
+            "--remove",
+            "authors",
+            "Jane Doe",
+            "--append",
+            "authors",
+            "Jane Smith",
+            "--mirror",
+            "comment",
+            "findercomment",
+            test_file.name,
+        ],
+    )
+    output = parse_cli_output(result.output)
+    assert output["comment"] == "Hello World"
+    assert md.authors == ["John Smith", "Jane Smith"]
+    assert md.findercomment == "Hello World"
+    assert md.tags == [Tag("test", 0), Tag("test2", 0)]

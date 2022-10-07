@@ -691,7 +691,7 @@ class MyClickCommand(click.Command):
         formatter.write_text(
             "Options are executed in the following order regardless of order "
             + "passed on the command line: "
-            + "restore, wipe, copyfrom, clear, set, append, update, remove, mirror, get, list, backup.  "
+            + "restore, wipe, copyfrom, clear, set, append, remove, mirror, get, list, backup.  "
             + "--backup and --restore are mutually exclusive.  "
             + "Other options may be combined or chained together."
         )
