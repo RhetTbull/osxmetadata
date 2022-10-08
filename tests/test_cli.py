@@ -414,7 +414,7 @@ def test_cli_files_only(test_dir):
     assert not md.tags
 
 
-def test_cli_backup_restore(test_dir):
+def test_cli_backup_restore(test_dir, snooze):
     """Test --backup and --restore"""
 
     dirname = pathlib.Path(test_dir)
@@ -440,6 +440,7 @@ def test_cli_backup_restore(test_dir):
 
     # wipe the data
     result = runner.invoke(cli, ["--wipe", test_file.as_posix()])
+    snooze()
     assert not md.tags
     assert not md.authors
     assert not md.stationerypad
@@ -491,6 +492,7 @@ def test_cli_order(test_dir):
     dirname = pathlib.Path(test_dir)
     test_file = dirname / "test_file.txt"
     test_file.touch()
+    test_file.write_text("test")
 
     md = OSXMetaData(test_file.name)
     md.tags = [Tag("test", 0)]
