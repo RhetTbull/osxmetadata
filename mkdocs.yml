@@ -1,0 +1,8 @@
+site_name: osxmetadata Documenation 
+
+theme:
+  name: "material"
+
+plugins:
+- search
+- mkdocstrings

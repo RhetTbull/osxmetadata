@@ -1,0 +1,74 @@
+[
+    {
+        "name": "kMDItemDisplayName",
+        "description": "The localized version of the file name.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFSContentChangeDate",
+        "description": "The date the file contents last changed.",
+        "type": "CFDate",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFSCreationDate",
+        "description": "The date and time that the file was created.",
+        "type": "CFDate",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFSInvisible",
+        "description": "Indicates whether the file is invisible.",
+        "type": "CFBoolean",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFSIsExtensionHidden",
+        "description": "Indicates whether the file extension of the file is hidden.",
+        "type": "CFBoolean",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFSLabel",
+        "description": "Index of the Finder label of the file. Possible values are 0 through 7.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFSName",
+        "description": "The file name of the item.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFSNodeCount",
+        "description": "Number of files in a directory.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFSOwnerGroupID",
+        "description": "The group ID of the owner of the file.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFSOwnerUserID",
+        "description": "The user ID of the owner of the file.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFSSize",
+        "description": "The size, in bytes, of the file on disk.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemPath",
+        "description": "The complete path to the file.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    }
+]

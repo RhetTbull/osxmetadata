@@ -1,117 +1,89 @@
 """Test findercomment """
 
-from tempfile import NamedTemporaryFile, TemporaryDirectory
-
 import pytest
-import platform
+
+from osxmetadata import OSXMetaData, kMDItemFinderComment
 
 
-@pytest.fixture(params=["file", "dir"])
-def temp_file(request):
+def test_finder_comments(test_file, snooze):
 
-    # TESTDIR for temporary files usually defaults to "/tmp",
-    # which may not have XATTR support (e.g. tmpfs);
-    # manual override here.
-    TESTDIR = None
-    if request.param == "file":
-        tempfile = NamedTemporaryFile(dir=TESTDIR)
-        tempfilename = tempfile.name
-        yield tempfilename
-        tempfile.close()
-    else:
-        tempdir = TemporaryDirectory(dir=TESTDIR)
-        tempdirname = tempdir.name
-        yield tempdirname
-        tempdir.cleanup()
-
-
-def test_finder_comments(temp_file):
-    from osxmetadata import OSXMetaData
-
-    meta = OSXMetaData(temp_file)
+    md = OSXMetaData(test_file.name)
     fc = "This is my new comment"
-    meta.findercomment = fc
-    assert meta.findercomment == fc
-    meta.findercomment += ", foo"
+    md.findercomment = fc
+    # Finder comment is set via AppleScript events and may take a moment to update
+    snooze()
+    assert md.findercomment == fc
+    md.findercomment += ", foo"
     fc += ", foo"
-    assert meta.findercomment == fc
+    snooze()
+    assert md.findercomment == fc
 
     # set finder comment to "" deletes it as this mirrors Finder and mdls
-    meta.findercomment = ""
-    assert meta.findercomment is None
+    md.findercomment = ""
+    snooze()
+    assert not md.findercomment
 
-    meta.findercomment = "foo"
-    assert meta.findercomment == "foo"
+    md.findercomment = "foo"
+    snooze()
+    assert md.findercomment == "foo"
 
     # set finder comment to None deletes it
-    meta.findercomment = None
-    assert meta.findercomment is None
+    md.findercomment = None
+    snooze()
+    assert not md.findercomment
 
     # can we set findercomment after is was set to None?
-    meta.findercomment = "bar"
-    assert meta.findercomment == "bar"
+    md.findercomment = "bar"
+    snooze()
+    assert md.findercomment == "bar"
 
 
-def test_finder_comments_2(temp_file):
-    """ test get/set attribute """
-
-    from osxmetadata import OSXMetaData
-    from osxmetadata.constants import kMDItemFinderComment
+def test_finder_comments_get_set(test_file, snooze):
+    """test get/set attribute"""
 
     attribute = kMDItemFinderComment
 
-    meta = OSXMetaData(temp_file)
+    md = OSXMetaData(test_file.name)
     fc = "This is my new comment"
-    meta.set_attribute(attribute, fc)
-    assert meta.findercomment == fc
-    meta.findercomment += ", foo"
+    md.set(attribute, fc)
+    snooze()
+    assert md.findercomment == fc
+    md.findercomment += ", foo"
     fc += ", foo"
-    assert meta.findercomment == fc
+    snooze()
+    assert md.findercomment == fc
 
     # set finder comment to "" deletes it as this mirrors mdls and Finder
-    meta.set_attribute(attribute, "")
-    assert meta.get_attribute(attribute) is None
+    md.set(attribute, "")
+    snooze()
+    assert not md.get(attribute)
 
-    meta.set_attribute(attribute, "foo")
-    assert meta.get_attribute(attribute) == "foo"
+    md.set(attribute, "foo")
+    snooze()
+    assert md.get(attribute) == "foo"
 
     # set finder comment to None deletes it
-    meta.set_attribute(attribute, None)
-    assert meta.get_attribute(attribute) is None
-
-    meta.clear_attribute(attribute)
-    assert meta.get_attribute(attribute) is None
+    md.set(attribute, None)
+    snooze()
+    assert not md.get(attribute)
 
     # can we set findercomment after is was set to None?
-    meta.set_attribute(attribute, "bar")
-    assert meta.get_attribute(attribute) == "bar"
+    md.set(attribute, "bar")
+    snooze()
+    assert md.get(attribute) == "bar"
 
 
-def test_finder_comments_dir():
-    """ test get/set attribute but on a directory, not on a file"""
+def test_finder_comments_dir(test_dir, snooze):
+    """test get/set attribute but on a directory, not on a file"""
 
-    from osxmetadata import OSXMetaData
-    from osxmetadata.constants import kMDItemFinderComment
+    attribute = kMDItemFinderComment
 
-    with TemporaryDirectory() as temp_dir:
-        attribute = kMDItemFinderComment
-
-        meta = OSXMetaData(temp_dir)
-        fc = "This is my new comment"
-        meta.set_attribute(attribute, fc)
-        assert meta.findercomment == fc
-        meta.findercomment += ", foo"
-        fc += ", foo"
-        assert meta.findercomment == fc
-
-
-# @pytest.mark.skipif(
-#     int(platform.mac_ver()[0].split(".")[1]) >= 15,
-#     reason="limit on finder comment length seems to be gone on 10.15+",
-# )
-# def test_finder_comments_max(temp_file):
-#     from osxmetadata import OSXMetaData, _MAX_FINDERCOMMENT
-
-#     meta = OSXMetaData(temp_file)
-#     with pytest.raises(ValueError):
-#         meta.findercomment = "x" * _MAX_FINDERCOMMENT + "x"
+    md = OSXMetaData(test_dir)
+    fc = "This is my new comment"
+    md.set(attribute, fc)
+    snooze()
+    assert md.findercomment == fc
+    md.findercomment += ", foo"
+    fc += ", foo"
+    snooze()
+    assert md.findercomment == fc

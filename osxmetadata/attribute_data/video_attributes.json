@@ -1,0 +1,80 @@
+[
+    {
+        "name": "kMDItemAudioBitRate",
+        "description": "The audio bit rate.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemCodecs",
+        "description": "The codecs used to encode/decode the media.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemDeliveryType",
+        "description": "The delivery type. Values are \"Fast start\" or \"RTSP\".",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemMediaTypes",
+        "description": "The media types present in the content.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemStreamable",
+        "description": "Whether the content is prepared for streaming.",
+        "type": "CFBoolean",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemTotalBitRate",
+        "description": "The total bit rate, audio and video combined, of the media.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemVideoBitRate",
+        "description": "The video bit rate.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemDirector",
+        "description": "Directory of the movie.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemProducer",
+        "description": "Producer of the content.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemGenre",
+        "description": "Genre of the movie.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemPerformers",
+        "description": "Performers in the movie.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemOriginalFormat",
+        "description": "Original format of the movie.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemOriginalSource",
+        "description": "Original source of the movie.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    }
+]

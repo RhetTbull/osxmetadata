@@ -1,959 +1,345 @@
 """ Test osxmetadata command line interface """
 
 import datetime
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+import glob
+import os
+import pathlib
 
 import pytest
 from click.testing import CliRunner
 
-from osxmetadata.attributes import ATTRIBUTES
-from osxmetadata.classes import _AttributeList, _AttributeTagsList
+from osxmetadata import *
+from osxmetadata import __version__
+from osxmetadata.__main__ import BACKUP_FILENAME, cli
+from osxmetadata.backup import load_backup_file
 
-# get list attribute names for string attributes for parameterized testing
-test_names_str = [
-    (attr) for attr in sorted(list(ATTRIBUTES.keys())) if ATTRIBUTES[attr].class_ == str
-]
-ids_str = [
-    attr for attr in sorted(list(ATTRIBUTES.keys())) if ATTRIBUTES[attr].class_ == str
-]
-
-# list of list attributes of type str
-test_names_list = [
-    (attr)
-    for attr in sorted(list(ATTRIBUTES.keys()))
-    if ATTRIBUTES[attr].class_ in (_AttributeList, _AttributeTagsList)
-    and ATTRIBUTES[attr].type_ == str
-]
-ids_list = [
-    attr
-    for attr in sorted(list(ATTRIBUTES.keys()))
-    if ATTRIBUTES[attr].class_ in (_AttributeList, _AttributeTagsList)
-    and ATTRIBUTES[attr].type_ == str
-]
-
-
-# list of list attributes of type datetime.datetime
-test_names_dt = [
-    (attr)
-    for attr in sorted(list(ATTRIBUTES.keys()))
-    if ATTRIBUTES[attr].class_ == _AttributeList
-    and ATTRIBUTES[attr].type_ == datetime.datetime
-]
-ids_list_dt = [
-    attr
-    for attr in sorted(list(ATTRIBUTES.keys()))
-    if ATTRIBUTES[attr].class_ == _AttributeList
-    and ATTRIBUTES[attr].type_ == datetime.datetime
-]
-
-
-def create_file(filepath):
-    """create an empty file at filepath"""
-    fd = open(filepath, "w+")
-    fd.close()
-
-
-@pytest.fixture(params=["file", "dir"])
-def temp_file(request):
-
-    # TESTDIR for temporary files usually defaults to "/tmp",
-    # which may not have XATTR support (e.g. tmpfs);
-    # manual override here.
-    TESTDIR = None
-    if request.param == "file":
-        tempfile = NamedTemporaryFile(dir=TESTDIR)
-        tempfilename = tempfile.name
-        yield tempfilename
-        tempfile.close()
-    else:
-        tempdir = TemporaryDirectory(dir=TESTDIR)
-        tempdirname = tempdir.name
-        yield tempdirname
-        tempdir.cleanup()
-
-
-@pytest.fixture
-def temp_dir():
-    # TESTDIR for temporary files usually defaults to "/tmp",
-    # which may not have XATTR support (e.g. tmpfs);
-    # manual override here.
-    TESTDIR = None
-    tempdir = TemporaryDirectory(dir=TESTDIR)
-    tempdirname = tempdir.name
-    yield tempdirname
-    tempdir.cleanup()
+help = """
+  -v, --version                   Show the version and exit.
+  -w, --walk                      Walk directory tree, processing each file in
+                                  the tree.
+  -j, --json                      Print output in JSON format, for use with
+                                  --list and --get.
+  -X, --wipe                      Wipe all metadata attributes from FILE.
+  -s, --set ATTRIBUTE VALUE       Set ATTRIBUTE to VALUE.
+  -l, --list                      List all metadata attributes for FILE.
+  -c, --clear ATTRIBUTE           Remove attribute from FILE.
+  -a, --append ATTRIBUTE VALUE    Append VALUE to ATTRIBUTE; for multi-valued
+                                  attributes, appends only if VALUE is not
+                                  already present.
+  -g, --get ATTRIBUTE             Get value of ATTRIBUTE.
+  -r, --remove ATTRIBUTE VALUE    Remove VALUE from ATTRIBUTE; only applies to
+                                  multi-valued attributes.
+  -m, --mirror ATTRIBUTE1 ATTRIBUTE2
+                                  Mirror values between ATTRIBUTE1 and
+                                  ATTRIBUTE2 so that ATTRIBUTE1 = ATTRIBUTE2;
+                                  for multi-valued attributes, merges values;
+                                  for string attributes, sets ATTRIBUTE1 =
+                                  ATTRIBUTE2 overwriting any value in
+                                  ATTRIBUTE1.  For example: '--mirror keywords
+                                  tags' sets tags and keywords to same values.
+  -B, --backup                    Backup FILE attributes.  Backup file
+                                  '.osxmetadata.json' will be created in same
+                                  folder as FILE. Only backs up attributes
+                                  known to osxmetadata unless used with --all.
+  -R, --restore                   Restore FILE attributes from backup file.
+                                  Restore will look for backup file
+                                  '.osxmetadata.json' in same folder as FILE.
+                                  Only restores attributes known to
+                                  osxmetadata unless used with --all.
+  -V, --verbose                   Print verbose output.
+  -f, --copyfrom SOURCE_FILE      Copy attributes from file SOURCE_FILE (only
+                                  updates destination attributes that are not
+                                  null in SOURCE_FILE).
+  --files-only                    Do not apply metadata commands to
+                                  directories themselves, only files in a
+                                  directory.
+  -p, --pattern PATTERN           Only process files matching PATTERN; only
+                                  applies to --walk. If specified, only files
+                                  matching PATTERN will be processed as each
+                                  directory is walked. May be used for than
+                                  once to specify multiple patterns. For
+                                  example, tag all *.pdf files in projectdir
+                                  and subfolders with tag 'project':
+                                  osxmetadata --append tags 'project' --walk
+                                  projectdir/ --pattern '*.pdf'
+  --help                          Show this message and exit.
+"""
 
 
 def parse_cli_output(output):
-    """helper for testing
-    parse the CLI --list output and return value of all set attributes as dict"""
+    """Helper for testing
+
+    Parse the CLI --list output and return value of all set attributes as dict
+    """
     import re
 
-    results = {}
     matches = re.findall(r"^(\w+)\s+.*\=\s+(.*)$", output, re.MULTILINE)
-    for match in matches:
-        results[match[0]] = match[1]
-    return results
+    return {match[0]: match[1] for match in matches}
 
 
-def test_cli_1(temp_file):
-    import datetime
+def test_cli_list(test_file):
+    """Test --list"""
 
-    from osxmetadata import FINDER_COLOR_RED, OSXMetaData, kMDItemDownloadedDate
-    from osxmetadata.__main__ import cli
+    md = OSXMetaData(test_file.name)
+    md.authors = ["John Doe"]
+    md.findercomment = "Hello World"
+    md.tags = [Tag("test", 0)]
+    md.description = "This is a test file"
 
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        [
-            "--set",
-            "description",
-            "Foo",
-            "--append",
-            "description",
-            "Bar",
-            "--list",
-            temp_file,
-        ],
+        ["--list", test_file.name],
     )
     assert result.exit_code == 0
     output = parse_cli_output(result.stdout)
-    assert output["description"] == "FooBar"
-    meta = OSXMetaData(temp_file)
-    assert meta.description == "FooBar"
-
-    result = runner.invoke(
-        cli,
-        [
-            "--update",
-            "keywords",
-            "foo",
-            "--update",
-            "keywords",
-            "bar",
-            "--remove",
-            "keywords",
-            "foo",
-            "--set",
-            "finderinfo",
-            "color:red",
-            "--list",
-            temp_file,
-        ],
-    )
-    assert result.exit_code == 0
-    output = parse_cli_output(result.stdout)
-    assert output["keywords"] == "['bar']"
-    meta = OSXMetaData(temp_file)
-    assert meta.keywords == ["bar"]
-    assert meta.finderinfo.color == FINDER_COLOR_RED
-
-    dt = "2020-02-23"
-    result = runner.invoke(cli, ["--set", "downloadeddate", dt, "--list", temp_file])
-    assert result.exit_code == 0
-    output = parse_cli_output(result.stdout)
-    assert output["downloadeddate"] == "['2020-02-23T00:00:00']"
-    expected_dt = datetime.datetime.fromisoformat(dt)
-    meta = OSXMetaData(temp_file)
-    assert meta.get_attribute(kMDItemDownloadedDate) == [expected_dt]
-    assert meta.downloadeddate == [expected_dt]
-
-    result = runner.invoke(cli, ["--clear", "description", temp_file])
-    assert result.exit_code == 0
-    meta = OSXMetaData(temp_file)
-    assert meta.description is None
-
-
-@pytest.mark.parametrize("attribute", test_names_str, ids=ids_str)
-def test_str_attributes(temp_file, attribute):
-    from osxmetadata import ATTRIBUTES, OSXMetaData
-    from osxmetadata.__main__ import cli
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        ["--set", attribute, "Foo", "--append", attribute, "Bar", "--list", temp_file],
-    )
-    assert result.exit_code == 0
-    output = parse_cli_output(result.stdout)
-    attr_short_name = ATTRIBUTES[attribute].name
-    assert output[attr_short_name] == "FooBar"
-    meta = OSXMetaData(temp_file)
-    assert meta.get_attribute(attribute) == "FooBar"
-
-
-@pytest.mark.parametrize("attribute", test_names_list, ids=ids_list)
-def test_list_attributes(temp_file, attribute):
-    from osxmetadata import ATTRIBUTES, OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-    from osxmetadata.constants import _TAGS_NAMES
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli, ["--set", attribute, "Foo", "--set", attribute, "Bar", "--list", temp_file]
-    )
-    assert result.exit_code == 0
-    output = parse_cli_output(result.stdout)
-    attr_short_name = ATTRIBUTES[attribute].name
-    assert output[attr_short_name] == "['Foo', 'Bar']"
-    meta = OSXMetaData(temp_file)
-    if attribute in [*_TAGS_NAMES]:
-        assert meta.get_attribute(attribute) == [Tag("Foo"), Tag("Bar")]
-    else:
-        assert meta.get_attribute(attribute) == ["Foo", "Bar"]
-
-    result = runner.invoke(
-        cli,
-        [
-            "--append",
-            attribute,
-            "Green",
-            "--remove",
-            attribute,
-            "Foo",
-            "--list",
-            temp_file,
-        ],
-    )
-    assert result.exit_code == 0
-    output = parse_cli_output(result.stdout)
-    attr_short_name = ATTRIBUTES[attribute].name
-    if attr_short_name == "tags":
-        assert output[attr_short_name] == "['Bar', 'Green,Green']"
-    else:
-        assert output[attr_short_name] == "['Bar', 'Green']"
-
-
-@pytest.mark.parametrize("attribute", test_names_dt, ids=ids_list_dt)
-def test_datetime_list_attributes(temp_file, attribute):
-    from osxmetadata import ATTRIBUTES, OSXMetaData
-    from osxmetadata.__main__ import cli
-
-    dt = datetime.datetime.now()
-    dt_str = dt.isoformat()
-
-    runner = CliRunner()
-    result = runner.invoke(cli, ["--set", attribute, dt_str, "--list", temp_file])
-    assert result.exit_code == 0
-    output = parse_cli_output(result.stdout)
-    attr_short_name = ATTRIBUTES[attribute].name
-    assert output[attr_short_name] == f"['{dt_str}']"
-    meta = OSXMetaData(temp_file)
-    assert meta.get_attribute(attribute) == [dt]
-
-
-def test_get_json(temp_file):
-    import json
-    import pathlib
-
-    from osxmetadata import ATTRIBUTES, OSXMetaData, __version__
-    from osxmetadata.__main__ import cli
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli, ["--set", "tags", "foo", "--set", "tags", "bar", temp_file]
-    )
-    result = runner.invoke(cli, ["--get", "tags", "--json", temp_file])
-    assert result.exit_code == 0
-    json_ = json.loads(result.stdout)
-    assert json_["com.apple.metadata:_kMDItemUserTags"] == [["foo", 0], ["bar", 0]]
-    assert json_["_version"] == __version__
-    assert json_["_filename"] == pathlib.Path(temp_file).name
-
-
-def test_list_json(temp_file):
-    import json
-    import pathlib
-
-    from osxmetadata import ATTRIBUTES, OSXMetaData, __version__
-    from osxmetadata.__main__ import cli
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli, ["--set", "tags", "foo", "--set", "tags", "bar", temp_file]
-    )
-    result = runner.invoke(cli, ["--list", "--json", temp_file])
-    assert result.exit_code == 0
-    json_ = json.loads(result.stdout)
-    assert json_["com.apple.metadata:_kMDItemUserTags"] == [["foo", 0], ["bar", 0]]
-    assert json_["_version"] == __version__
-    assert json_["_filename"] == pathlib.Path(temp_file).name
-
-
-def test_cli_error_json(temp_file):
-    from osxmetadata import ATTRIBUTES, OSXMetaData
-    from osxmetadata.__main__ import cli
-
-    runner = CliRunner()
-    result = runner.invoke(cli, ["--set", "tags", "foo", "--json", temp_file])
-    assert result.exit_code == 2
-    assert "--json can only be used with --get or --list" in result.stdout
-
-
-def test_cli_error_bad_attribute(temp_file):
-    from osxmetadata import ATTRIBUTES, OSXMetaData
-    from osxmetadata.__main__ import cli
-
-    runner = CliRunner()
-    result = runner.invoke(cli, ["--set", "foo", "bar", temp_file])
-    assert result.exit_code == 2
-    assert "Invalid attribute foo" in result.stdout
-
-
-def test_cli_error(temp_file):
-    from osxmetadata.__main__ import cli
-
-    runner = CliRunner()
-    result = runner.invoke(cli, ["--set", temp_file])
-    assert result.exit_code == 2
-    assert "Error:" in result.stdout
-
-
-def test_cli_backup_restore(temp_file):
-    import pathlib
-
-    from osxmetadata import ATTRIBUTES, OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-    from osxmetadata.constants import (
-        _BACKUP_FILENAME,
-        FINDER_COLOR_GREEN,
-        FINDER_COLOR_NONE,
-    )
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "--set",
-            "tags",
-            "Foo",
-            "--set",
-            "tags",
-            "Bar",
-            "--set",
-            "comment",
-            "Hello World!",
-            "--list",
-            "--set",
-            "finderinfo",
-            "color:green",
-            temp_file,
-        ],
-    )
-    assert result.exit_code == 0
-    output = parse_cli_output(result.stdout)
-    assert output["tags"] == "['Foo', 'Bar', 'Green,Green']"
-    meta = OSXMetaData(temp_file)
-    assert meta.get_attribute("tags") == [
-        Tag("Foo"),
-        Tag("Bar"),
-        Tag("Green", FINDER_COLOR_GREEN),
-    ]
-    assert meta.get_attribute("comment") == "Hello World!"
-    assert meta.finderinfo.color == FINDER_COLOR_GREEN
-
-    # test creation of backup file
-    result = runner.invoke(cli, ["--backup", temp_file])
-    assert result.exit_code == 0
-    backup_file = pathlib.Path(pathlib.Path(temp_file).parent) / _BACKUP_FILENAME
-    assert backup_file.exists()
-
-    # clear the attributes to see if they can be restored
-    meta.clear_attribute("tags")
-    meta.clear_attribute("comment")
-    meta.clear_attribute("finderinfo")
-    assert meta.tags == []
-    assert meta.comment is None
-    assert meta.finderinfo.color == FINDER_COLOR_NONE
-
-    result = runner.invoke(cli, ["--restore", temp_file])
-    assert result.exit_code == 0
-    assert meta.tags == [Tag("Foo"), Tag("Bar"), Tag("Green", FINDER_COLOR_GREEN)]
-    assert meta.comment == "Hello World!"
-    assert meta.finderinfo.color == FINDER_COLOR_GREEN
-
-
-def test_cli_backup_restore_2(temp_file):
-    # test set during restore
-    import pathlib
-
-    from osxmetadata import ATTRIBUTES, OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-    from osxmetadata.constants import _BACKUP_FILENAME
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "--set",
-            "tags",
-            "Foo",
-            "--set",
-            "tags",
-            "Bar",
-            "--set",
-            "comment",
-            "Hello World!",
-            "--list",
-            temp_file,
-        ],
-    )
-    assert result.exit_code == 0
-    output = parse_cli_output(result.stdout)
-    assert output["tags"] == "['Foo', 'Bar']"
-    meta = OSXMetaData(temp_file)
-    assert meta.get_attribute("tags") == [Tag("Foo"), Tag("Bar")]
-    assert meta.get_attribute("comment") == "Hello World!"
-
-    # test creation of backup file
-    result = runner.invoke(cli, ["--backup", temp_file])
-    assert result.exit_code == 0
-    backup_file = pathlib.Path(pathlib.Path(temp_file).parent) / _BACKUP_FILENAME
-    assert backup_file.exists()
-
-    # clear the attributes to see if they can be restored
-    meta.clear_attribute("tags")
-    meta.clear_attribute("comment")
-    assert meta.tags == []
-    assert meta.comment is None
-
-    result = runner.invoke(
-        cli,
-        [
-            "--restore",
-            "--append",
-            "tags",
-            "Flooz",
-            "--set",
-            "keywords",
-            "FooBar",
-            temp_file,
-        ],
-    )
-    assert result.exit_code == 0
-    assert meta.tags == [Tag("Foo"), Tag("Bar"), Tag("Flooz")]
-    assert meta.comment == "Hello World!"
-    assert meta.keywords == ["FooBar"]
-
-
-def test_cli_backup_restore_all(temp_file):
-    """Test --backup/--restore with --all"""
-    import pathlib
-
-    from osxmetadata import ATTRIBUTES, OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-    from osxmetadata.constants import _BACKUP_FILENAME
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "--set",
-            "tags",
-            "Foo",
-            "--set",
-            "tags",
-            "Bar",
-            "--set",
-            "comment",
-            "Hello World!",
-            "--list",
-            temp_file,
-        ],
-    )
-    assert result.exit_code == 0
-    meta = OSXMetaData(temp_file)
-    # set a value osxmetadata doesn't know about
-    meta._attrs.set("com.foo.bar", b"FOOBAR")
-
-    # backup
-    result = runner.invoke(cli, ["--backup", "--all", temp_file])
-    assert result.exit_code == 0
-
-    # clear the attributes to see if they can be restored
-    meta.clear_attribute("tags")
-    meta.clear_attribute("comment")
-    meta._attrs.remove("com.foo.bar")
-    assert meta.tags == []
-    assert meta.comment is None
-    assert "com.foo.bar" not in meta._list_attributes()
-
-    # first run restore without --all
-    result = runner.invoke(cli, ["--restore", temp_file])
-    assert result.exit_code == 0
-    assert meta.tags == [Tag("Foo"), Tag("Bar")]
-    assert meta.comment == "Hello World!"
-
-    with pytest.raises(KeyError):
-        assert meta._attrs["com.foo.bar"] == b"FOOBAR"
-
-    # next run restore with --all
-    result = runner.invoke(cli, ["--restore", "--all", temp_file])
-    assert result.exit_code == 0
-    assert meta.tags == [Tag("Foo"), Tag("Bar")]
-    assert meta.comment == "Hello World!"
-    assert meta._attrs["com.foo.bar"] == b"FOOBAR"
-
-
-def test_cli_mirror(temp_file):
-    import datetime
-
-    from osxmetadata import OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "--set",
-            "comment",
-            "Foo",
-            "--set",
-            "findercomment",
-            "Bar",
-            "--set",
-            "keywords",
-            "foo",
-            "--set",
-            "tags",
-            "bar",
-            "--list",
-            temp_file,
-        ],
-    )
-    assert result.exit_code == 0
-    meta = OSXMetaData(temp_file)
-    assert meta.tags == [Tag("bar")]
-    assert meta.keywords == ["foo"]
-    assert meta.findercomment == "Bar"
-    assert meta.comment == "Foo"
-
-    result = runner.invoke(
-        cli,
-        [
-            "--mirror",
-            "keywords",
-            "tags",
-            "--mirror",
-            "comment",
-            "findercomment",
-            temp_file,
-        ],
-    )
-
-    assert result.exit_code == 0
-    assert meta.keywords == ["bar", "foo"]
-    assert meta.tags == [Tag("bar"), Tag("foo")]
-    assert meta.findercomment == "Bar"
-    assert meta.comment == "Bar"
-
-
-def test_cli_mirror_bad_args(temp_file):
-    import datetime
-
-    from osxmetadata import OSXMetaData
-    from osxmetadata.__main__ import cli
-
-    runner = CliRunner()
-    result = runner.invoke(cli, ["--mirror", "keywords", "comment", temp_file])
-    assert result.exit_code == 2
-    assert "incompatible types" in result.output
-
-    result = runner.invoke(cli, ["--mirror", "downloadeddate", "tags", temp_file])
-    assert result.exit_code == 2
-    assert "incompatible types" in result.output
-
-
-def test_cli_wipe(temp_file):
-    from osxmetadata import OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "--set",
-            "comment",
-            "Foo",
-            "--set",
-            "findercomment",
-            "Bar",
-            "--set",
-            "keywords",
-            "foo",
-            "--set",
-            "tags",
-            "bar",
-            "--list",
-            temp_file,
-        ],
-    )
-    assert result.exit_code == 0
-    meta = OSXMetaData(temp_file)
-    assert meta.tags == [Tag("bar")]
-    assert meta.keywords == ["foo"]
-    assert meta.findercomment == "Bar"
-    assert meta.comment == "Foo"
-
-    result = runner.invoke(cli, ["--wipe", temp_file])
-    assert result.exit_code == 0
-    assert meta.tags == []
-    assert meta.keywords == []
-    assert meta.findercomment is None
-    assert meta.comment is None
-
-
-def test_cli_wipe_2(temp_file):
-    # test wipe then set
-    from osxmetadata import OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "--set",
-            "comment",
-            "Foo",
-            "--set",
-            "findercomment",
-            "Bar",
-            "--set",
-            "keywords",
-            "foo",
-            "--set",
-            "tags",
-            "bar",
-            "--list",
-            temp_file,
-        ],
-    )
-    assert result.exit_code == 0
-    meta = OSXMetaData(temp_file)
-    assert meta.tags == [Tag("bar")]
-    assert meta.keywords == ["foo"]
-    assert meta.findercomment == "Bar"
-    assert meta.comment == "Foo"
-
-    result = runner.invoke(
-        cli, ["--wipe", "--set", "comment", "Hello World!", temp_file]
-    )
-    assert result.exit_code == 0
-    assert meta.tags == []
-    assert meta.keywords == []
-    assert meta.findercomment is None
-    assert meta.comment == "Hello World!"
-
-
-def test_cli_copy_from(temp_file):
-    # test copy from source file
-    from osxmetadata import OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-
-    TESTDIR = None
-    source_file = NamedTemporaryFile(dir=TESTDIR)
-    source_filename = source_file.name
-
-    meta_source = OSXMetaData(source_filename)
-    meta_source.tags = [Tag("bar")]
-    meta_source.keywords = ["foo"]
-    meta_source.findercomment = "Bar"
-    meta_source.comment = "Foo"
-
-    runner = CliRunner()
-    result = runner.invoke(cli, ["--copyfrom", source_filename, temp_file])
-    assert result.exit_code == 0
-    meta = OSXMetaData(temp_file)
-    assert meta.tags == [Tag("bar")]
-    assert meta.keywords == ["foo"]
-    assert meta.findercomment == "Bar"
-    assert meta.comment == "Foo"
-
-    source_file.close()
-
-
-def test_cli_copy_from_2(temp_file):
-    # test copy from source file with setting etc
-    from osxmetadata import OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-
-    TESTDIR = None
-    source_file = NamedTemporaryFile(dir=TESTDIR)
-    source_filename = source_file.name
-
-    meta_source = OSXMetaData(source_filename)
-    meta_source.tags = [Tag("bar")]
-    meta_source.keywords = ["foo"]
-    meta_source.findercomment = "Bar"
-    meta_source.comment = "Foo"
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "--copyfrom",
-            source_filename,
-            temp_file,
-            "--set",
-            "tags",
-            "FOOBAR",
-            "--append",
-            "findercomment",
-            "Foo",
-        ],
-    )
-    assert result.exit_code == 0
-    meta = OSXMetaData(temp_file)
-    assert meta.tags == [Tag("FOOBAR")]
-    assert meta.keywords == ["foo"]
-    assert meta.findercomment == "BarFoo"
-    assert meta.comment == "Foo"
-
-    source_file.close()
-
-
-def test_cli_verbose(temp_file):
-    from osxmetadata import OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-
-    TESTDIR = None
-    source_file = NamedTemporaryFile(dir=TESTDIR)
-    source_filename = source_file.name
-
-    meta_source = OSXMetaData(source_filename)
-    meta_source.tags = [Tag("bar")]
-    meta_source.keywords = ["foo"]
-    meta_source.findercomment = "Bar"
-    meta_source.comment = "Foo"
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "--wipe",
-            "--set",
-            "keywords",
-            "test",
-            "--list",
-            "--get",
-            "keywords",
-            "--clear",
-            "keywords",
-            "--remove",
-            "keywords",
-            "test",
-            "--update",
-            "keywords",
-            "foo",
-            "--mirror",
-            "keywords",
-            "tags",
-            "--backup",
-            "--verbose",
-            "--copyfrom",
-            source_filename,
-            temp_file,
-        ],
-    )
-    assert result.exit_code == 0
-    output = result.output
-    assert "Processing file" in output
-    assert "No metadata to wipe from" in output
-    assert "Copying attributes from" in output
-    assert "Copying com.apple.metadata:_kMDItemUserTags" in output
-    assert "Copying com.apple.metadata:kMDItemComment" in output
-    assert "Copying com.apple.metadata:kMDItemKeywords" in output
-    assert "Copying com.apple.metadata:kMDItemFinderComment" in output
-    assert "Clearing keywords" in output
-    assert "Setting keywords=test" in output
-    assert "Updating keywords=foo" in output
-    assert "Removing keywords" in output
-    assert "Mirroring keywords tags" in output
-    assert "Backing up attribute data" in output
-
-    source_file.close()
-
-
-def test_cli_verbose_short_opts(temp_file):
-    from osxmetadata import OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-
-    TESTDIR = None
-    source_file = NamedTemporaryFile(dir=TESTDIR)
-    source_filename = source_file.name
-
-    meta_source = OSXMetaData(source_filename)
-    meta_source.tags = [Tag("bar")]
-    meta_source.keywords = ["foo"]
-    meta_source.findercomment = "Bar"
-    meta_source.comment = "Foo"
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "-X",
-            "-s",
-            "keywords",
-            "test",
-            "-l",
-            "-g",
-            "keywords",
-            "-c",
-            "keywords",
-            "-r",
-            "keywords",
-            "test",
-            "-u",
-            "keywords",
-            "foo",
-            "-m",
-            "keywords",
-            "tags",
-            "-V",
-            "-B",
-            "-f",
-            source_filename,
-            temp_file,
-        ],
-    )
-    assert result.exit_code == 0
-    output = result.output
-    assert "Processing file" in output
-    assert "No metadata to wipe from" in output
-    assert "Copying attributes from" in output
-    assert "Copying com.apple.metadata:_kMDItemUserTags" in output
-    assert "Copying com.apple.metadata:kMDItemComment" in output
-    assert "Copying com.apple.metadata:kMDItemKeywords" in output
-    assert "Copying com.apple.metadata:kMDItemFinderComment" in output
-    assert "Clearing keywords" in output
-    assert "Setting keywords=test" in output
-    assert "Updating keywords=foo" in output
-    assert "Removing keywords" in output
-    assert "Mirroring keywords tags" in output
-    assert "Backing up attribute data" in output
-
-    source_file.close()
+    assert output["description"] == "This is a test file"
+    assert output["findercomment"] == "Hello World"
+    assert output["authors"] == "John Doe"
+    assert output["tags"] == "test: 0"
 
 
 def test_cli_version():
-    from osxmetadata import OSXMetaData, __version__
-    from osxmetadata.__main__ import cli
+    """Test --version"""
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["-v"])
-    assert result.exit_code == 0
-    assert f"version {__version__}" in result.output
-
     result = runner.invoke(cli, ["--version"])
     assert result.exit_code == 0
-    assert f"version {__version__}" in result.output
+    assert __version__ in result.stdout
 
 
-def test_cli_downloadeddate(temp_file):
-    # pass ISO 8601 format with timezone, get back naive local time
-    import datetime
+def test_cli_wipe(test_file):
+    """Test --wipe"""
 
-    from osxmetadata import OSXMetaData, kMDItemDownloadedDate
-    from osxmetadata.__main__ import cli
-    from osxmetadata.datetime_utils import (
-        datetime_naive_to_utc,
-        datetime_remove_tz,
-        datetime_utc_to_local,
-    )
-
-    runner = CliRunner()
-    dt = "2020-02-23:00:00:00+00:00"  # UTC time
-    utc_time = datetime.datetime.fromisoformat(dt)
-    local_time = datetime_remove_tz(datetime_utc_to_local(utc_time))
-
-    result = runner.invoke(cli, ["--set", "downloadeddate", dt, "--list", temp_file])
-    assert result.exit_code == 0
-
-    output = parse_cli_output(result.stdout)
-    assert output["downloadeddate"] == f"['{local_time.isoformat()}']"
-
-    meta = OSXMetaData(temp_file)
-    meta.tz_aware = True
-    assert meta.get_attribute(kMDItemDownloadedDate) == [utc_time]
-    assert meta.downloadeddate == [utc_time]
-
-
-def test_cli_walk(temp_dir):
-    """test --walk"""
-    import os
-    import pathlib
-
-    from osxmetadata import OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-
-    dirname = pathlib.Path(temp_dir)
-    os.makedirs(dirname / "temp" / "subfolder1")
-    os.makedirs(dirname / "temp" / "subfolder2")
-    create_file(dirname / "temp" / "temp1.txt")
-    create_file(dirname / "temp" / "subfolder1" / "sub1.txt")
-
-    runner = CliRunner()
-    result = runner.invoke(cli, ["--set", "tags", "FOO", "--walk", temp_dir])
-    assert result.exit_code == 0
-
-    md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.txt")
-    assert md.tags == [Tag("FOO")]
-
-    md = OSXMetaData(dirname / "temp" / "subfolder2")
-    assert md.tags == [Tag("FOO")]
-
-
-def test_cli_walk_files_only(temp_dir):
-    """test --walk with --files-only"""
-    import os
-    import pathlib
-
-    from osxmetadata import OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-
-    dirname = pathlib.Path(temp_dir)
-    os.makedirs(dirname / "temp" / "subfolder1")
-    os.makedirs(dirname / "temp" / "subfolder2")
-    create_file(dirname / "temp" / "temp1.txt")
-    create_file(dirname / "temp" / "subfolder1" / "sub1.txt")
+    md = OSXMetaData(test_file.name)
+    md.authors = ["John Doe"]
+    md.description = "This is a test file"
 
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["--set", "tags", "FOO", "--walk", "--files-only", temp_dir]
+        cli,
+        ["--wipe", test_file.name],
+    )
+    assert result.exit_code == 0
+    assert not md.authors
+    assert not md.description
+
+
+def test_cli_set(test_file):
+    """Test --set"""
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--set",
+            "authors",
+            "John Doe",
+            "--set",
+            "tags",
+            "test,0",
+            "--set",
+            "description",
+            "Hello World",
+            "--set",
+            "description",
+            "Goodbye World",  # this should overwrite the previous value
+            test_file.name,
+        ],
+    )
+    assert result.exit_code == 0
+    md = OSXMetaData(test_file.name)
+    assert md.authors == ["John Doe"]
+    assert md.tags == [Tag("test", 0)]
+    assert md.description == "Goodbye World"
+
+
+def test_cli_clear(test_file):
+    """Test --clear"""
+
+    md = OSXMetaData(test_file.name)
+    md.authors = ["John Doe"]
+    md.description = "This is a test file"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--clear", "authors", test_file.name],
+    )
+    assert result.exit_code == 0
+    assert not md.authors
+    assert md.description == "This is a test file"
+
+
+def test_cli_append(test_file):
+    """Test --append"""
+
+    md = OSXMetaData(test_file.name)
+    md.authors = ["John Doe"]
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--append",
+            "authors",
+            "Jane Doe",
+            "--append",  # append to empty attribute
+            "tags",
+            "test,0",
+            test_file.name,
+        ],
+    )
+    assert result.exit_code == 0
+    assert md.authors == ["John Doe", "Jane Doe"]
+    assert md.tags == [Tag("test", 0)]
+
+
+def test_cli_get(test_file):
+    """Test --get"""
+
+    md = OSXMetaData(test_file.name)
+    md.authors = ["John Doe"]
+    md.description = "This is a test file"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--get", "authors", test_file.name],
+    )
+    assert result.exit_code == 0
+    output = parse_cli_output(result.stdout)
+    assert output["authors"] == "John Doe"
+
+
+def test_cli_remove(test_file):
+    """Test --remove"""
+
+    md = OSXMetaData(test_file.name)
+    md.authors = ["John Doe", "Jane Doe"]
+    md.tags = [Tag("test", 0)]
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--remove",
+            "authors",
+            "John Doe",
+            "--remove",
+            "tags",
+            "test,0",
+            test_file.name,
+        ],
+    )
+    assert result.exit_code == 0
+    assert md.authors == ["Jane Doe"]
+    assert not md.tags
+
+
+def test_cli_mirror(test_file):
+    """Test --mirror"""
+
+    md = OSXMetaData(test_file.name)
+    md.description = "This is a test file"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--mirror",
+            "comment",
+            "description",
+            test_file.name,
+            "--verbose",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "Mirroring" in result.stdout
+    assert md.description == "This is a test file"
+
+
+def test_cli_copyfrom(test_file, test_file2):
+    """Test --copyfrom"""
+
+    md = OSXMetaData(test_file.name)
+    md.description = "This is a test file"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--copyfrom",
+            test_file.name,
+            test_file2.name,
+        ],
+    )
+    assert result.exit_code == 0
+
+    md2 = OSXMetaData(test_file2.name)
+    assert md2.description == "This is a test file"
+
+
+def test_cli_walk(test_dir):
+    """test --walk"""
+
+    dirname = pathlib.Path(test_dir)
+    os.makedirs(dirname / "temp" / "subfolder1")
+    os.makedirs(dirname / "temp" / "subfolder2")
+    (dirname / "temp" / "temp1.txt").touch()
+    (dirname / "temp" / "subfolder1" / "sub1.txt").touch()
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--set", "tags", "test", "--walk", test_dir])
+    assert result.exit_code == 0
+
+    md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.txt")
+    assert md.tags == [Tag("test", 0)]
+
+    md = OSXMetaData(dirname / "temp" / "subfolder2")
+    assert md.tags == [Tag("test", 0)]
+
+
+def test_cli_walk_files_only(test_dir):
+    """test --walk with --files-only"""
+
+    dirname = pathlib.Path(test_dir)
+    os.makedirs(dirname / "temp" / "subfolder1")
+    os.makedirs(dirname / "temp" / "subfolder2")
+    (dirname / "temp" / "temp1.txt").touch()
+    (dirname / "temp" / "subfolder1" / "sub1.txt").touch()
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["--set", "tags", "test", "--walk", "--files-only", test_dir]
     )
     assert result.exit_code == 0
 
     md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.txt")
-    assert md.tags == [Tag("FOO")]
+    assert md.tags == [Tag("test", 0)]
 
     md = OSXMetaData(dirname / "temp" / "subfolder2")
     assert not md.tags
 
 
-def test_cli_walk_pattern(temp_dir):
+def test_cli_walk_pattern(test_dir):
     """test --walk with --pattern"""
-    import os
-    import pathlib
 
-    from osxmetadata import OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-
-    dirname = pathlib.Path(temp_dir)
+    dirname = pathlib.Path(test_dir)
     os.makedirs(dirname / "temp" / "subfolder1")
     os.makedirs(dirname / "temp" / "subfolder2")
-    create_file(dirname / "temp" / "temp1.txt")
-    create_file(dirname / "temp" / "subfolder1" / "sub1.txt")
-    create_file(dirname / "temp" / "subfolder1" / "sub1.pdf")
+    (dirname / "temp" / "temp1.txt").touch()
+    (dirname / "temp" / "subfolder1" / "sub1.txt").touch()
+    (dirname / "temp" / "subfolder1" / "sub1.pdf").touch()
 
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["--set", "tags", "FOO", "--walk", "--pattern", "*.pdf", temp_dir]
+        cli, ["--set", "tags", "test", "--walk", "--pattern", "*.pdf", test_dir]
     )
     assert result.exit_code == 0
 
     md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.pdf")
-    assert md.tags == [Tag("FOO")]
+    assert md.tags == [Tag("test", 0)]
 
     md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.txt")
     assert not md.tags
@@ -962,21 +348,16 @@ def test_cli_walk_pattern(temp_dir):
     assert not md.tags
 
 
-def test_cli_walk_pattern_2(temp_dir):
+def test_cli_walk_pattern_2(test_dir):
     """test --walk with more than one --pattern"""
-    import os
-    import pathlib
 
-    from osxmetadata import OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-
-    dirname = pathlib.Path(temp_dir)
+    dirname = pathlib.Path(test_dir)
     os.makedirs(dirname / "temp" / "subfolder1")
     os.makedirs(dirname / "temp" / "subfolder2")
-    create_file(dirname / "temp" / "temp1.txt")
-    create_file(dirname / "temp" / "subfolder1" / "sub1.txt")
-    create_file(dirname / "temp" / "subfolder1" / "sub1.pdf")
-    create_file(dirname / "temp" / "subfolder2" / "sub2.jpg")
+    (dirname / "temp" / "temp1.txt").touch()
+    (dirname / "temp" / "subfolder1" / "sub1.txt").touch()
+    (dirname / "temp" / "subfolder1" / "sub1.pdf").touch()
+    (dirname / "temp" / "subfolder2" / "sub2.jpg").touch()
 
     runner = CliRunner()
     result = runner.invoke(
@@ -984,22 +365,22 @@ def test_cli_walk_pattern_2(temp_dir):
         [
             "--set",
             "tags",
-            "FOO",
+            "test",
             "--walk",
             "--pattern",
             "*.pdf",
             "--pattern",
             "*.jpg",
-            temp_dir,
+            test_dir,
         ],
     )
     assert result.exit_code == 0
 
     md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.pdf")
-    assert md.tags == [Tag("FOO")]
+    assert md.tags == [Tag("test", 0)]
 
     md = OSXMetaData(dirname / "temp" / "subfolder2" / "sub2.jpg")
-    assert md.tags == [Tag("FOO")]
+    assert md.tags == [Tag("test", 0)]
 
     md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.txt")
     assert not md.tags
@@ -1008,32 +389,159 @@ def test_cli_walk_pattern_2(temp_dir):
     assert not md.tags
 
 
-def test_cli_files_only(temp_dir):
+def test_cli_files_only(test_dir):
     """test --files-only without --walk"""
-    import glob
-    import os
-    import pathlib
 
-    from osxmetadata import OSXMetaData, Tag
-    from osxmetadata.__main__ import cli
-
-    dirname = pathlib.Path(temp_dir)
+    dirname = pathlib.Path(test_dir)
     os.makedirs(dirname / "temp" / "subfolder1")
     os.makedirs(dirname / "temp" / "subfolder2")
-    create_file(dirname / "temp" / "temp1.txt")
-    create_file(dirname / "temp" / "subfolder1" / "sub1.txt")
+    (dirname / "temp" / "temp1.txt").touch()
+    (dirname / "temp" / "subfolder1" / "sub1.txt").touch()
 
     files = glob.glob(str(dirname / "temp" / "*"))
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["--set", "tags", "FOO", "--files-only", *files])
+    result = runner.invoke(cli, ["--set", "tags", "test", "--files-only", *files])
     assert result.exit_code == 0
 
     md = OSXMetaData(dirname / "temp" / "temp1.txt")
-    assert md.tags == [Tag("FOO")]
+    assert md.tags == [Tag("test", 0)]
 
     md = OSXMetaData(dirname / "temp" / "subfolder1")
     assert not md.tags
 
     md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.txt")
     assert not md.tags
+
+
+def test_cli_backup_restore(test_dir):
+    """Test --backup and --restore"""
+
+    dirname = pathlib.Path(test_dir)
+    test_file = dirname / "test_file.txt"
+    test_file.touch()
+
+    md = OSXMetaData(test_file)
+    md.tags = [Tag("test", 0)]
+    md.authors = ["John Doe", "Jane Doe"]
+    md.wherefroms = ["http://www.apple.com"]
+    md.downloadeddate = [datetime.datetime(2019, 1, 1, 0, 0, 0)]
+    md.stationerypad = True
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--backup", test_file.as_posix()])
+    assert result.exit_code == 0
+
+    # test the backup file was written and is readable
+    backup_file = dirname / BACKUP_FILENAME
+    assert backup_file.is_file()
+    backup_data = load_backup_file(backup_file)
+    assert backup_data[test_file.name]["stationerypad"] == True
+
+    # wipe the data
+    result = runner.invoke(cli, ["--wipe", test_file.as_posix()])
+    assert not md.tags
+    assert not md.authors
+    assert not md.stationerypad
+
+    # restore the data
+    result = runner.invoke(cli, ["--restore", test_file.as_posix()])
+    assert result.exit_code == 0
+    assert md.tags == [Tag("test", 0)]
+    assert md.authors == ["John Doe", "Jane Doe"]
+    assert md.wherefroms == ["http://www.apple.com"]
+    assert md.downloadeddate == [datetime.datetime(2019, 1, 1, 0, 0, 0)]
+    assert md.stationerypad
+
+
+def test_cli_backup_walk_pattern(test_dir):
+    """test --backup --walk with --pattern"""
+
+    dirname = pathlib.Path(test_dir)
+    os.makedirs(dirname / "temp" / "subfolder1")
+    os.makedirs(dirname / "temp" / "subfolder2")
+    (dirname / "temp" / "temp1.txt").touch()
+    (dirname / "temp" / "subfolder1" / "sub1.txt").touch()
+    (dirname / "temp" / "subfolder1" / "sub1.pdf").touch()
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--set", "tags", "test", "--walk", "--pattern", "*.pdf", "--backup", test_dir],
+    )
+    assert result.exit_code == 0
+
+    md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.pdf")
+    assert md.tags == [Tag("test", 0)]
+
+    backup_file = dirname / "temp" / "subfolder1" / BACKUP_FILENAME
+    assert backup_file.is_file()
+    backup_data = load_backup_file(backup_file)
+    assert backup_data["sub1.pdf"][_kMDItemUserTags] == [["test", 0]]
+    assert backup_data.get("sub1.txt") is None
+
+
+def test_cli_order(test_dir):
+    """Test order CLI options are executed
+
+    Order of execution should be:
+    restore, wipe, copyfrom, clear, set, append, remove, mirror, get, list, backup
+    """
+
+    dirname = pathlib.Path(test_dir)
+    test_file = dirname / "test_file.txt"
+    test_file.touch()
+
+    md = OSXMetaData(test_file.name)
+    md.tags = [Tag("test", 0)]
+    md.authors = ["John Doe", "Jane Doe"]
+    md.wherefroms = ["http://www.apple.com"]
+    md.downloadeddate = [datetime.datetime(2019, 1, 1, 0, 0, 0)]
+    md.findercomment = "Hello World"
+
+    runner = CliRunner()
+
+    # first, create backup file for --restore
+    runner.invoke(cli, ["--backup", test_file])
+
+    # wipe the data
+    runner.invoke(cli, ["--wipe", test_file])
+
+    # restore the data and check order of operations
+    result = runner.invoke(
+        cli,
+        [
+            "--get",
+            "comment",
+            "--set",
+            "authors",
+            "John Smith",
+            "--restore",
+            "--set",
+            "title",
+            "Test Title",
+            "--clear",
+            "title",
+            "--append",
+            "tags",
+            "test2",
+            "--set",
+            "comment",
+            "foo",
+            "--remove",
+            "authors",
+            "Jane Doe",
+            "--append",
+            "authors",
+            "Jane Smith",
+            "--mirror",
+            "comment",
+            "findercomment",
+            test_file.name,
+        ],
+    )
+    output = parse_cli_output(result.output)
+    assert output["comment"] == "Hello World"
+    assert md.authors == ["John Smith", "Jane Smith"]
+    assert md.findercomment == "Hello World"
+    assert md.tags == [Tag("test", 0), Tag("test2", 0)]

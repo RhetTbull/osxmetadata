@@ -1,14 +1,33 @@
 """ Functions for writing and loading backup files """
 
+import datetime
 import json
 import logging
 import os
 from enum import Enum
 
+from osxmetadata import OSXMetaData, __version__
+
+__all__ = ["get_backup_dict", "write_backup_file", "load_backup_file"]
+
 
 class BackupDatabaseType(Enum):
     SINGLE_RECORD_JSON = 1
     JSON = 2
+
+
+def get_backup_dict(filepath: str):
+    """get backup dict for a single file"""
+    md = OSXMetaData(filepath)
+    backup_dict = md.asdict()
+    backup_dict.update(
+        {
+            "_version": __version__,
+            "_filepath": md._posix_path,
+            "_filename": md._fname.name,
+        }
+    )
+    return backup_dict
 
 
 def backup_database_type(path: str) -> BackupDatabaseType:
@@ -30,6 +49,15 @@ def write_backup_file(backup_file, backup_data):
     """Write backup_data to backup_file as JSON
     backup_data: dict where key is filename and value is dict of the attributes
     as returned by json.loads(OSXMetaData.to_json())"""
+
+    # Convert datetime objects to isoformat strings for serialization
+    for filename, data in backup_data.items():
+        for key, value in data.items():
+            if isinstance(value, datetime.datetime):
+                data[key] = value.isoformat()
+            elif isinstance(value, (list, tuple)):
+                if value and isinstance(value[0], datetime.datetime):
+                    data[key] = [v.isoformat() for v in value]
 
     with open(backup_file, mode="w") as fp:
         json.dump(list(backup_data.values()), fp, indent=2)

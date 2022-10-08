@@ -1,0 +1,116 @@
+[
+    {
+        "name": "kMDItemAppleLoopDescriptors",
+        "description": "Specifies multiple pieces of descriptive information about a loop.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemAppleLoopsKeyFilterType",
+        "description": "Specifies key filtering information about a loop. Loops are matched against projects that often in a major or minor key.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemAppleLoopsLoopMode",
+        "description": "Specifies how a file should be played.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemAppleLoopsRootKey",
+        "description": "Specifies the loop's original key. The key is the root note or tonic for the loop, and does not include the scale type.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemAudioChannelCount",
+        "description": "Number of channels in the audio data contained in the file.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemAudioEncodingApplication",
+        "description": "The name of the application that encoded the data contained in the audio file.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemAudioSampleRate",
+        "description": "Sample rate of the audio data contained in the file. The sample rate is a float value representing hz (audio_frames/second). For example: 44100. 0, 22254. 54.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemAudioTrackNumber",
+        "description": "The track number of a song or composition when it is part of an album.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemComposer",
+        "description": "The composer of the music contained in the audio file.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemIsGeneralMIDISequence",
+        "description": "Indicates whether the MIDI sequence contained in the file is setup for use with a General MIDI device.",
+        "type": "CFBoolean",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemKeySignature",
+        "description": "The key of the music contained in the audio file. For example: C, Dm, F#m, Bb.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemLyricist",
+        "description": "The lyricist, or text writer, of the music contained in the audio file.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemMusicalGenre",
+        "description": "The musical genre of the song or composition contained in the audio file. For example: Jazz, Pop, Rock, Classical.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemMusicalInstrumentCategory",
+        "description": "Specifies the category of an instrument.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemMusicalInstrumentName",
+        "description": "Specifies the name of instrument relative to the instrument category.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemRecordingDate",
+        "description": "The recording date of the song or composition.",
+        "type": "CFDate",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemRecordingYear",
+        "description": "Indicates the year the item was recorded. For example, 1964, 2003, etc.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemTempo",
+        "description": "A float value that specifies the beats per minute of the music contained in the audio file.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemTimeSignature",
+        "description": "The time signature of the musical composition contained in the audio/MIDI file. For example: \"4/4\", \"7/8\".",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    }
+]

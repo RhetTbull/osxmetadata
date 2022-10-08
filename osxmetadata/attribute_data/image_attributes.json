@@ -1,0 +1,224 @@
+[
+    {
+        "name": "kMDItemPixelHeight",
+        "description": "The height, in pixels, of the contents. For example, the image height or the video frame height.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemPixelWidth",
+        "description": "The width, in pixels, of the contents. For example, the image width or the video frame width.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemPixelCount",
+        "description": "The total number of pixels in the contents. Same as kMDItemPixelWidth x kMDItemPixelHeight.",
+        "type": "CFNumber",
+        "version": "macOS 10.6+"
+    },
+    {
+        "name": "kMDItemColorSpace",
+        "description": "The color space model used by the document contents. For example, \"RGB\", \"CMYK\", \"YUV\", or \"YCbCr\".",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemBitsPerSample",
+        "description": "The number of bits per sample. For example, the bit depth of an image (8-bit, 16-bit etc. . . ) or the bit depth per audio sample of uncompressed audio data (8, 16, 24, 32, 64, etc. . ).",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFlashOnOff",
+        "description": "Indicates if a camera flash was used.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFocalLength",
+        "description": "The actual focal length of the lens, in millimeters.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemAcquisitionMake",
+        "description": "The manufacturer of the device used to aquire the document contents.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemAcquisitionModel",
+        "description": "The model of the device used to aquire the document contents. For example, 100, 200, 400, etc.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemISOSpeed",
+        "description": "The ISO speed used to acquire the document contents.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemOrientation",
+        "description": "The orientation of the document contents. Possible values are 0 (landscape) and 1 (portrait).",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemLayerNames",
+        "description": "The names of the layers in the file.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemWhiteBalance",
+        "description": "The white balance setting used to acquire the document contents. Possible values are 0 (auto white balance) and 1 (manual).",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemAperture",
+        "description": "The aperture setting used to acquire the document contents. This unit is the APEX value.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemProfileName",
+        "description": "The name of the color profile used by the document contents.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemResolutionWidthDPI",
+        "description": "Resolution width, in DPI, of this image.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemResolutionHeightDPI",
+        "description": "Resolution height, in DPI, of this image.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemExposureMode",
+        "description": "The exposure mode used to acquire the document contents.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemExposureTimeSeconds",
+        "description": "The exposure time, in seconds, used to acquire the document contents.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemEXIFVersion",
+        "description": "The version of the EXIF header used to generate the metadata.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemAlbum",
+        "description": "The title for a collection of media. This is analagous to a record album, or photo album.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemHasAlphaChannel",
+        "description": "Indicates if this image file has an alpha channel.",
+        "type": "CFBoolean",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemRedEyeOnOff",
+        "description": "Indicates if red-eye reduction was used to take the picture.",
+        "type": "CFBoolean",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemMeteringMode",
+        "description": "The metering mode used to take the image.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemMaxAperture",
+        "description": "The smallest f-number of the lens. Ordinarily it is given in the range of 00. 00 to 99. 99.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFNumber",
+        "description": "The diameter of the diaphragm aperture in terms of the effective focal length of the lens.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemExposureProgram",
+        "description": "The class of the exposure program used by the camera to set exposure when the image is taken. Possible values include: Manual, Normal, and Aperture priority.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemExposureTimeString",
+        "description": "The time of the exposure.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemEXIFGPSVersion",
+        "description": "The version of GPSInfoIFD in EXIF used to generate the metadata.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemAltitude",
+        "description": "The altitude of the item in meters above sea level, expressed using the WGS84 datum. Negative values lie below sea level.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemLatitude",
+        "description": "The latitude of the item in degrees north of the equator, expressed using the WGS84 datum. Negative values lie south of the equator.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemLongitude",
+        "description": "The longitude of the item in degrees east of the prime meridian, expressed using the WGS84 datum. Negative values lie west of the prime meridian.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemTimestamp",
+        "description": "The timestamp on the item. This generally is used to indicate the time at which the event captured by the item took place.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemSpeed",
+        "description": "The speed of the item, in kilometers per hour.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemGPSTrack",
+        "description": "The direction of travel of the item, in degrees from true north.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemImageDirection",
+        "description": "The direction of the item's image, in degrees from true north.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemNamedLocation",
+        "description": "The name of the location or point of interest associated with the item. The name may be user provided.",
+        "type": "CFString",
+        "version": "macOS 10.6+"
+    }
+]

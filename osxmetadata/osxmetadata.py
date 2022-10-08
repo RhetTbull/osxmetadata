@@ -1,577 +1,308 @@
 """ OSXMetaData class to read and write various Mac OS X metadata 
     such as tags/keywords and Finder comments from files """
 
-
 import base64
 import datetime
 import json
-import logging
-import os.path
 import pathlib
-import plistlib
+import typing as t
 
-# plistlib creates constants at runtime which causes pylint to complain
-from plistlib import FMT_BINARY  # pylint: disable=E0611
-
-import applescript
+import CoreServices
 import xattr
+from Foundation import NSURL
 
 from ._version import __version__
-from .attributes import ATTRIBUTES, Attribute, validate_attribute_value
-from .classes import _AttributeList, _AttributeOSXPhotosDetectedText, _AttributeTagsList
-from .constants import (
-    _FINDER_COMMENT_NAMES,
-    FINDER_COLOR_NONE,
-    FinderInfo,
-    _kMDItemUserTags,
+from .attribute_data import (
+    MDIMPORTER_ATTRIBUTE_DATA,
+    MDITEM_ATTRIBUTE_DATA,
+    MDITEM_ATTRIBUTE_SHORT_NAMES,
+    NSURL_RESOURCE_KEY_DATA,
 )
-from .datetime_utils import (
-    datetime_naive_to_utc,
-    datetime_remove_tz,
-    datetime_utc_to_local,
+from .finder_comment import kMDItemFinderComment, set_or_remove_finder_comment
+from .finder_info import (
+    _kFinderColor,
+    _kFinderInfo,
+    _kFinderStationeryPad,
+    get_finderinfo_bytes,
+    get_finderinfo_color,
+    get_finderinfo_stationerypad,
+    set_finderinfo_bytes,
+    set_finderinfo_color,
+    set_finderinfo_stationerypad,
 )
-from .debug import _debug, _get_logger, _set_debug
-from .findertags import Tag, get_tag_color_name
+from .finder_tags import _kMDItemUserTags, get_finder_tags, set_finder_tags
+from .mditem import MDItemValueType, get_mditem_metadata, set_or_remove_mditem_metadata
+from .nsurl_metadata import get_nsurl_metadata, set_nsurl_metadata
 
-# TODO: What to do about colors
-# TODO: check what happens if OSXMetaData.__init__ called with invalid file--should result in error but saw one case where it didn't
-# TODO: cleartags does not always clear colors--this is a new behavior, did Mac OS change something in implementation of colors?
-
-# all attributes that are part of com.apple.FinderInfo
-_FINDERINFO_ATTRIBUTES = ["finderinfo", "findercolor", "stationarypad"]
-
-# all attributes that use an Attribute class (defined in attributes.py)
-_ATTRIBUTE_CLASS_ATTRIBUTES = [
+ALL_ATTRIBUTES = {
+    "finderinfo",
     "tags",
-    "osxphotos_detected_text",
-    *_FINDERINFO_ATTRIBUTES,
-]
+    *list(MDITEM_ATTRIBUTE_DATA.keys()),
+    *list(MDITEM_ATTRIBUTE_SHORT_NAMES.keys()),
+    *list(NSURL_RESOURCE_KEY_DATA.keys()),
+    *list(MDIMPORTER_ATTRIBUTE_DATA.keys()),
+    _kFinderColor,
+    _kFinderInfo,
+    _kFinderStationeryPad,
+    _kMDItemUserTags,
+}
 
-# all attributes related to stationary pad
-_FINDERINFO_STATIONARYPAD_ATTRIBUTES = ["finderinfo", "stationarypad"]
+# Subset of attributes returned by asdict() and to_json() methods
+ASDICT_ATTRIBUTES = {
+    *list(MDITEM_ATTRIBUTE_DATA.keys()),
+    *list(MDIMPORTER_ATTRIBUTE_DATA.keys()),
+    _kFinderStationeryPad,
+    _kFinderColor,
+    _kMDItemUserTags,
+}
 
-# all attributes related to Finder color
-_FINDERINFO_COLOR_ATTRIBUTES = ["finderinfo", "findercolor"]
+# TODO: Need a wipe() method to remove all metadata from a file
 
-# all attributes that are included in finderinfo
-_FINDERINFO_SUB_ATTRIBUTES = ["findercolor", "stationarypad"]
+class OSXMetaDataAttributeError(Exception):
+    """Raised when an attribute is not supported or attempting to set read-only attribute"""
 
-# AppleScript for manipulating Finder comments
-_scpt_set_finder_comment = applescript.AppleScript(
-    """
-            on run {path, fc}
-	            set thePath to path
-	            set theComment to fc
-	            tell application "Finder" to set comment of (POSIX file thePath as alias) to theComment
-            end run
-            """
-)
-
-_scpt_clear_finder_comment = applescript.AppleScript(
-    """
-            on run {path}
-	            set thePath to path
-	            set theComment to missing value
-	            tell application "Finder" to set comment of (POSIX file thePath as alias) to theComment
-            end run
-            """
-)
+    pass
 
 
 class OSXMetaData:
     """Create an OSXMetaData object to access file metadata"""
 
-    __slots__ = [
-        "__init",
-        "_attrs",
-        "_fname",
-        "_posix_name",
-        "_tz_aware",
-        "authors",
-        "comment",
-        "copyright",
-        "creator",
-        "description",
-        "downloadeddate",
-        "duedate",
-        "findercolor",
-        "findercomment",
-        "finderinfo",
-        "headline",
-        "keywords",
-        "participants",
-        "projects",
-        "rating",
-        "stationary",
-        "stationarypad",
-        "tags",
-        "version",
-        "wherefroms",
-        "osxphotos_detected_text",
-    ]
-
-    def __init__(self, fname, tz_aware=False):
+    def __init__(self, fname: str):
         """Create an OSXMetaData object to access file metadata
         fname: filename to operate on
-        timezone_aware: bool; if True, date/time attributes will return
-                  timezone aware datetime.datetime attributes; if False (default)
-                  date/time attributes will return timezone naive objects"""
+        """
         self._fname = pathlib.Path(fname)
-        self._posix_name = self._fname.resolve().as_posix()
-        self._tz_aware = tz_aware
-
         if not self._fname.exists():
-            raise FileNotFoundError("file does not exist: ", fname)
+            raise FileNotFoundError(f"file does not exist: {fname}")
 
-        self._attrs = xattr.xattr(self._fname)
+        self._posix_path = self._fname.resolve().as_posix()
 
-        # create property classes for the multi-valued attributes
-        # tags get special handling due to color labels
-        # ATTRIBUTES contains both long and short names, want only the short names (attribute.name)
-        for name in {attribute.name for attribute in ATTRIBUTES.values()}:
-            attribute = ATTRIBUTES[name]
-            if attribute.class_ not in [str, float, int, bool, datetime.datetime]:
-                super().__setattr__(
-                    name, attribute.class_(attribute, self._attrs, self)
-                )
+        # Create MDItemRef, NSURL, and xattr objects
+        # MDItemRef is used for most attributes
+        # NSURL and xattr are required for certain attributes like Finder tags
+        # Because many of the getter/setter functions require some combination of MDItemRef, NSURL, and xattr,
+        # they are created here and kept for the life of the object so that they don't have to be
+        # recreated for each attribute
+        # This does mean that if the file is moved or renamed, the object will still be pointing to the old file
+        # thus you should not rename or move a file while using an OSXMetaData object
+        self._mditem: CoreServices.MDItemRef = CoreServices.MDItemCreate(
+            None, self._posix_path
+        )
+        if not self._mditem:
+            raise OSError(f"Unable to create MDItem for file: {fname}")
+        self._url = NSURL.fileURLWithPath_(self._posix_path)
+        self._xattr = xattr.xattr(self._posix_path)
 
-        # Done with initialization
+        # Required so __setattr__ gets handled correctly during __init__
         self.__init = True
 
-    @property
-    def name(self):
-        """POSIX path of the file OSXMetaData is operating on"""
-        return self._fname.resolve().as_posix()
+    def get(self, attribute: str) -> MDItemValueType:
+        """Get metadata attribute value
+        attribute: metadata attribute name
+        """
+        return self.__getattr__(attribute)
 
-    @property
-    def tz_aware(self):
-        """returns the timezone aware flag"""
-        return self._tz_aware
-
-    @tz_aware.setter
-    def tz_aware(self, tz_flag):
-        """sets the timezone aware flag
-        tz_flag: bool"""
-        self._tz_aware = tz_flag
-
-    def asdict(self, all_=False, encode=True):
-        """Return dict with all attributes for this file
+    def set(self, attribute: str, value: MDItemValueType):
+        """Set metadata attribute value
 
         Args:
-            all_: bool, if True, returns all attributes including those that osxmetadata knows nothing about
-            encode: bool, if True, encodes values for unknown attributes with base64, otherwise leaves the values as raw bytes
+            attribute: metadata attribute name
+            value: value to set attribute to; must match the type expected by the attribute (e.g. str or list)
+        """
+        self.__setattr__(attribute, value)
+
+    def get_xattr(
+        self, key: str, decode: t.Callable[[t.ByteString], t.Any] = None
+    ) -> t.Any:
+        """Get xattr value
+
+        Args:
+            key: xattr name
+            decode: optional Callable to decode value before returning
+        """
+        xattr = self._xattr[key]
+        if decode:
+            xattr = decode(xattr)
+        return xattr
+
+    def set_xattr(
+        self, key: str, value: t.Any, encode: t.Callable[[t.ByteString], t.Any] = None
+    ):
+        """Set xattr value
+
+        Args:
+            key: xattr name
+            encode: optional Callable to encode value before setting
+        """
+        if encode:
+            value = encode(value)
+        self._xattr[key] = value
+
+    def remove_xattr(self, key: str):
+        """Remove xattr
+
+        Args:
+            key: xattr name
+        """
+        self._xattr.remove(key)
+
+    def asdict(self, attributes: t.Set[str] = ASDICT_ATTRIBUTES) -> t.Dict[str, t.Any]:
+        """Return all MDItem metadata (or a subset defined by attributes) as a dict
+
+        Args:
+            attributes: set of attributes to include in dict
 
         Returns:
-            dict with attributes for this file
+            dict of metadata
         """
+        return {key: getattr(self, key) for key in attributes}
 
-        attribute_list = self._list_attributes() if all_ else self.list_metadata()
-        dict_data = {
-            "_version": __version__,
-            "_filepath": self._posix_name,
-            "_filename": self._fname.name,
-        }
-
-        for attr in attribute_list:
-            try:
-                attribute = ATTRIBUTES[attr]
-                if attribute.name == "tags":
-                    tags = self.get_attribute(attribute.name)
-                    value = [[tag.name, tag.color] for tag in tags]
-                    dict_data[attribute.constant] = value
-                elif attribute.constant == FinderInfo:
-                    value = self.finderinfo.asdict()
-                    dict_data[attribute.constant] = value
-                elif attribute.type_ == datetime.datetime:
-                    # need to convert datetime.datetime to string to serialize
-                    value = self.get_attribute(attribute.name)
-                    if type(value) == list:
-                        value = [v.isoformat() for v in value]
-                    else:
-                        value = value.isoformat()
-                    dict_data[attribute.constant] = value
-                else:
-                    # get raw value
-                    dict_data[attribute.constant] = self.get_attribute(attribute.name)
-            except KeyError:
-                # an attribute osxmetadata doesn't know about
-                if all_:
-                    try:
-                        value = self._attrs[attr]
-                        # convert value to base64 encoded ascii
-                        if encode:
-                            value = base64.b64encode(value).decode("ascii")
-                        dict_data[attr] = value
-                    except KeyError as e:
-                        # value disappeared between call to _list_attributes and now
-                        pass
-        return dict_data
-
-    def to_json(self, all_=False):
-        """Returns a string in JSON format for all attributes in this file
+    def to_json(
+        self, attributes: t.Set[str] = ASDICT_ATTRIBUTES, indent: int = 4
+    ) -> str:
+        """Return all MDItem metadata (or a subset defined by attributes) as a JSON string
 
         Args:
-            all_: bool; if True, also restores attributes not known to osxmetadata (generated with asdict(all_=True, encode=True) )
-        """
-        dict_data = self.asdict(all_=all_)
-        return json.dumps(dict_data)
+            attributes: set of attributes to include in JSON
+            indent: indent level for JSON output
 
-    def _restore_attributes(self, attr_dict, all_=False):
-        """restore attributes from attr_dict
-        for each attribute in attr_dict, will set the attribute
-        will not clear/erase any attributes on file that are not in attr_dict
+        Returns:
+            JSON string
+
+        Notes:
+            datetime objects are converted to ISO 8601 format
+            binary objects are converted to base64 encoded strings
+            the resulting JSON will include 3 additional keys: _version, _filepath, and _filename;
+            these are expected by the CLI backup/restore commands
+        """
+
+        dict_data = self.asdict(attributes)
+
+        # add fields that backup/restore expects
+        dict_data.update(
+            {
+                "_version": __version__,
+                "_filepath": self._posix_path,
+                "_filename": self._fname.name,
+            }
+        )
+
+        for key, value in dict_data.items():
+            if isinstance(value, datetime.datetime):
+                dict_data[key] = value.isoformat()
+            elif isinstance(value, (list, tuple)):
+                if value and isinstance(value[0], datetime.datetime):
+                    dict_data[key] = [v.isoformat() for v in value]
+            elif isinstance(value, bytes):
+                dict_data[key] = base64.b64encode(value).decode("ascii")
+
+        return json.dumps(dict_data, indent=indent)
+
+    @property
+    def path(self) -> str:
+        """Return path to file"""
+        return self._posix_path
+
+    def __getattr__(self, attribute: str) -> MDItemValueType:
+        """Get metadata attribute value
 
         Args:
-            attr_dict: an attribute dict as produced by OSXMetaData.asdict()
-            all_: bool; if True, also restores attributes not known to osxmetadata (generated with asdict(all_=True, encode=True) )
+            attribute: metadata attribute name
         """
-
-        for key, val in attr_dict.items():
-            if key.startswith("_"):
-                # skip private keys like _version and _filepath
-                continue
-            try:
-                if key == _kMDItemUserTags:
-                    if not isinstance(val, list):
-                        raise TypeError(
-                            f"expected list for attribute {key} but got {type(val)}"
-                        )
-                    self.set_attribute(key, [Tag(*tag_val) for tag_val in val])
-                elif key == FinderInfo:
-                    if not isinstance(val, dict):
-                        raise TypeError(
-                            f"expected dict for attribute {key} but got {type(val)}"
-                        )
-                    self.set_attribute(key, val)
-                elif key in ATTRIBUTES:
-                    self.set_attribute(key, val)
-                elif all_:
-                    self._attrs.set(key, base64.b64decode(val))
-            except Exception as e:
-                logging.warning(
-                    f"Unable to restore attribute {key} for {self._fname}: {e}"
-                )
-
-    def get_attribute(self, attribute_name):
-        """load attribute and return value or None if attribute was not set
-        attribute_name: name of attribute
-        """
-
-        attribute = ATTRIBUTES[attribute_name]
-
-        # user tags and finderinfo need special processing
-        if attribute.name in _ATTRIBUTE_CLASS_ATTRIBUTES:
-            return getattr(self, attribute.name).get_value()
-
-        # must be a "normal" metadata attribute
-        try:
-            plist = plistlib.loads(self._attrs[attribute.constant])
-        except KeyError:
-            plist = None
-
-        # add UTC to any datetime.datetime objects because that's how MacOS stores them
-        # In the plist associated with extended metadata attributes, times are stored as:
-        # <date>2020-04-14T14:49:22Z</date>
-        if plist and isinstance(plist, list):
-            if isinstance(plist[0], datetime.datetime):
-                plist = [datetime_naive_to_utc(d) for d in plist]
-                if not self._tz_aware:
-                    # want datetimes in naive format
-                    plist = [
-                        datetime_remove_tz(d_local)
-                        for d_local in [datetime_utc_to_local(d_utc) for d_utc in plist]
-                    ]
-        elif isinstance(plist, datetime.datetime):
-            plist = datetime_naive_to_utc(plist)
-            if not self._tz_aware:
-                # want datetimes in naive format
-                plist = datetime_remove_tz(datetime_utc_to_local(plist))
-
-        if attribute.as_list and isinstance(plist, list):
-            return plist[0]
-        else:
-            return plist
-
-    def get_attribute_str(self, attribute_name):
-        """returns a string representation of attribute value
-        e.g. if attribute is a datedate.datetime object, will
-        format using datetime.isoformat()
-        attribute_name: name of attribute"""
-
-        attribute = ATTRIBUTES[attribute_name]
-        value = self.get_attribute(attribute_name)
-        if attribute.class_ == _AttributeOSXPhotosDetectedText:
-            return json.dumps(value)
-
-        if type(value) in [list, set]:
-            if value:
-                if type(value[0]) == datetime.datetime:
-                    new_value = [v.isoformat() for v in value]
-                    return str(new_value)
-                elif isinstance(value[0], Tag):
-                    new_value = [
-                        f"{tag.name},{get_tag_color_name(tag.color)}"
-                        if tag.color
-                        else f"{tag.name}"
-                        for tag in value
-                    ]
-                    return str(new_value)
-            return [str(val) for val in value]
-        else:
-            if type(value) == datetime.datetime:
-                return value.isoformat()
-            elif isinstance(value, Tag):
-                return (
-                    f"{value.name},{get_tag_color_name(value.color)}"
-                    if value.color
-                    else f"{value.name}"
-                )
-            return str(value)
-
-    def set_attribute(self, attribute_name, value):
-        """write attribute to file with value
-        attribute_name: an osxmetadata Attribute name
-        value: value to store in attribute"""
-        attribute = ATTRIBUTES[attribute_name]
-
-        # user tags and Finder info need special processing
-        if attribute.name in _ATTRIBUTE_CLASS_ATTRIBUTES:
-            return getattr(self, attribute.name).set_value(value)
-
-        # verify type is correct
-        value = validate_attribute_value(attribute, value)
-
-        if attribute.name in _FINDER_COMMENT_NAMES:
-            # Finder Comment needs special handling
-            # code following will also set the attribute for Finder Comment
-            self.set_finder_comment(self._posix_name, value)
-        elif attribute.class_ in [
-            _AttributeList,
-            _AttributeTagsList,
-        ]:
-            getattr(self, attribute.name).set_value(value)
-        else:
-            # must be a normal scalar (e.g. str, float)
-            plist = plistlib.dumps(value, fmt=FMT_BINARY)
-            self._attrs.set(attribute.constant, plist)
-
-    def update_attribute(self, attribute_name, value):
-        """Update attribute with union of itself and value
-        (this avoids adding duplicate values to attribute)
-        attribute: an osxmetadata Attribute name
-        value: value to append to attribute"""
-        return self.append_attribute(attribute_name, value, update=True)
-
-    def append_attribute(self, attribute_name, value, update=False):
-        """append value to attribute
-        attribute_name: an osxmetadata Attribute name
-        value: value to append to attribute
-        update: (bool) if True, update instead of append (e.g. avoid adding duplicates)
-                (default is False)"""
-
-        attribute = ATTRIBUTES[attribute_name]
-
-        # start with existing values
-        new_value = self.get_attribute(attribute.name)
-
-        # user tags need special processing to normalize names
-        if attribute.name == "tags":
-            if not isinstance(new_value, list) or not isinstance(value, list):
-                raise TypeError(
-                    f"tags expects values in list: {type(new_value)}, {type(value)}"
-                )
-
-            if update:
-                # verify not already in values
-                for val in value:
-                    if val not in new_value:
-                        new_value.append(val)
-            else:
-                new_value.extend(value)
-            return self.tags.set_value(new_value)
-        if attribute.name in _FINDERINFO_ATTRIBUTES:
-            raise ValueError(f"cannot append or update {attribute.name}")
-
-        value = validate_attribute_value(attribute, value)
-
-        if (
-            attribute.class_ == _AttributeOSXPhotosDetectedText
-            and new_value is None
-            or attribute.class_ != _AttributeOSXPhotosDetectedText
-            and attribute.list
-            and new_value is None
+        if attribute in ["tags", _kMDItemUserTags]:
+            return get_finder_tags(self._xattr)
+        elif attribute in MDITEM_ATTRIBUTE_SHORT_NAMES:
+            # handle dynamic properties like self.keywords and self.comments
+            return get_mditem_metadata(
+                self._mditem, MDITEM_ATTRIBUTE_SHORT_NAMES[attribute]
+            )
+        elif (
+            attribute in MDITEM_ATTRIBUTE_DATA or attribute in MDIMPORTER_ATTRIBUTE_DATA
         ):
-            new_value = value
-        elif attribute.list:
-            new_value = list(new_value)
-            if update:
-                for val in value:
-                    if val not in new_value:
-                        new_value.append(val)
-            elif attribute.class_ == _AttributeOSXPhotosDetectedText:
-                for val in value:
-                    new_value.append(val)
-            else:
-                new_value.extend(value)
+            return get_mditem_metadata(self._mditem, attribute)
+        elif attribute in NSURL_RESOURCE_KEY_DATA:
+            return get_nsurl_metadata(self._url, attribute)
+        elif attribute in ["finderinfo", _kFinderInfo]:
+            return get_finderinfo_bytes(self._xattr)
+        elif attribute == _kFinderStationeryPad:
+            return get_finderinfo_stationerypad(self._xattr)
+        elif attribute == _kFinderColor:
+            return get_finderinfo_color(self._xattr)
         else:
-            # scalar value
-            if update:
-                raise AttributeError(f"Cannot use update on {attribute.type_}")
-            if new_value is None:
-                new_value = value
-            else:
-                new_value += value
+            raise AttributeError(f"Invalid attribute: {attribute}")
 
-        try:
-            if attribute.name in _FINDER_COMMENT_NAMES:
-                # Finder Comment needs special handling
-                self.set_finder_comment(self._posix_name, new_value)
-            elif attribute.class_ in [
-                _AttributeList,
-                _AttributeTagsList,
-                _AttributeOSXPhotosDetectedText,
-            ]:
-                # if tags, set_value will normalize
-                getattr(self, attribute.name).set_value(new_value)
-            else:
-                plist = plistlib.dumps(new_value, fmt=FMT_BINARY)
-                self._attrs.set(attribute.constant, plist)
-        except Exception as e:
-            # todo: should catch this or not?
-            raise e
+    def __setattr__(self, attribute: str, value: t.Any):
+        """set metadata attribute value
 
-        return new_value
-
-    def remove_attribute(self, attribute_name, value):
-        """remove a value from attribute, raise ValueError if attribute does not contain value
-        only applies to multi-valued attributes, otherwise raises TypeError
-        attribute_name: name of OSXMetaData attribute"""
-
-        attribute = ATTRIBUTES[attribute_name]
-
-        if not attribute.list:
-            raise TypeError("remove only applies to multi-valued attributes")
-
-        if attribute.name == "tags":
-            # tags need special processing
-            self.tags.remove(value)
-        else:
-            values = self.get_attribute(attribute.name)
-            values = list(values)
-            values.remove(value)
-            self.set_attribute(attribute.name, values)
-
-    def discard_attribute(self, attribute_name, value):
-        """remove a value from attribute, unlike remove, does not raise exception
-        if attribute does not contain value
-        only applies to multi-valued attributes, otherwise raises TypeError
-        attribute_name: name of OSXMetaData attribute"""
-
-        attribute = ATTRIBUTES[attribute_name]
-
-        if not attribute.list:
-            raise TypeError("discard only applies to multi-valued attributes")
-
-        values = self.get_attribute(attribute.name)
-        try:
-            values.remove(value)
-            self.set_attribute(attribute.name, values)
-        except Exception:
-            pass
-
-    def clear_attribute(self, attribute_name):
-        """clear anttribute (remove it from the file)
-        attribute_name: name of OSXMetaData attribute"""
-
-        attribute = ATTRIBUTES[attribute_name]
-
-        try:
-            if attribute.name in _FINDER_COMMENT_NAMES:
-                # Finder Comment needs special handling
-                # code following will also clear the attribute for Finder Comment
-                self.clear_finder_comment(self._posix_name)
-
-            if attribute.name in ["tags", *_FINDERINFO_COLOR_ATTRIBUTES]:
-                # don't clear the entire FinderInfo attribute, just delete the bits we know about
-                self.finderinfo.set_finderinfo_color(FINDER_COLOR_NONE)
-
-            if attribute.name in _FINDERINFO_STATIONARYPAD_ATTRIBUTES:
-                self.finderinfo.set_finderinfo_stationarypad(False)
-
-            if attribute.name not in _FINDERINFO_ATTRIBUTES:
-                # remove the entire attribute
-                self._attrs.remove(attribute.constant)
-        except (IOError, OSError):
-            # TODO: fix this try/except handling
-            pass
-
-    def _list_attributes(self):
-        """list all the attributes set on the file"""
-        return self._attrs.list()
-
-    def list_metadata(self):
-        """list the Apple metadata attributes set on the file:
-        e.g. those in com.apple.metadata namespace"""
-        # also lists com.osxmetadata.test used for debugging
-        mdlist = self._list_attributes()
-        mdlist = [
-            md
-            for md in mdlist
-            if md.startswith("com.apple.metadata")
-            or md.startswith("com.apple.FinderInfo")
-            or md.startswith("com.osxmetadata.test")
-            or md.startswith("osxphotos.metadata")
-        ]
-        return mdlist
-
-    def set_finder_comment(self, path, comment):
-        """set finder comment for object path (file or directory)
-        path: path to file or directory in posix format
-        comment: comment string
+        Args:
+            attribute: metadata attribute name
+            value: value to set
         """
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"Could not find {path}")
-
-        if comment:
-            _scpt_set_finder_comment.run(path, comment)
-            plist = plistlib.dumps(comment, fmt=FMT_BINARY)
-            self._attrs.set(ATTRIBUTES["findercomment"].constant, plist)
-        else:
-            self.clear_finder_comment(path)
-
-    def clear_finder_comment(self, path):
-        """clear finder comment for object path (file or directory)
-        path: path to file or directory in posix format
-        """
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"Could not find {path}")
-
-        _scpt_clear_finder_comment.run(path)
         try:
-            self._attrs.remove(ATTRIBUTES["findercomment"].constant)
-        except (IOError, OSError):
-            # exception raised if attribute not found and attempt to remove it
-            pass
-
-    def __getattr__(self, name):
-        """if attribute name is in ATTRIBUTE dict, return the value"""
-        if name in ATTRIBUTES:
-            return self.get_attribute(name)
-        raise AttributeError(f"{name} is not an attribute")
-
-    def __setattr__(self, name, value):
-        """if object is initialized and name is an attribute in ATTRIBUTES,
-        set the attribute to value
-        if value value is None, will clear (delete) the attribute and all associated values
-        if name is not a metadata attribute, assume it's a normal class attribute and pass to
-        super() to handle"""
-        try:
-            if self.__init:
-                # already initialized
-                attribute = ATTRIBUTES[name]
-                if value is None:
-                    self.clear_attribute(attribute.name)
-                else:
-                    self.set_attribute(attribute.name, value)
+            if not self.__init:
+                # during __init__ we don't want to call __setattr__ as it will
+                # cause an infinite loop
+                return super().__setattr__(attribute, value)
+            if attribute in ["findercomment", kMDItemFinderComment]:
+                # finder comment cannot be set using MDItemSetAttribute
+                set_or_remove_finder_comment(self._url, self._xattr, value)
+            elif attribute in ["tags", _kMDItemUserTags]:
+                # handle Finder tags
+                set_finder_tags(self._url, value)
+            elif attribute in MDITEM_ATTRIBUTE_SHORT_NAMES:
+                # handle dynamic properties like self.keywords and self.comments
+                attribute_name = MDITEM_ATTRIBUTE_SHORT_NAMES[attribute]
+                set_or_remove_mditem_metadata(self._mditem, attribute_name, value)
+            elif attribute in MDITEM_ATTRIBUTE_DATA:
+                set_or_remove_mditem_metadata(self._mditem, attribute, value)
+            elif attribute in NSURL_RESOURCE_KEY_DATA:
+                set_nsurl_metadata(self._url, attribute, value)
+            elif attribute in ["finderinfo", _kFinderInfo]:
+                set_finderinfo_bytes(self._xattr, value)
+            elif attribute == _kFinderStationeryPad:
+                set_finderinfo_stationerypad(self._xattr, bool(value))
+            elif attribute == _kFinderColor:
+                set_finderinfo_color(self._xattr, value)
+            elif attribute in ALL_ATTRIBUTES:
+                raise OSXMetaDataAttributeError(f"Attribute {attribute} is read-only")
+            else:
+                raise OSXMetaDataAttributeError(f"Invalid attribute: {attribute}")
         except (KeyError, AttributeError):
-            super().__setattr__(name, value)
+            super().__setattr__(attribute, value)
+        except OSXMetaDataAttributeError as e:
+            raise AttributeError(e) from e
+
+    def __getitem__(self, key: str) -> MDItemValueType:
+        """Get metadata attribute value
+
+        Args:
+            key: metadata attribute name
+        """
+        if key == _kMDItemUserTags:
+            return get_finder_tags(self._xattr)
+        elif key in MDITEM_ATTRIBUTE_DATA:
+            return get_mditem_metadata(self._mditem, key)
+        elif key in NSURL_RESOURCE_KEY_DATA:
+            return get_nsurl_metadata(self._url, key)
+        else:
+            raise KeyError(f"Invalid key: {key}")
+
+    def __setitem__(self, key: str, value: t.Any):
+        """set metadata attribute value
+
+        Args:
+            key: metadata attribute name
+            value: value to set
+        """
+        if key == _kMDItemUserTags:
+            set_finder_tags(self._xattr, value)
+        elif key == kMDItemFinderComment:
+            set_or_remove_finder_comment(self._url, self._xattr, value)
+        elif key in MDITEM_ATTRIBUTE_DATA:
+            set_or_remove_mditem_metadata(self._mditem, key, value)
+        elif key in NSURL_RESOURCE_KEY_DATA:
+            set_nsurl_metadata(self._url, key, value)
+        elif key in ALL_ATTRIBUTES:
+            raise KeyError(f"Attribute {key} is read-only")
+        else:
+            raise KeyError(f"Invalid key: {key}")

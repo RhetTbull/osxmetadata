@@ -1,0 +1,344 @@
+[
+    {
+        "name": "kMDItemAttributeChangeDate",
+        "description": "The date and time of the last change made to a metadata attribute.",
+        "type": "CFDate",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemAudiences",
+        "description": "The audience for which the file is intended. The audience may be determined by the creator or the publisher or by a third party.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemAuthors",
+        "description": "The author, or authors, of the contents of the file.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemAuthorAddresses",
+        "description": "This attribute indicates the author addresses of the document.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.6+"
+    },
+    {
+        "name": "kMDItemCity",
+        "description": "Identifies city of origin according to guidelines established by the provider.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemComment",
+        "description": "A comment related to the file. This differs from the Finder comment, kMDItemFinderComment.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemContactKeywords",
+        "description": "A list of contacts that are associated with this document, not including the authors.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemContentCreationDate",
+        "description": "The creation date of an edited or optimized version of the song or composition.",
+        "type": "CFDate",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemContentModificationDate",
+        "description": "The date and time that the contents of the file were last modified.",
+        "type": "CFDate",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemContentType",
+        "description": "The UTI pedigree of a file.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemContributors",
+        "description": "The entities responsible for making contributions to the content of the resource.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemCopyright",
+        "description": "The copyright owner of the file contents.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemCountry",
+        "description": "The full, publishable name of the country or region where the intellectual property of the item was created, according to guidelines of the provider.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemCoverage",
+        "description": "The extent or scope of the content of the resource.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemCreator",
+        "description": "Application used to create the document content (for example \"Word\", \"Pages\", and so on).",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemDescription",
+        "description": "A description of the content of the resource. The description may include an abstract, table of contents, reference to a graphical representation of content or a free-text account of the content.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemDueDate",
+        "description": "Date this item is due.",
+        "type": "CFDate",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemDurationSeconds",
+        "description": "The duration, in seconds, of the content of file. A value of 10. 5 represents media that is 10 and 1/2 seconds long.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemEmailAddresses",
+        "description": "Email addresses related to this item.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemEncodingApplications",
+        "description": "Application used to convert the original content into it's current form. For example, a PDF file might have an encoding application set to \"Distiller\".",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFinderComment",
+        "description": "Finder comments for this file.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFonts",
+        "description": "Fonts used in this item. You should store the font's full name, the postscript name, or the font family name, based on the available information.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemHeadline",
+        "description": "A publishable entry providing a synopsis of the contents of the file. For example, \"Apple Introduces the iPod Photo\".",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemIdentifier",
+        "description": "A formal identifier used to reference the resource within a given context.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemInstantMessageAddresses",
+        "description": "Instant message addresses related to this item.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemInstructions",
+        "description": "Editorial instructions concerning the use of the item, such as embargoes and warnings. For example, \"Second of four stories\".",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemKeywords",
+        "description": "Keywords associated with this file. For example, \"Birthday\", \"Important\", etc.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemKind",
+        "description": "A description of the kind of item this file represents.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemLanguages",
+        "description": "Indicates the languages of the intellectual content of the resource. Recommended best practice for the values of the Language element is defined by RFC 3066.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemLastUsedDate",
+        "description": "The date and time that the file was last used. This value is updated automatically by LaunchServices everytime a file is opened by double clicking, or by asking LaunchServices to open a file.",
+        "type": "CFDate",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemNumberOfPages",
+        "description": "Number of pages in the document.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemOrganizations",
+        "description": "The company or organization that created the document.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemPageHeight",
+        "description": "Height of the document page, in points (72 points per inch). For PDF files this indicates the height of the first page only.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemPageWidth",
+        "description": "Width of the document page, in points (72 points per inch). For PDF files this indicates the width of the first page only.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemParticipants",
+        "description": "The list of people who are visible in an image or movie or written about in a document.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.6+"
+    },
+    {
+        "name": "kMDItemPhoneNumbers",
+        "description": "Phone numbers related to this item.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemProjects",
+        "description": "The list of projects that this file is part of. For example, if you were working on a movie all of the files could be marked as belonging to the project \"My Movie\".",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemPublishers",
+        "description": "The entity responsible for making the resource available. For example, a person, an organization, or a service. Typically, the name of a publisher should be used to indicate the entity.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemRecipients",
+        "description": "Recipients of this item.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemRecipientAddresses",
+        "description": "This attribute indicates the recipient addresses of the document.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.6+"
+    },
+    {
+        "name": "kMDItemRights",
+        "description": "Provides a link to information about rights held in and over the resource.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemSecurityMethod",
+        "description": "The security or encryption method used for the file.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemStarRating",
+        "description": "User rating of this item. For example, the stars rating of an iTunes track.",
+        "type": "CFNumber",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemStateOrProvince",
+        "description": "Identifies the province or state of origin according to guidelines established by the provider. For example, \"CA\", \"Ontario\", or \"Sussex\".",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemTextContent",
+        "description": "Contains a text representation of the content of the document. Data in multiple fields should be combined using a whitespace character as a separator.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemTitle",
+        "description": "The title of the file. For example, this could be the title of a document, the name of a song, or the subject of an email message.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemVersion",
+        "description": "The version number of this file.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemWhereFroms",
+        "description": "Describes where the file was obtained from.",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemAuthorEmailAddresses",
+        "description": "This attribute indicates the author of the emails message addresses. (This is always the email address, and not the human readable version).",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemRecipientEmailAddresses",
+        "description": "This attribute indicates the recipients email addresses. (This is always the email address, and not the human readable version).",
+        "type": "CFArray of CFStrings",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemTheme",
+        "description": "Theme of the this item.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemSubject",
+        "description": "Subject of the this item.",
+        "type": "CFString",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemCFBundleIdentifier",
+        "description": "If this item is a bundle, then this is the CFBundleIdentifier.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemFSHasCustomIcon",
+        "description": "Boolean indicating if this file has a custom icon.",
+        "type": "CFBoolean",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemFSIsStationery",
+        "description": "Boolean indicating if this file is stationery.",
+        "type": "CFBoolean",
+        "version": "macOS 10.4+"
+    },
+    {
+        "name": "kMDItemInformation",
+        "description": "Information about the item.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemURL",
+        "description": "Url of the item.",
+        "type": "CFString",
+        "version": "macOS 10.5+"
+    }
+]

@@ -1,5 +1,17 @@
 """ Constants and definitions used by osxmetadata """
 
+FINDER_COLOR_NONE = 0
+FINDER_COLOR_GRAY = 1
+FINDER_COLOR_GREEN = 2
+FINDER_COLOR_PURPLE = 3
+FINDER_COLOR_BLUE = 4
+FINDER_COLOR_YELLOW = 5
+FINDER_COLOR_RED = 6
+FINDER_COLOR_ORANGE = 7
+
+_MIN_FINDER_COLOR = 0
+_MAX_FINDER_COLOR = 7
+
 # color labels
 _COLORNAMES = {
     "None": 0,
@@ -34,59 +46,34 @@ _COLORIDS = {
     7: "Orange",
 }
 
-FINDER_COLOR_NONE = 0
-FINDER_COLOR_GRAY = 1
-FINDER_COLOR_GREEN = 2
-FINDER_COLOR_PURPLE = 3
-FINDER_COLOR_BLUE = 4
-FINDER_COLOR_YELLOW = 5
-FINDER_COLOR_RED = 6
-FINDER_COLOR_ORANGE = 7
-
-_MIN_FINDER_COLOR = 0
-_MAX_FINDER_COLOR = 7
-
-_VALID_COLORIDS = "01234567"
-_MAX_FINDERCOMMENT = 750  # determined through trial & error with Finder
-_MAX_WHEREFROM = (
-    1024  # just picked something....todo: need to figure out what max length is
-)
-
-# offset of tag color in com.apple.FinderInfo xattr
-# tag color is 3 bits
-_kCOLOR_OFFSET = 76
-
-# offset of stationary pad bit in com.apple.FinderInfo xattr
-_kSTATIONARYPAD_OFFSET = 68
-
-# _TAGS = "com.apple.metadata:_kMDItemUserTags"
-# _FINDER_COMMENT = "com.apple.metadata:kMDItemFinderComment"
-# _WHERE_FROM = "com.apple.metadata:kMDItemWhereFroms"
-# _DOWNLOAD_DATE = "com.apple.metadata:kMDItemDownloadedDate"
+__all__ = [
+    "FINDER_COLOR_NONE",
+    "FINDER_COLOR_GRAY",
+    "FINDER_COLOR_GREEN",
+    "FINDER_COLOR_PURPLE",
+    "FINDER_COLOR_BLUE",
+    "FINDER_COLOR_YELLOW",
+    "FINDER_COLOR_RED",
+    "FINDER_COLOR_ORANGE",
+    "_MIN_FINDER_COLOR",
+    "_MAX_FINDER_COLOR",
+    "_COLORNAMES",
+    "_COLORNAMES_LOWER",
+    "_COLORIDS",
+]
 
 
-FinderInfo = "com.apple.FinderInfo"
-_kMDItemUserTags = "com.apple.metadata:_kMDItemUserTags"
-kMDItemAuthors = "com.apple.metadata:kMDItemAuthors"
-kMDItemComment = "com.apple.metadata:kMDItemComment"
-kMDItemCopyright = "com.apple.metadata:kMDItemCopyright"
-kMDItemCreator = "com.apple.metadata:kMDItemCreator"
-kMDItemDescription = "com.apple.metadata:kMDItemDescription"
-kMDItemDownloadedDate = "com.apple.metadata:kMDItemDownloadedDate"
-kMDItemDueDate = "com.apple.metadata:kMDItemDueDate"
-kMDItemFSIsStationery = "com.apple.metadata:kMDItemFSIsStationery"
-kMDItemFinderComment = "com.apple.metadata:kMDItemFinderComment"
-kMDItemHeadline = "com.apple.metadata:kMDItemHeadline"
-kMDItemKeywords = "com.apple.metadata:kMDItemKeywords"
-kMDItemParticipants = "com.apple.metadata:kMDItemParticipants"
-kMDItemProjects = "com.apple.metadata:kMDItemProjects"
-kMDItemStarRating = "com.apple.metadata:kMDItemStarRating"
-kMDItemSubject = "com.apple.metadata:kMDItemSubject"
-kMDItemTitle = "com.apple.metadata:kMDItemTitle"
-kMDItemUserTags = "com.apple.metadata:_kMDItemUserTags"
-kMDItemVersion = "com.apple.metadata:kMDItemVersion"
-kMDItemWhereFroms = "com.apple.metadata:kMDItemWhereFroms"
-OSXPhotosDetectedText = "osxphotos.metadata:detected_text"
+
+# _VALID_COLORIDS = "01234567"
+# _MAX_FINDERCOMMENT = 750  # determined through trial & error with Finder
+# _MAX_WHEREFROM = (
+#     1024  # just picked something....todo: need to figure out what max length is
+# )
+
+
+# FinderInfo = "com.apple.FinderInfo"
+# _kMDItemUserTags = "com.apple.metadata:_kMDItemUserTags"
+# OSXPhotosDetectedText = "osxphotos.metadata:detected_text"
 
 # Special handling for Finder comments
 _FINDER_COMMENT_NAMES = [
@@ -95,31 +82,10 @@ _FINDER_COMMENT_NAMES = [
     "com.apple.metadata:kMDItemFinderComment",
 ]
 _TAGS_NAMES = ["tags", "_kMDItemUserTags", "com.apple.metadata:_kMDItemUserTags"]
-_FINDERINFO_NAMES = ["finderinfo", "com.apple.FinderInfo"]
 
-_BACKUP_FILENAME = ".osxmetadata.json"
 
-__all__ = [
-    "FinderInfo",
-    "_kMDItemUserTags",
-    "kMDItemAuthors",
-    "kMDItemComment",
-    "kMDItemCopyright",
-    "kMDItemCreator",
-    "kMDItemDescription",
-    "kMDItemDownloadedDate",
-    "kMDItemDueDate",
-    "kMDItemFSIsStationery",
-    "kMDItemFinderComment",
-    "kMDItemHeadline",
-    "kMDItemKeywords",
-    "kMDItemParticipants",
-    "kMDItemProjects",
-    "kMDItemStarRating",
-    "kMDItemSubject",
-    "kMDItemTitle",
-    "kMDItemUserTags",
-    "kMDItemVersion",
-    "kMDItemWhereFroms",
-    "OSXPhotosDetectedText",
-]
+# __all__ = [
+#     "FinderInfo",
+#     "_kMDItemUserTags",
+#     "OSXPhotosDetectedText",
+# ]

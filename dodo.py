@@ -3,6 +3,21 @@
 import osxmetadata
 
 
+def task_update_readme():
+    """Update README with CLI output"""
+    return {"actions": ["poetry run cog -r README.md"]}
+
+
+def task_test():
+    """Run tests"""
+    return {"actions": ["poetry run pytest --doctest-glob=README.md tests/"]}
+
+
+def task_docs():
+    """Build docs"""
+    return {"actions": ["poetry run mkdocs build"]}
+
+
 def task_clean_build_files():
     """Clean out old build files"""
     return {
