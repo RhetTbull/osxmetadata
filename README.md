@@ -939,6 +939,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center"><a href="http://www.borja.glezseoane.es"><img src="https://avatars.githubusercontent.com/u/24481419?v=4?s=75" width="75px;" alt="Borja González Seoane"/><br /><sub><b>Borja González Seoane</b></sub></a><br /><a href="https://github.com/RhetTbull/osxmetadata/commits?author=bglezseoane" title="Code">💻</a></td>
       <td align="center"><a href="https://github.com/porg"><img src="https://avatars.githubusercontent.com/u/737143?v=4?s=75" width="75px;" alt="porg"/><br /><sub><b>porg</b></sub></a><br /><a href="https://github.com/RhetTbull/osxmetadata/issues?q=author%3Aporg" title="Bug reports">🐛</a></td>
       <td align="center"><a href="https://github.com/nk9"><img src="https://avatars.githubusercontent.com/u/3646730?v=4?s=75" width="75px;" alt="Nick Kocharhook"/><br /><sub><b>Nick Kocharhook</b></sub></a><br /><a href="https://github.com/RhetTbull/osxmetadata/issues?q=author%3Ank9" title="Bug reports">🐛</a></td>
+      <td align="center"><a href="https://jakewilliami.github.io/"><img src="https://avatars.githubusercontent.com/u/54291317?v=4?s=75" width="75px;" alt="Jake Ireland"/><br /><sub><b>Jake Ireland</b></sub></a><br /><a href="#ideas-jakewilliami" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
   </tbody>
 </table>
