@@ -52,7 +52,8 @@ OSXMetaData uses setuptools, thus simply run:
 
     git clone https://github.com/RhetTbull/osxmetadata.git
     cd osxmetadata 
-    python3 setup.py install
+    pip install poetry
+    poetry install
 
 I recommend you create a [virtual environment](https://docs.python.org/3/tutorial/venv.html) before installing osxmetadata.
 
