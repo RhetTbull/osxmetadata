@@ -28,7 +28,7 @@ def test_audio():
     return TEST_AUDIO
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def test_file():
     """Create a temporary test file"""
     # can't use tmp_path fixture because the tmpfs filesystem doesn't support xattrs
@@ -36,7 +36,7 @@ def test_file():
         yield test_file
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def test_file2():
     """Create a temporary test file"""
     # can't use tmp_path fixture because the tmpfs filesystem doesn't support xattrs

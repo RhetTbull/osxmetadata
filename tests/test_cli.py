@@ -441,6 +441,7 @@ def test_cli_backup_restore(test_dir, snooze):
     # wipe the data
     result = runner.invoke(cli, ["--wipe", test_file.as_posix()])
     snooze()
+    md = OSXMetaData(test_file)
     assert not md.tags
     assert not md.authors
     assert not md.stationerypad
@@ -482,7 +483,7 @@ def test_cli_backup_walk_pattern(test_dir):
     assert backup_data.get("sub1.txt") is None
 
 
-def test_cli_order(test_dir):
+def test_cli_order(test_dir, snooze):
     """Test order CLI options are executed
 
     Order of execution should be:
@@ -494,7 +495,7 @@ def test_cli_order(test_dir):
     test_file.touch()
     test_file.write_text("test")
 
-    md = OSXMetaData(test_file.name)
+    md = OSXMetaData(test_file)
     md.tags = [Tag("test", 0)]
     md.authors = ["John Doe", "Jane Doe"]
     md.wherefroms = ["http://www.apple.com"]
@@ -504,10 +505,11 @@ def test_cli_order(test_dir):
     runner = CliRunner()
 
     # first, create backup file for --restore
-    runner.invoke(cli, ["--backup", test_file])
+    runner.invoke(cli, ["--backup", test_file.as_posix()])
 
     # wipe the data
-    runner.invoke(cli, ["--wipe", test_file])
+    runner.invoke(cli, ["--wipe", test_file.as_posix()])
+    snooze()
 
     # restore the data and check order of operations
     result = runner.invoke(
@@ -539,11 +541,14 @@ def test_cli_order(test_dir):
             "--mirror",
             "comment",
             "findercomment",
-            test_file.name,
+            test_file.as_posix(),
         ],
     )
     output = parse_cli_output(result.output)
     assert output["comment"] == "Hello World"
+
+    snooze()
+    md = OSXMetaData(test_file)
     assert md.authors == ["John Smith", "Jane Smith"]
     assert md.findercomment == "Hello World"
     assert md.tags == [Tag("test", 0), Tag("test2", 0)]
