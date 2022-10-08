@@ -1,4 +1,0 @@
-build==0.8.0
-doit==0.36.0
-pyinstaller==5.2
-pytest==7.1.2
