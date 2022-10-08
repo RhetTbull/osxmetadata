@@ -934,10 +934,13 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
 <table>
-  <tr>
-    <td align="center"><a href="http://www.borja.glezseoane.es"><img src="https://avatars.githubusercontent.com/u/24481419?v=4?s=75" width="75px;" alt=""/><br /><sub><b>Borja González Seoane</b></sub></a><br /><a href="https://github.com/RhetTbull/osxmetadata/commits?author=bglezseoane" title="Code">💻</a></td>
-    <td align="center"><a href="https://github.com/porg"><img src="https://avatars.githubusercontent.com/u/737143?v=4?s=75" width="75px;" alt=""/><br /><sub><b>porg</b></sub></a><br /><a href="https://github.com/RhetTbull/osxmetadata/issues?q=author%3Aporg" title="Bug reports">🐛</a></td>
-  </tr>
+  <tbody>
+    <tr>
+      <td align="center"><a href="http://www.borja.glezseoane.es"><img src="https://avatars.githubusercontent.com/u/24481419?v=4?s=75" width="75px;" alt="Borja González Seoane"/><br /><sub><b>Borja González Seoane</b></sub></a><br /><a href="https://github.com/RhetTbull/osxmetadata/commits?author=bglezseoane" title="Code">💻</a></td>
+      <td align="center"><a href="https://github.com/porg"><img src="https://avatars.githubusercontent.com/u/737143?v=4?s=75" width="75px;" alt="porg"/><br /><sub><b>porg</b></sub></a><br /><a href="https://github.com/RhetTbull/osxmetadata/issues?q=author%3Aporg" title="Bug reports">🐛</a></td>
+      <td align="center"><a href="https://github.com/nk9"><img src="https://avatars.githubusercontent.com/u/3646730?v=4?s=75" width="75px;" alt="Nick Kocharhook"/><br /><sub><b>Nick Kocharhook</b></sub></a><br /><a href="https://github.com/RhetTbull/osxmetadata/issues?q=author%3Ank9" title="Bug reports">🐛</a></td>
+    </tr>
+  </tbody>
 </table>
 
 <!-- markdownlint-restore -->
