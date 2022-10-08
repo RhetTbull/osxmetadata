@@ -18,6 +18,14 @@ def task_docs():
     return {"actions": ["poetry run mkdocs build"]}
 
 
+def task_gh_docs():
+    """Build docs and push to gh-pages"""
+    return {
+        "actions": [
+            "poetry run mkdocs gh-deploy --force",
+        ]
+    }
+
 def task_clean_build_files():
     """Clean out old build files"""
     return {
