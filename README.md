@@ -261,6 +261,10 @@ The Finder keeps some legacy Finder info data about files in a bitstring stored 
 - `findercolor`: The color of the file as an integer; setting this attribute has the same effect as applying a color label in the Finder's `Get Info` window. osxmetadata will set this attribute automatically when setting user tags; it is recommended you do not set this attribute directly.
 - `finderinfo`: The raw Finder info data as a bytes object; you should only manipulate this attribute if you know what you are doing.
 
+## Temporary Files
+
+Spotlight does not appear to index temporary files (those in `/tmp` or `/private/var/tmp`). Setting metadata using osxmetadata on temporary files in these locations will not fail but but it appears the metadata will not be indexed and a subsequent read will return the default value as if the metadata had not been written. This is not a limitation of osxmetadata but rather a limitation of Spotlight. If you need to set metadata on temporary files, you should use a different location.
+
 ## Command Line Usage
 
 Installs command line tool called `osxmetadata` which provides a simple interface to view/edit metadata supported by osxmetadata.
