@@ -16,19 +16,10 @@ from ScriptingBridge import SBApplication
 kMDItemFinderComment = "kMDItemFinderComment"
 
 __all__ = [
-    "clear_finder_comment",
     "kMDItemFinderComment",
     "set_finder_comment",
     "set_or_remove_finder_comment",
 ]
-
-# _scpt_clear_finder_comment = applescript.AppleScript(
-#     """
-#         on run {path}
-#             tell application "Finder" to set comment of (POSIX file path as alias) to missing value
-#         end run
-#     """
-# )
 
 
 def set_finder_comment(url: NSURL, comment: str):
@@ -60,15 +51,3 @@ def set_or_remove_finder_comment(url: NSURL, xattr_: xattr.xattr, comment: str):
         # so that is what this code does
         set_finder_comment(url, "")
         xattr_.remove("com.apple.metadata:kMDItemFinderComment")
-
-
-# def clear_finder_comment(path: str, xattr_: xattr.xattr):
-#     """Clear Finder comment for file at path"""
-
-#     _scpt_clear_finder_comment.run(path)
-
-#     # remove attribute from xattr list
-#     # if Finder comment value was None or "", remove the attribute
-#     # this mirrors what Finder does when you clear the comment
-#     # but the AppleScript/ScriptingBridge interface does not do this
-#     xattr_.remove("com.apple.metadata:kMDItemFinderComment")
