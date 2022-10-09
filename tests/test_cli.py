@@ -12,7 +12,8 @@ from osxmetadata import *
 from osxmetadata import __version__
 from osxmetadata.__main__ import BACKUP_FILENAME, cli
 from osxmetadata.backup import load_backup_file
-from .conftest import snooze
+
+from .conftest import FINDER_COMMENT_SNOOZE, snooze
 
 
 def parse_cli_output(output):
@@ -35,7 +36,8 @@ def test_cli_list(test_file):
     md.tags = [Tag("test", 0)]
     md.description = "This is a test file"
 
-    snooze()
+    snooze(FINDER_COMMENT_SNOOZE)
+
     runner = CliRunner()
     result = runner.invoke(
         cli,

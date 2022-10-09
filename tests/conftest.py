@@ -13,8 +13,10 @@ TEST_VIDEO = "tests/test_video.mov"
 TEST_AUDIO = "tests/test_audio.m4a"
 
 # how long to wait for metadata to be written to disk
-SNOOZE_TIME = 0.1
-FINDER_COMMENT_SNOOZE = 2.0  # Finder comments need more time to be written to disk
+# if running in GitHub Actions, wait longer
+SNOOZE_TIME = 0.5 if os.environ.get("GITHUB_ACTION") else 0.1
+# Finder comments need more time to be written to disk
+FINDER_COMMENT_SNOOZE = 2.0
 
 
 def snooze(seconds: float = SNOOZE_TIME) -> None:
