@@ -14,7 +14,8 @@ TEST_AUDIO = "tests/test_audio.m4a"
 
 # how long to wait for metadata to be written to disk
 SNOOZE_TIME = 0.1
-FINDER_COMMENT_SNOOZE = 1.0 # Finder comments need more time to be written to disk
+FINDER_COMMENT_SNOOZE = 2.0  # Finder comments need more time to be written to disk
+
 
 def snooze(seconds: float = SNOOZE_TIME) -> None:
     """Sleep for a bit to allow Finder to update metadata"""
