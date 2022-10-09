@@ -12,10 +12,11 @@ To bump the minor version, run `bumpversion minor --verbose --dry-run` to see wh
 
 - `pip install poetry`
 - `poetry install`
+- `poetry shell` to activate the virtual environment
 
 ## Testing
 
-The doit `test` task (`doit test`) will run pytest to test the package. The README.md file contains some example code that can be tested with `poetry run pytest --doctest-glob=README.md`.  The `test` task will do this automatically.
+The doit `test` task (`doit test`) will run pytest to test the package. (You'll need to have used `poetry shell` before running `doit` to activate the poetry environment.) The README.md file contains some example code that can be tested with `poetry run pytest --doctest-glob=README.md`.  The `test` task will do this automatically.
 
 ## Building
 
