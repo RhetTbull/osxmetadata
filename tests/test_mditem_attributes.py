@@ -1,5 +1,7 @@
 """Test osxmetadata basic mditem metadata tags"""
 
+import os
+
 import pytest
 
 from osxmetadata import OSXMetaData
@@ -123,6 +125,9 @@ def test_mditem_attributes_set_none(attribute_name, test_file):
     assert not md.get(attribute_name)
 
 
+@pytest.mark.skipif(
+    os.environ.get("GITHUB_ACTION"), reason="GitHub Actions doesn't run md import"
+)
 def test_mditem_attributes_image(test_image):
     """test mditem attributes for image files"""
 
@@ -131,6 +136,9 @@ def test_mditem_attributes_image(test_image):
     assert md.get("kMDItemPixelHeight") == 2754
 
 
+@pytest.mark.skipif(
+    os.environ.get("GITHUB_ACTION"), reason="GitHub Actions doesn't run md import"
+)
 def test_mditem_attributes_video(test_video):
     """test mditem attributes for video files"""
 
@@ -139,6 +147,9 @@ def test_mditem_attributes_video(test_video):
     assert md.get("kMDItemAudioBitRate") == 64.0
 
 
+@pytest.mark.skipif(
+    os.environ.get("GITHUB_ACTION"), reason="GitHub Actions doesn't run md import"
+)
 def test_mditem_attributes_audio(test_audio):
     """test mditem attributes for audio files"""
 

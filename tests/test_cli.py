@@ -14,58 +14,6 @@ from osxmetadata.__main__ import BACKUP_FILENAME, cli
 from osxmetadata.backup import load_backup_file
 from .conftest import snooze
 
-help = """
-  -v, --version                   Show the version and exit.
-  -w, --walk                      Walk directory tree, processing each file in
-                                  the tree.
-  -j, --json                      Print output in JSON format, for use with
-                                  --list and --get.
-  -X, --wipe                      Wipe all metadata attributes from FILE.
-  -s, --set ATTRIBUTE VALUE       Set ATTRIBUTE to VALUE.
-  -l, --list                      List all metadata attributes for FILE.
-  -c, --clear ATTRIBUTE           Remove attribute from FILE.
-  -a, --append ATTRIBUTE VALUE    Append VALUE to ATTRIBUTE; for multi-valued
-                                  attributes, appends only if VALUE is not
-                                  already present.
-  -g, --get ATTRIBUTE             Get value of ATTRIBUTE.
-  -r, --remove ATTRIBUTE VALUE    Remove VALUE from ATTRIBUTE; only applies to
-                                  multi-valued attributes.
-  -m, --mirror ATTRIBUTE1 ATTRIBUTE2
-                                  Mirror values between ATTRIBUTE1 and
-                                  ATTRIBUTE2 so that ATTRIBUTE1 = ATTRIBUTE2;
-                                  for multi-valued attributes, merges values;
-                                  for string attributes, sets ATTRIBUTE1 =
-                                  ATTRIBUTE2 overwriting any value in
-                                  ATTRIBUTE1.  For example: '--mirror keywords
-                                  tags' sets tags and keywords to same values.
-  -B, --backup                    Backup FILE attributes.  Backup file
-                                  '.osxmetadata.json' will be created in same
-                                  folder as FILE. Only backs up attributes
-                                  known to osxmetadata unless used with --all.
-  -R, --restore                   Restore FILE attributes from backup file.
-                                  Restore will look for backup file
-                                  '.osxmetadata.json' in same folder as FILE.
-                                  Only restores attributes known to
-                                  osxmetadata unless used with --all.
-  -V, --verbose                   Print verbose output.
-  -f, --copyfrom SOURCE_FILE      Copy attributes from file SOURCE_FILE (only
-                                  updates destination attributes that are not
-                                  null in SOURCE_FILE).
-  --files-only                    Do not apply metadata commands to
-                                  directories themselves, only files in a
-                                  directory.
-  -p, --pattern PATTERN           Only process files matching PATTERN; only
-                                  applies to --walk. If specified, only files
-                                  matching PATTERN will be processed as each
-                                  directory is walked. May be used for than
-                                  once to specify multiple patterns. For
-                                  example, tag all *.pdf files in projectdir
-                                  and subfolders with tag 'project':
-                                  osxmetadata --append tags 'project' --walk
-                                  projectdir/ --pattern '*.pdf'
-  --help                          Show this message and exit.
-"""
-
 
 def parse_cli_output(output):
     """Helper for testing
@@ -238,6 +186,7 @@ def test_cli_remove(test_file):
             test_file.name,
         ],
     )
+    snooze()
     assert result.exit_code == 0
     assert md.authors == ["Jane Doe"]
     assert not md.tags
