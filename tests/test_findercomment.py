@@ -4,41 +4,43 @@ import pytest
 
 from osxmetadata import OSXMetaData, kMDItemFinderComment
 
+from .conftest import FINDER_COMMENT_SNOOZE, snooze
 
-def test_finder_comments(test_file, snooze):
+
+def test_finder_comments(test_file):
 
     md = OSXMetaData(test_file.name)
     fc = "This is my new comment"
     md.findercomment = fc
     # Finder comment is set via AppleScript events and may take a moment to update
-    snooze()
+    snooze(FINDER_COMMENT_SNOOZE)
     assert md.findercomment == fc
     md.findercomment += ", foo"
     fc += ", foo"
-    snooze()
+    snooze(FINDER_COMMENT_SNOOZE)
     assert md.findercomment == fc
 
     # set finder comment to "" deletes it as this mirrors Finder and mdls
     md.findercomment = ""
-    snooze()
+    snooze(FINDER_COMMENT_SNOOZE)
     assert not md.findercomment
 
     md.findercomment = "foo"
-    snooze()
+    snooze(FINDER_COMMENT_SNOOZE)
     assert md.findercomment == "foo"
 
     # set finder comment to None deletes it
     md.findercomment = None
-    snooze()
+    snooze(FINDER_COMMENT_SNOOZE)
     assert not md.findercomment
 
     # can we set findercomment after is was set to None?
     md.findercomment = "bar"
-    snooze()
+    snooze(FINDER_COMMENT_SNOOZE)
     assert md.findercomment == "bar"
 
 
-def test_finder_comments_get_set(test_file, snooze):
+def test_finder_comments_get_set(test_file):
     """test get/set attribute"""
 
     attribute = kMDItemFinderComment
@@ -46,20 +48,20 @@ def test_finder_comments_get_set(test_file, snooze):
     md = OSXMetaData(test_file.name)
     fc = "This is my new comment"
     md.set(attribute, fc)
-    snooze()
+    snooze(FINDER_COMMENT_SNOOZE)
     assert md.findercomment == fc
     md.findercomment += ", foo"
     fc += ", foo"
-    snooze()
+    snooze(FINDER_COMMENT_SNOOZE)
     assert md.findercomment == fc
 
     # set finder comment to "" deletes it as this mirrors mdls and Finder
     md.set(attribute, "")
-    snooze()
+    snooze(FINDER_COMMENT_SNOOZE)
     assert not md.get(attribute)
 
     md.set(attribute, "foo")
-    snooze()
+    snooze(FINDER_COMMENT_SNOOZE)
     assert md.get(attribute) == "foo"
 
     # set finder comment to None deletes it
@@ -69,11 +71,11 @@ def test_finder_comments_get_set(test_file, snooze):
 
     # can we set findercomment after is was set to None?
     md.set(attribute, "bar")
-    snooze()
+    snooze(FINDER_COMMENT_SNOOZE)
     assert md.get(attribute) == "bar"
 
 
-def test_finder_comments_dir(test_dir, snooze):
+def test_finder_comments_dir(test_dir):
     """test get/set attribute but on a directory, not on a file"""
 
     attribute = kMDItemFinderComment
@@ -81,9 +83,9 @@ def test_finder_comments_dir(test_dir, snooze):
     md = OSXMetaData(test_dir)
     fc = "This is my new comment"
     md.set(attribute, fc)
-    snooze()
+    snooze(FINDER_COMMENT_SNOOZE)
     assert md.findercomment == fc
     md.findercomment += ", foo"
     fc += ", foo"
-    snooze()
+    snooze(FINDER_COMMENT_SNOOZE)
     assert md.findercomment == fc

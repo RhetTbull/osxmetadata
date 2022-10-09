@@ -15,6 +15,7 @@ from osxmetadata.constants import (
     FINDER_COLOR_GREEN,
     FINDER_COLOR_NONE,
 )
+from .conftest import snooze
 
 
 def test_stationerypad(test_file):
@@ -25,9 +26,11 @@ def test_stationerypad(test_file):
 
     md = OSXMetaData(test_file.name)
     md.stationerypad = True
+    snooze()
     assert md.stationerypad == True
 
     md.set(_kFinderStationeryPad, False)
+    snooze()
     assert md.get(_kFinderStationeryPad) == False
 
 
@@ -35,6 +38,7 @@ def test_finderinfo(test_file):
     """Test finderinfo attribute to get raw bytes"""
 
     md = OSXMetaData(test_file.name)
+    snooze()
     assert len(md.finderinfo) == 32
 
     assert (
@@ -43,6 +47,7 @@ def test_finderinfo(test_file):
         + b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
     )
     md.stationerypad = True
+    snooze()
     assert (
         md.finderinfo
         == b"\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00"
@@ -56,11 +61,13 @@ def test_findercolor(test_file):
     md = OSXMetaData(test_file.name)
     assert md.findercolor == FINDER_COLOR_NONE
     md.findercolor = FINDER_COLOR_GREEN
+    snooze()
     assert md.findercolor == FINDER_COLOR_GREEN
 
     # test that setting a tag color also sets the FinderInfo color
     md.findercolor = FINDER_COLOR_NONE
     md.tags = [Tag("Blue", color=FINDER_COLOR_BLUE)]
+    snooze()
     assert md.findercolor == FINDER_COLOR_BLUE
 
 

@@ -12,6 +12,7 @@ from osxmetadata import *
 from osxmetadata import __version__
 from osxmetadata.__main__ import BACKUP_FILENAME, cli
 from osxmetadata.backup import load_backup_file
+from .conftest import snooze
 
 help = """
   -v, --version                   Show the version and exit.
@@ -86,6 +87,7 @@ def test_cli_list(test_file):
     md.tags = [Tag("test", 0)]
     md.description = "This is a test file"
 
+    snooze()
     runner = CliRunner()
     result = runner.invoke(
         cli,
@@ -115,11 +117,13 @@ def test_cli_wipe(test_file):
     md.authors = ["John Doe"]
     md.description = "This is a test file"
 
+    snooze()
     runner = CliRunner()
     result = runner.invoke(
         cli,
         ["--wipe", test_file.name],
     )
+    snooze()
     assert result.exit_code == 0
     assert not md.authors
     assert not md.description
@@ -147,6 +151,7 @@ def test_cli_set(test_file):
             test_file.name,
         ],
     )
+    snooze()
     assert result.exit_code == 0
     md = OSXMetaData(test_file.name)
     assert md.authors == ["John Doe"]
@@ -166,6 +171,7 @@ def test_cli_clear(test_file):
         cli,
         ["--clear", "authors", test_file.name],
     )
+    snooze()
     assert result.exit_code == 0
     assert not md.authors
     assert md.description == "This is a test file"
@@ -414,7 +420,7 @@ def test_cli_files_only(test_dir):
     assert not md.tags
 
 
-def test_cli_backup_restore(test_dir, snooze):
+def test_cli_backup_restore(test_dir):
     """Test --backup and --restore"""
 
     dirname = pathlib.Path(test_dir)
@@ -483,7 +489,7 @@ def test_cli_backup_walk_pattern(test_dir):
     assert backup_data.get("sub1.txt") is None
 
 
-def test_cli_order(test_dir, snooze):
+def test_cli_order(test_dir):
     """Test order CLI options are executed
 
     Order of execution should be:

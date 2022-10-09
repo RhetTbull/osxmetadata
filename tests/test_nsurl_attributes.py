@@ -9,6 +9,8 @@ from osxmetadata.attribute_data import (
     NSURL_RESOURCE_KEY_DATA,
 )
 
+from .conftest import snooze
+
 
 @pytest.mark.parametrize("attribute_name", NSURL_RESOURCE_KEY_DATA.keys())
 def test_nsurl_attributes_all(attribute_name, test_file):
@@ -38,6 +40,7 @@ def test_nsurl_attribute_NSURLTagNamesKey(test_file):
     md = OSXMetaData(test_file.name)
     assert md.get("NSURLTagNamesKey") is None
     md["NSURLTagNamesKey"] = ["a", "b"]
+    snooze()
     assert md.NSURLTagNamesKey == ["a", "b"]
     md.NSURLTagNamesKey = []
     assert not md.NSURLTagNamesKey

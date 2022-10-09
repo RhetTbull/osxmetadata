@@ -12,6 +12,18 @@ TEST_IMAGE = "tests/test_image.jpg"
 TEST_VIDEO = "tests/test_video.mov"
 TEST_AUDIO = "tests/test_audio.m4a"
 
+# how long to wait for metadata to be written to disk
+SNOOZE_TIME = 0.1
+FINDER_COMMENT_SNOOZE = 0.5 # Finder comments need more time to be written to disk
+
+def snooze(seconds: float = SNOOZE_TIME) -> None:
+    """Sleep for a bit to allow Finder to update metadata"""
+
+    def _sleep():
+        time.sleep(seconds)
+
+    return _sleep
+
 
 @pytest.fixture(scope="session")
 def test_image():
@@ -50,16 +62,6 @@ def test_dir():
     # can't use tmp_path fixture because the tmpfs filesystem doesn't support xattrs
     with TemporaryDirectory(dir=os.getcwd(), prefix="tmp_") as test_dir:
         yield test_dir
-
-
-@pytest.fixture(scope="session")
-def snooze():
-    """Sleep for a bit to allow Finder to update metadata"""
-
-    def _sleep():
-        time.sleep(0.5)
-
-    return _sleep
 
 
 def value_for_type(

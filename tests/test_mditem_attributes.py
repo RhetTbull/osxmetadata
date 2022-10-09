@@ -11,7 +11,7 @@ from osxmetadata.attribute_data import (
     MDITEM_ATTRIBUTE_VIDEO,
 )
 
-from .conftest import value_for_type
+from .conftest import FINDER_COMMENT_SNOOZE, snooze, value_for_type
 
 # filter out the read-only attributes
 MDITEM_ATTRIBUTES_TO_TEST = [
@@ -30,7 +30,7 @@ MDITEM_ATTRIBUTES_CAN_BE_REMOVED = [
 
 
 @pytest.mark.parametrize("attribute_name", MDITEM_ATTRIBUTES_TO_TEST)
-def test_mditem_attributes_get_set(attribute_name, test_file, snooze):
+def test_mditem_attributes_get_set(attribute_name, test_file):
     """test mditem attributes"""
 
     # can't use tmp_path fixture because the tmpfs filesystem doesn't support xattrs
@@ -40,13 +40,14 @@ def test_mditem_attributes_get_set(attribute_name, test_file, snooze):
 
     md = OSXMetaData(test_file.name)
     md.set(attribute_name, test_value)
+    snooze()
     if attribute_name == "kMDItemFinderComment":
-        snooze()  # Finder needs a moment to update the comment
+        snooze(FINDER_COMMENT_SNOOZE)
     assert md.get(attribute_name) == test_value
 
 
 @pytest.mark.parametrize("attribute_name", MDITEM_ATTRIBUTES_TO_TEST)
-def test_mditem_attributes_dict(attribute_name, test_file, snooze):
+def test_mditem_attributes_dict(attribute_name, test_file):
     """test mditem attributes with dict access"""
 
     attribute = MDITEM_ATTRIBUTE_DATA[attribute_name]
@@ -55,13 +56,14 @@ def test_mditem_attributes_dict(attribute_name, test_file, snooze):
 
     md = OSXMetaData(test_file.name)
     md[attribute_name] = test_value
+    snooze()
     if attribute_name == "kMDItemFinderComment":
-        snooze()  # Finder needs a bit of time to update the metadata
+        snooze(FINDER_COMMENT_SNOOZE)
     assert md[attribute_name] == test_value
 
 
 @pytest.mark.parametrize("attribute_name", MDITEM_ATTRIBUTES_TO_TEST)
-def test_mditem_attributes_property(attribute_name, test_file, snooze):
+def test_mditem_attributes_property(attribute_name, test_file):
     """test mditem attributes with property access"""
 
     attribute = MDITEM_ATTRIBUTE_DATA[attribute_name]
@@ -70,13 +72,14 @@ def test_mditem_attributes_property(attribute_name, test_file, snooze):
 
     md = OSXMetaData(test_file.name)
     setattr(md, attribute_name, test_value)
+    snooze()
     if attribute_name == "kMDItemFinderComment":
-        snooze()  # Finder comment is slow to update
+        snooze(FINDER_COMMENT_SNOOZE)
     assert getattr(md, attribute_name) == test_value
 
 
 @pytest.mark.parametrize("attribute_name", MDITEM_ATTRIBUTES_TO_TEST)
-def test_mditem_attributes_short_name(attribute_name, test_file, snooze):
+def test_mditem_attributes_short_name(attribute_name, test_file):
     """test mditem attributes"""
 
     attribute = MDITEM_ATTRIBUTE_DATA[attribute_name]
@@ -85,8 +88,9 @@ def test_mditem_attributes_short_name(attribute_name, test_file, snooze):
 
     md = OSXMetaData(test_file.name)
     setattr(md, attribute["short_name"], test_value)
-    if attribute_name == "findercomment":
-        snooze()  # Finder comment is slow to update
+    snooze()
+    if attribute_name == "kMDItemFinderComment":
+        snooze(FINDER_COMMENT_SNOOZE)
     assert getattr(md, attribute["short_name"]) == test_value
 
 
@@ -99,7 +103,7 @@ def test_mditem_attributes_all(attribute_name, test_file):
 
 
 @pytest.mark.parametrize("attribute_name", MDITEM_ATTRIBUTES_CAN_BE_REMOVED)
-def test_mditem_attributes_set_none(attribute_name, test_file, snooze):
+def test_mditem_attributes_set_none(attribute_name, test_file):
     """test mditem attributes can be set to None to remove"""
 
     # can't use tmp_path fixture because the tmpfs filesystem doesn't support xattrs
@@ -108,12 +112,14 @@ def test_mditem_attributes_set_none(attribute_name, test_file, snooze):
     test_value = value_for_type(attribute_type)
     md = OSXMetaData(test_file.name)
     md.set(attribute_name, test_value)
+    snooze()
     if attribute_name == "kMDItemFinderComment":
-        snooze()  # Finder needs a moment to update the comment
+        snooze(FINDER_COMMENT_SNOOZE)  # Finder needs a moment to update the comment
     assert md.get(attribute_name)
     md.set(attribute_name, None)
+    snooze()
     if attribute_name == "kMDItemFinderComment":
-        snooze()
+        snooze(FINDER_COMMENT_SNOOZE)
     assert not md.get(attribute_name)
 
 
