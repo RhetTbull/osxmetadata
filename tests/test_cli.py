@@ -188,6 +188,8 @@ def test_cli_remove(test_file):
     )
     snooze()
     assert result.exit_code == 0
+
+    md = OSXMetaData(test_file.name)
     assert md.authors == ["Jane Doe"]
     assert not md.tags
 
@@ -209,8 +211,11 @@ def test_cli_mirror(test_file):
             "--verbose",
         ],
     )
+    snooze()
     assert result.exit_code == 0
     assert "Mirroring" in result.stdout
+
+    md = OSXMetaData(test_file.name)
     assert md.description == "This is a test file"
 
 
@@ -229,10 +234,11 @@ def test_cli_copyfrom(test_file, test_file2):
             test_file2.name,
         ],
     )
+    snooze()
     assert result.exit_code == 0
 
-    md2 = OSXMetaData(test_file2.name)
-    assert md2.description == "This is a test file"
+    md = OSXMetaData(test_file2.name)
+    assert md.description == "This is a test file"
 
 
 def test_cli_walk(test_dir):
@@ -246,6 +252,7 @@ def test_cli_walk(test_dir):
 
     runner = CliRunner()
     result = runner.invoke(cli, ["--set", "tags", "test", "--walk", test_dir])
+    snooze()
     assert result.exit_code == 0
 
     md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.txt")
@@ -268,6 +275,7 @@ def test_cli_walk_files_only(test_dir):
     result = runner.invoke(
         cli, ["--set", "tags", "test", "--walk", "--files-only", test_dir]
     )
+    snooze()
     assert result.exit_code == 0
 
     md = OSXMetaData(dirname / "temp" / "subfolder1" / "sub1.txt")

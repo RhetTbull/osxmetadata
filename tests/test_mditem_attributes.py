@@ -126,7 +126,7 @@ def test_mditem_attributes_set_none(attribute_name, test_file):
 
 
 @pytest.mark.skipif(
-    os.environ.get("GITHUB_ACTION"), reason="GitHub Actions doesn't run md import"
+    bool(os.environ.get("GITHUB_ACTION")), reason="GitHub Actions doesn't run md import"
 )
 def test_mditem_attributes_image(test_image):
     """test mditem attributes for image files"""
@@ -137,7 +137,7 @@ def test_mditem_attributes_image(test_image):
 
 
 @pytest.mark.skipif(
-    os.environ.get("GITHUB_ACTION"), reason="GitHub Actions doesn't run md import"
+    bool(os.environ.get("GITHUB_ACTION")), reason="GitHub Actions doesn't run md import"
 )
 def test_mditem_attributes_video(test_video):
     """test mditem attributes for video files"""
@@ -148,7 +148,7 @@ def test_mditem_attributes_video(test_video):
 
 
 @pytest.mark.skipif(
-    os.environ.get("GITHUB_ACTION"), reason="GitHub Actions doesn't run md import"
+    bool(os.environ.get("GITHUB_ACTION")), reason="GitHub Actions doesn't run md import"
 )
 def test_mditem_attributes_audio(test_audio):
     """test mditem attributes for audio files"""
