@@ -21,11 +21,7 @@ FINDER_COMMENT_SNOOZE = 2.0
 
 def snooze(seconds: float = SNOOZE_TIME) -> None:
     """Sleep for a bit to allow Finder to update metadata"""
-
-    def _sleep():
-        time.sleep(seconds)
-
-    return _sleep
+    time.sleep(seconds)
 
 
 @pytest.fixture(scope="session")
@@ -69,7 +65,9 @@ def test_dir():
 
 def value_for_type(
     type_: type,
-) -> t.Union[str, float, bool, datetime.datetime, t.List[str]]:
+) -> t.Union[
+    str, float, bool, datetime.datetime, t.List[str], t.List[datetime.datetime]
+]:
     """Get test value for a given metadata attribute type"""
     if type_ == "str":
         return "Hello World"

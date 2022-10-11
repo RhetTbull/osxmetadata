@@ -60,8 +60,10 @@ I recommend you create a [virtual environment](https://docs.python.org/3/tutoria
 ## Using the API
 
 ```pycon
->>> from osxmetadata import *
 >>> import datetime
+>>> import pathlib
+>>> from osxmetadata import *
+>>> pathlib.Path("test_file.txt").touch()
 >>> md = OSXMetaData("test_file.txt")
 >>> md.set(kMDItemAuthors, ["Jane Smith", "John Doe"])
 >>> md.get(kMDItemAuthors)
