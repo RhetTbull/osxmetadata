@@ -837,7 +837,7 @@ rights                     kMDItemRights; com.apple.metadata:kMDItemRights;
 securitymethod             kMDItemSecurityMethod;
                            com.apple.metadata:kMDItemSecurityMethod; The
                            security or encryption method used for the file.;
-                           number
+                           string
 speed                      kMDItemSpeed; com.apple.metadata:kMDItemSpeed; The
                            speed of the item, in kilometers per hour.; string
 starrating                 kMDItemStarRating;

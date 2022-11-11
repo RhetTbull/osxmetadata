@@ -26,6 +26,7 @@ def task_gh_docs():
         ]
     }
 
+
 def task_clean_build_files():
     """Clean out old build files"""
     return {
@@ -42,7 +43,15 @@ def task_build_exe():
     """Build exe with pyinstaller"""
     return {
         "actions": [
-            'pyinstaller --onefile --hidden-import="pkg_resources.py2_warn" --name osxmetadata cli.py'
+            'pyinstaller --onefile --hidden-import="pkg_resources.py2_warn" --name osxmetadata '
+            "--add-data osxmetadata/attribute_data/audio_attributes.json:osxmetadata/attribute_data "
+            "--add-data osxmetadata/attribute_data/common_attributes.json:osxmetadata/attribute_data "
+            "--add-data osxmetadata/attribute_data/filesystem_attributes.json:osxmetadata/attribute_data "
+            "--add-data osxmetadata/attribute_data/image_attributes.json:osxmetadata/attribute_data "
+            "--add-data osxmetadata/attribute_data/mdimporter_constants.json:osxmetadata/attribute_data "
+            "--add-data osxmetadata/attribute_data/nsurl_resource_keys.json:osxmetadata/attribute_data "
+            "--add-data osxmetadata/attribute_data/video_attributes.json:osxmetadata/attribute_data "
+            "cli.py"
         ]
     }
 
