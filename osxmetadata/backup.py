@@ -19,12 +19,17 @@ class BackupDatabaseType(Enum):
 def get_backup_dict(filepath: str):
     """get backup dict for a single file"""
     md = OSXMetaData(filepath)
-    backup_dict = md.asdict()
+    try:
+        backup_dict = md.asdict()
+    except Exception as e:
+        logging.warning(f"Error retrieving metadata for file {filepath}: {e}")
+        backup_dict = {}
+
     backup_dict.update(
         {
             "_version": __version__,
-            "_filepath": md._posix_path,
             "_filename": md._fname.name,
+            "_filepath": md._posix_path,
         }
     )
     return backup_dict
