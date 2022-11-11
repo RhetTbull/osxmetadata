@@ -63,6 +63,9 @@ def write_backup_file(backup_file, backup_data):
             elif isinstance(value, (list, tuple)):
                 if value and isinstance(value[0], datetime.datetime):
                     data[key] = [v.isoformat() for v in value]
+        # strip null values
+        data = {k: v for k, v in data.items() if v is not None}
+        backup_data[filename] = data
 
     with open(backup_file, mode="w") as fp:
         json.dump(list(backup_data.values()), fp, indent=2)

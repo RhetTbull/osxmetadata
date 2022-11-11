@@ -248,7 +248,7 @@
     {
         "name": "kMDItemSecurityMethod",
         "description": "The security or encryption method used for the file.",
-        "type": "CFNumber",
+        "type": "CFString",
         "version": "macOS 10.4+"
     },
     {
