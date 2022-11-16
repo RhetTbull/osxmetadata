@@ -745,7 +745,11 @@ SET_OPTION = click.option(
     "-s",
     "set_",
     metavar="ATTRIBUTE VALUE",
-    help="Set ATTRIBUTE to VALUE.",
+    help="Set ATTRIBUTE to VALUE. "
+    "If ATTRIBUTE is a multi-value attribute, such as keywords (kMDItemKeywords), "
+    "you may specify --set multiple times to add to the array of values: "
+    "'--set keywords foo --set keywords bar' will set keywords to ['foo', 'bar']. "
+    "Not that this will overwrite any existing values for the attribute; see also --append.",
     nargs=2,
     multiple=True,
     required=False,
@@ -788,7 +792,10 @@ APPEND_OPTION = click.option(
     "--append",
     "-a",
     metavar="ATTRIBUTE VALUE",
-    help="Append VALUE to ATTRIBUTE; for multi-valued attributes, appends only if VALUE is not already present.",
+    help="Append VALUE to ATTRIBUTE; for multi-valued attributes, appends only if VALUE is not already present. "
+    "May be used in combination with --set to add to an existing value: "
+    "'--set keywords foo --append keywords bar' will set keywords to ['foo', 'bar'], "
+    "overwriting any existing values for the attribute.",
     nargs=2,
     multiple=True,
     required=False,
