@@ -109,6 +109,50 @@ def test_cli_set(test_file):
     assert md.description == "Goodbye World"
 
 
+def test_cli_set_multi_keywords_1(test_file):
+    """Test --set with multiple keywords (#83)"""
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--set",
+            "keywords",
+            "Foo",
+            "--set",
+            "keywords",
+            "Bar",
+            test_file.name,
+        ],
+    )
+    snooze()
+    assert result.exit_code == 0
+    md = OSXMetaData(test_file.name)
+    assert sorted(md.keywords) == ["Bar", "Foo"]
+
+
+def test_cli_set_multi_keywords_2(test_file):
+    """Test --set, --append with multiple keywords (#83)"""
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--set",
+            "keywords",
+            "Foo",
+            "--append",
+            "keywords",
+            "Bar",
+            test_file.name,
+        ],
+    )
+    snooze()
+    assert result.exit_code == 0
+    md = OSXMetaData(test_file.name)
+    assert sorted(md.keywords) == ["Bar", "Foo"]
+
+
 def test_cli_clear(test_file):
     """Test --clear"""
 
@@ -149,6 +193,52 @@ def test_cli_append(test_file):
     assert result.exit_code == 0
     assert md.authors == ["John Doe", "Jane Doe"]
     assert md.tags == [Tag("test", 0)]
+
+
+def test_cli_set_then_append(test_file):
+    """Test --set then --append"""
+
+    md = OSXMetaData(test_file.name)
+    md.authors = ["John Doe"]
+
+    # set initial value
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--set",
+            "keywords",
+            "foo",
+            test_file.name,
+        ],
+    )
+    assert result.exit_code == 0
+
+    # set again and verify that it overwrites
+    result = runner.invoke(
+        cli,
+        [
+            "--set",
+            "keywords",
+            "bar",
+            test_file.name,
+        ],
+    )
+    assert result.exit_code == 0
+    assert md.keywords == ["bar"]
+
+    # append and verify that it appends
+    result = runner.invoke(
+        cli,
+        [
+            "--append",
+            "keywords",
+            "baz",
+            test_file.name,
+        ],
+    )
+    assert result.exit_code == 0
+    assert sorted(md.keywords) == ["bar", "baz"]
 
 
 def test_cli_get(test_file):

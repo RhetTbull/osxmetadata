@@ -163,3 +163,13 @@ def test_mditem_attributes_audio(test_audio):
 
     md = OSXMetaData(test_audio)
     assert md.get("kMDItemAudioSampleRate") == 44100.0
+
+
+def test_get_set_mditem_attribute_value(test_file):
+    """test get and set of mditem attribute value using the direct methods without value conversion, #83"""
+
+    md = OSXMetaData(test_file.name)
+    md.set_mditem_attribute_value("kMDItemComment", "foo,bar")
+    snooze()
+    assert md.get_mditem_attribute_value("kMDItemComment") == "foo,bar"
+    assert md.comment == "foo,bar"

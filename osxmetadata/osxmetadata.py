@@ -31,7 +31,12 @@ from .finder_info import (
     set_finderinfo_stationerypad,
 )
 from .finder_tags import _kMDItemUserTags, get_finder_tags, set_finder_tags
-from .mditem import MDItemValueType, get_mditem_metadata, set_or_remove_mditem_metadata
+from .mditem import (
+    MDItemValueType,
+    get_mditem_metadata,
+    set_or_remove_mditem_metadata,
+    MDItemSetAttribute,
+)
 from .nsurl_metadata import get_nsurl_metadata, set_nsurl_metadata
 
 ALL_ATTRIBUTES = {
@@ -196,6 +201,34 @@ class OSXMetaData:
                 dict_data[key] = base64.b64encode(value).decode("ascii")
 
         return json.dumps(dict_data, indent=indent)
+
+    def get_mditem_attribute_value(self, attribute: str) -> t.Any:
+        """Get the raw MDItem attribute value without any type conversion.
+
+        Args:
+            attribute: metadata attribute name
+
+        Returns:
+            raw MDItem attribute value as returned by CoreServices.MDItemCopyAttribute()
+
+        Note: This is a low level function that you probably don't need to use,
+        but may be useful in some cases. You should probably use the get() method instead.
+        """
+        return CoreServices.MDItemCopyAttribute(self._mditem, attribute)
+
+    def set_mditem_attribute_value(self, attribute: str, value: t.Any) -> bool:
+        """Set the raw MDItem attribute value without any type conversion.
+
+        Args:
+            attribute: metadata attribute name
+            value: value to set attribute to
+
+        Returns: True if successful otherwise False
+
+        Note: This is a low level function that you probably don't need to use,
+        but may be useful in some cases. You should probably use the set() method instead.
+        """
+        return MDItemSetAttribute(self._mditem, attribute, value)
 
     @property
     def path(self) -> str:

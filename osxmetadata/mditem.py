@@ -51,7 +51,7 @@ MDItemValueType = t.Union[bool, str, float, t.List[str], datetime.datetime]
 # appropriate Objective C object pointers.
 
 
-def MDItemSetAttribute(mditem, name, attr):
+def MDItemSetAttribute(mditem, name, attr) -> bool:
     """dummy function definition"""
     ...
 
@@ -100,7 +100,7 @@ def set_mditem_metadata(
 ) -> bool:
     """Set file metadata using undocumented function MDItemSetAttribute
 
-    file: path to file
+    mditem: MDItem object
     attribute: metadata attribute to set
     value: value to set attribute to; must match the type expected by the attribute (e.g. bool, str, List[str], float, datetime.datetime)
 
@@ -149,7 +149,13 @@ def get_mditem_metadata(
         elif attribute_type == "float":
             return float(value)
         elif attribute_type == "list":
-            return [str(x) for x in value]
+            # some attributes like kMDItemKeywords do not always follow the documented type
+            # and can return a single comma-delimited string instead of a list (See #83)
+            return (
+                str(value).split(",")
+                if isinstance(value, (objc.pyobjc_unicode, str))
+                else [str(x) for x in value]
+            )
         elif attribute_type == "datetime.datetime":
             return CFDate_to_datetime(value)
         elif attribute_type == "list[datetime.datetime]":
@@ -160,6 +166,8 @@ def get_mditem_metadata(
         elif "__NSTaggedDate" in repr(type(value)):
             # this is a hack but works for MDImporter attributes that don't have a documented type
             return NSDate_to_datetime(value)
+        elif isinstance(value, objc.pyobjc_unicode):
+            return str(value)
         else:
             return value
     except ValueError:
