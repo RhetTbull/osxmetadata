@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "osxmetadata"
-version = "1.2.0"
+version = "1.2.1"
 description = "Read and write meta data, such as tags/keywords, Finder comments, etc. on MacOS files"
 authors = ["Rhet Turnbull <rturnbull+git@gmail.com>"]
 license = "MIT License"
