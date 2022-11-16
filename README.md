@@ -298,12 +298,23 @@ Options:
   -j, --json                      Print output in JSON format, for use with
                                   --list and --get.
   -X, --wipe                      Wipe all metadata attributes from FILE.
-  -s, --set ATTRIBUTE VALUE       Set ATTRIBUTE to VALUE.
+  -s, --set ATTRIBUTE VALUE       Set ATTRIBUTE to VALUE. If ATTRIBUTE is a
+                                  multi-value attribute, such as keywords
+                                  (kMDItemKeywords), you may specify --set
+                                  multiple times to add to the array of values:
+                                  '--set keywords foo --set keywords bar' will
+                                  set keywords to ['foo', 'bar']. Not that this
+                                  will overwrite any existing values for the
+                                  attribute; see also --append.
   -l, --list                      List all metadata attributes for FILE.
   -c, --clear ATTRIBUTE           Remove attribute from FILE.
   -a, --append ATTRIBUTE VALUE    Append VALUE to ATTRIBUTE; for multi-valued
                                   attributes, appends only if VALUE is not
-                                  already present.
+                                  already present. May be used in combination
+                                  with --set to add to an existing value: '--set
+                                  keywords foo --append keywords bar' will set
+                                  keywords to ['foo', 'bar'], overwriting any
+                                  existing values for the attribute.
   -g, --get ATTRIBUTE             Get value of ATTRIBUTE.
   -r, --remove ATTRIBUTE VALUE    Remove VALUE from ATTRIBUTE; only applies to
                                   multi-valued attributes.
