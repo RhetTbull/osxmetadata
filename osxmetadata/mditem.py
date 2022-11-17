@@ -152,7 +152,7 @@ def get_mditem_metadata(
             # some attributes like kMDItemKeywords do not always follow the documented type
             # and can return a single comma-delimited string instead of a list (See #83)
             return (
-                str(value).split(",")
+                [x.strip() for x in str(value).split(",")]
                 if isinstance(value, (objc.pyobjc_unicode, str))
                 else [str(x) for x in value]
             )
