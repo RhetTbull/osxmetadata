@@ -160,11 +160,14 @@ def get_mditem_metadata(
             return CFDate_to_datetime(value)
         elif attribute_type == "list[datetime.datetime]":
             return [CFDate_to_datetime(x) for x in value]
+        # these are a hack but works for MDImporter attributes that don't have a documented type
         elif "__NSCFArray" in repr(type(value)):
-            # this is a hack but works for MDImporter attributes that don't have a documented type
+            return [str(x) for x in value]
+        elif "__NSArrayI" in repr(type(value)):
+            return [str(x) for x in value]
+        elif "__NSArrayM" in repr(type(value)):
             return [str(x) for x in value]
         elif "__NSTaggedDate" in repr(type(value)):
-            # this is a hack but works for MDImporter attributes that don't have a documented type
             return NSDate_to_datetime(value)
         elif isinstance(value, objc.pyobjc_unicode):
             return str(value)
