@@ -18,6 +18,14 @@ To bump the minor version, run `bumpversion minor --verbose --dry-run` to see wh
 
 The doit `test` task (`doit test`) will run pytest to test the package. (You'll need to have used `poetry shell` before running `doit` to activate the poetry environment.) The README.md file contains some example code that can be tested with `poetry run pytest --doctest-glob=README.md`.  The `test` task will do this automatically.
 
+Note that a couple of tests are currently failing on Ventura even though the same code works fine when run directly. I've not figured out why this is happening yet.
+
 ## Building
 
 To test and build the package, run `doit`. This will build the package and run the tests.  Run `doit list` to see the available tasks.  doit tasks are defined in `dodo.py`.
+
+## Changelog
+
+Use [auto-changelog](https://github.com/cookpete/auto-changelog):
+
+- `auto-changelog --ignore-commit-pattern CHANGELOG -l 5`
