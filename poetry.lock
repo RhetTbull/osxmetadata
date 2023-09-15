@@ -957,16 +957,17 @@ files = [
 
 [[package]]
 name = "mkdocstrings"
-version = "0.19.1"
+version = "0.23.0"
 description = "Automatic documentation from sources, for MkDocs."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "mkdocstrings-0.19.1-py3-none-any.whl", hash = "sha256:32a38d88f67f65b264184ea71290f9332db750d189dea4200cbbe408d304c261"},
-    {file = "mkdocstrings-0.19.1.tar.gz", hash = "sha256:d1037cacb4b522c1e8c164ed5d00d724a82e49dcee0af80db8fb67b384faeef9"},
+    {file = "mkdocstrings-0.23.0-py3-none-any.whl", hash = "sha256:051fa4014dfcd9ed90254ae91de2dbb4f24e166347dae7be9a997fe16316c65e"},
+    {file = "mkdocstrings-0.23.0.tar.gz", hash = "sha256:d9c6a37ffbe7c14a7a54ef1258c70b8d394e6a33a1c80832bce40b9567138d1c"},
 ]
 
 [package.dependencies]
+importlib-metadata = {version = ">=4.6", markers = "python_version < \"3.10\""}
 Jinja2 = ">=2.11.1"
 Markdown = ">=3.3"
 MarkupSafe = ">=1.1"
@@ -974,6 +975,7 @@ mkdocs = ">=1.2"
 mkdocs-autorefs = ">=0.3.1"
 mkdocstrings-python = {version = ">=0.5.2", optional = true, markers = "extra == \"python\""}
 pymdown-extensions = ">=6.3"
+typing-extensions = {version = ">=4.1", markers = "python_version < \"3.10\""}
 
 [package.extras]
 crystal = ["mkdocstrings-crystal (>=0.3.4)"]
@@ -982,18 +984,18 @@ python-legacy = ["mkdocstrings-python-legacy (>=0.2.1)"]
 
 [[package]]
 name = "mkdocstrings-python"
-version = "0.8.3"
+version = "1.7.0"
 description = "A Python handler for mkdocstrings."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "mkdocstrings-python-0.8.3.tar.gz", hash = "sha256:9ae473f6dc599339b09eee17e4d2b05d6ac0ec29860f3fc9b7512d940fc61adf"},
-    {file = "mkdocstrings_python-0.8.3-py3-none-any.whl", hash = "sha256:4e6e1cd6f37a785de0946ced6eb846eb2f5d891ac1cc2c7b832943d3529087a7"},
+    {file = "mkdocstrings_python-1.7.0-py3-none-any.whl", hash = "sha256:85c5f009a5a0ebb6076b7818c82a2bb0eebd0b54662628fa8b25ee14a6207951"},
+    {file = "mkdocstrings_python-1.7.0.tar.gz", hash = "sha256:5dac2712bd38a3ff0812b8650a68b232601d1474091b380a8b5bc102c8c0d80a"},
 ]
 
 [package.dependencies]
-griffe = ">=0.24"
-mkdocstrings = ">=0.19"
+griffe = ">=0.35"
+mkdocstrings = ">=0.20"
 
 [[package]]
 name = "more-itertools"
@@ -1990,4 +1992,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.12"
-content-hash = "0ea401fe81319fc79c22584cb8916c3d8092682e8b96dbb4cb6e80ad57c055e0"
+content-hash = "da4805ced32fc341c1a8be7e4794f2f44a114df4e1d07a1a9a319a8a267094b2"
