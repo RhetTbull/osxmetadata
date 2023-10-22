@@ -24,6 +24,13 @@ Note that a couple of tests are currently failing on Ventura even though the sam
 
 To test and build the package, run `doit`. This will build the package and run the tests.  Run `doit list` to see the available tasks.  doit tasks are defined in `dodo.py`.
 
+## Docs
+
+Uses `mkdocs`:
+
+- `mkdocs build`
+- `mkdocs gh-deploy`
+
 ## Changelog
 
 Use [auto-changelog](https://github.com/cookpete/auto-changelog):
