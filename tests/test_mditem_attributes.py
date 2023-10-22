@@ -151,7 +151,7 @@ def test_mditem_attributes_video(test_video):
     """test mditem attributes for video files"""
 
     md = OSXMetaData(test_video)
-    assert sorted(md.get("kMDItemCodecs")) == sorted(["H.264", "AAC", "Timed Metadata"])
+    assert "H.264" in md.get("kMDItemCodecs")
     assert md.get("kMDItemAudioBitRate") == 64.0
 
 

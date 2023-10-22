@@ -30,7 +30,7 @@ pyobjc-framework-CoreMedia = "^9.0.0"
 pyobjc-framework-CoreServices = "^9.0.0"
 pyobjc-framework-Quartz = "^9.0.0"
 pyobjc-framework-ScriptingBridge = "^9.0.0"
-python = ">=3.8,<3.12"
+python = ">=3.8,<=3.12"
 wheel = "^0.41.2"
 xattr = "^0.10.1"
 
