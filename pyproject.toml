@@ -19,7 +19,7 @@ keywords = [
 ]
 
 [tool.poetry.dependencies]
-bitstring = "^4.1.2"
+bitstring = "^4.2.3"
 click = "^8.0"
 py-applescript = "^1.0.3"
 pyobjc-core = ">=9.0.0"
