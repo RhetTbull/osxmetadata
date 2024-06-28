@@ -398,6 +398,7 @@ def md_remove_metadata_with_error(
             return f"remove is not a valid operation for single-value attribute {attr}"
 
         if attr in _TAGS_NAMES:
+            val = md_tag_value_from_file(md, val)
             val = tag_factory(val)
         elif attr in MDITEM_ATTRIBUTE_DATA or attr in MDITEM_ATTRIBUTE_SHORT_NAMES:
             val = str_to_mditem_type(attr, val)
@@ -413,6 +414,24 @@ def md_remove_metadata_with_error(
             md.set(attr, new_value)
         except KeyError as e:
             raise e
+
+
+def md_tag_value_from_file(md: OSXMetaData, value: str) -> str:
+    """Given a tag value, return the tag + color if tag value contains color.
+    If not, check if file has the same tag and if so, return the tag + color from the file
+
+    Returns the new tag value
+    """
+    values = value.split(",")
+    if len(values) > 2:
+        raise ValueError(f"More than one value found after comma: {value}")
+    if len(values) == 2:
+        return value
+    if file_tags := md.get(_kMDItemUserTags):
+        for tag in file_tags:
+            if tag.name.lower() == value.lower():
+                return f"{value},{tag.color}"
+    return value
 
 
 def md_mirror_metadata_with_error(
@@ -677,7 +696,7 @@ class MyClickCommand(click.Command):
                 "findercolor; Finder color tag value. "
                 + "The value can be either a number or the name of the color as follows: "
                 + f"{', '.join([f'{colorid}: {color}' for color, colorid in _COLORNAMES_LOWER.items() if colorid != FINDER_COLOR_NONE])}; "
-                +"integer or string.",
+                + "integer or string.",
             )
         )
         attr_tuples = sorted(attr_tuples)
