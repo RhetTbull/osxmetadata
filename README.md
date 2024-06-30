@@ -18,7 +18,7 @@ MacOS provides some tools to view these various metadata attributes.  For exampl
 
 ## Supported operating systems
 
-Only works on MacOS.  Requires Python 3.8+. Tested on macOS 10.15.7 (Catalina); should work on all versions of macOS 10.15 and later.
+Only works on MacOS. Tested on macOS 13.5.1 (Ventura); should work on all versions of macOS 10.15 and later. Supported on Python 3.10+.
 
 ## Installation instructions
 
