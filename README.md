@@ -378,11 +378,7 @@ specify the color, append comma + color name (e.g. 'red') after the tag name.
 For example --set tags Foo,red. Valid color names are: gray, green, purple,
 blue, yellow, red, orange. If color is not specified but a tag of the same name
 has already been assigned a color in the Finder, the same color will
-automatically be assigned.
-
-com.apple.FinderInfo (finderinfo) value is a key:value dictionary. To set
-finderinfo, pass value in format key1:value1,key2:value2,etc. For example:
-'osxmetadata --set finderinfo color:2 file.ext'.
+automatically be assigned. See also findercolor.
 
 Short Name                 Description
 acquisitionmake            kMDItemAcquisitionMake;
@@ -551,14 +547,6 @@ durationseconds            kMDItemDurationSeconds;
                            duration, in seconds, of the content of file. A
                            value of 10. 5 represents media that is 10 and 1/2
                            seconds long.; number
-exifgpsversion             kMDItemEXIFGPSVersion;
-                           com.apple.metadata:kMDItemEXIFGPSVersion; The
-                           version of GPSInfoIFD in EXIF used to generate the
-                           metadata.; string
-exifversion                kMDItemEXIFVersion;
-                           com.apple.metadata:kMDItemEXIFVersion; The version
-                           of the EXIF header used to generate the metadata.;
-                           string
 emailaddresses             kMDItemEmailAddresses;
                            com.apple.metadata:kMDItemEmailAddresses; Email
                            addresses related to this item.; list of strings
@@ -568,6 +556,14 @@ encodingapplications       kMDItemEncodingApplications;
                            into it's current form. For example, a PDF file
                            might have an encoding application set to
                            "Distiller".; list of strings
+exifgpsversion             kMDItemEXIFGPSVersion;
+                           com.apple.metadata:kMDItemEXIFGPSVersion; The
+                           version of GPSInfoIFD in EXIF used to generate the
+                           metadata.; string
+exifversion                kMDItemEXIFVersion;
+                           com.apple.metadata:kMDItemEXIFVersion; The version
+                           of the EXIF header used to generate the metadata.;
+                           string
 exposuremode               kMDItemExposureMode;
                            com.apple.metadata:kMDItemExposureMode; The
                            exposure mode used to acquire the document
@@ -585,9 +581,27 @@ exposuretimeseconds        kMDItemExposureTimeSeconds;
 exposuretimestring         kMDItemExposureTimeString;
                            com.apple.metadata:kMDItemExposureTimeString; The
                            time of the exposure.; string
+findercolor                findercolor; Finder color tag value. The value can
+                           be either a number or the name of the color as
+                           follows: 1: gray, 2: green, 3: purple, 4: blue, 5:
+                           yellow, 6: red, 7: orange; integer or string.
+findercomment              kMDItemFinderComment;
+                           com.apple.metadata:kMDItemFinderComment; Finder
+                           comments for this file.; string
+flashonoff                 kMDItemFlashOnOff;
+                           com.apple.metadata:kMDItemFlashOnOff; Indicates if
+                           a camera flash was used.; number
 fnumber                    kMDItemFNumber; com.apple.metadata:kMDItemFNumber;
                            The diameter of the diaphragm aperture in terms of
                            the effective focal length of the lens.; number
+focallength                kMDItemFocalLength;
+                           com.apple.metadata:kMDItemFocalLength; The actual
+                           focal length of the lens, in millimeters.; number
+fonts                      kMDItemFonts; com.apple.metadata:kMDItemFonts;
+                           Fonts used in this item. You should store the
+                           font's full name, the postscript name, or the font
+                           family name, based on the available information.;
+                           list of strings
 fscontentchangedate        kMDItemFSContentChangeDate;
                            com.apple.metadata:kMDItemFSContentChangeDate; The
                            date the file contents last changed.; date/time
@@ -623,26 +637,12 @@ fsowneruserid              kMDItemFSOwnerUserID;
                            ID of the owner of the file.; number
 fssize                     kMDItemFSSize; com.apple.metadata:kMDItemFSSize;
                            The size, in bytes, of the file on disk.; number
-findercomment              kMDItemFinderComment;
-                           com.apple.metadata:kMDItemFinderComment; Finder
-                           comments for this file.; string
-flashonoff                 kMDItemFlashOnOff;
-                           com.apple.metadata:kMDItemFlashOnOff; Indicates if
-                           a camera flash was used.; number
-focallength                kMDItemFocalLength;
-                           com.apple.metadata:kMDItemFocalLength; The actual
-                           focal length of the lens, in millimeters.; number
-fonts                      kMDItemFonts; com.apple.metadata:kMDItemFonts;
-                           Fonts used in this item. You should store the
-                           font's full name, the postscript name, or the font
-                           family name, based on the available information.;
-                           list of strings
+genre                      kMDItemGenre; com.apple.metadata:kMDItemGenre;
+                           Genre of the movie.; string
 gpstrack                   kMDItemGPSTrack;
                            com.apple.metadata:kMDItemGPSTrack; The direction
                            of travel of the item, in degrees from true north.;
                            string
-genre                      kMDItemGenre; com.apple.metadata:kMDItemGenre;
-                           Genre of the movie.; string
 hasalphachannel            kMDItemHasAlphaChannel;
                            com.apple.metadata:kMDItemHasAlphaChannel;
                            Indicates if this image file has an alpha channel.;
@@ -652,9 +652,6 @@ headline                   kMDItemHeadline;
                            entry providing a synopsis of the contents of the
                            file. For example, "Apple Introduces the iPod
                            Photo".; string
-isospeed                   kMDItemISOSpeed;
-                           com.apple.metadata:kMDItemISOSpeed; The ISO speed
-                           used to acquire the document contents.; number
 identifier                 kMDItemIdentifier;
                            com.apple.metadata:kMDItemIdentifier; A formal
                            identifier used to reference the resource within a
@@ -680,6 +677,9 @@ isgeneralmidisequence      kMDItemIsGeneralMIDISequence;
                            Indicates whether the MIDI sequence contained in
                            the file is setup for use with a General MIDI
                            device.; boolean
+isospeed                   kMDItemISOSpeed;
+                           com.apple.metadata:kMDItemISOSpeed; The ISO speed
+                           used to acquire the document contents.; number
 keysignature               kMDItemKeySignature;
                            com.apple.metadata:kMDItemKeySignature; The key of
                            the music contained in the audio file. For example:
