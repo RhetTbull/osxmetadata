@@ -14,11 +14,12 @@ TEST_AUDIO = "tests/test_audio.m4a"
 
 # how long to wait for metadata to be written to disk
 # if running in GitHub Actions, wait longer
-SNOOZE_TIME = 0.5 if os.environ.get("GITHUB_ACTION") else 0.1
-# Finder comments need more time to be written to disk
-FINDER_COMMENT_SNOOZE = 2.0
+GH_ACTION_SNOOZE = 10.0
+SNOOZE_TIME = GH_ACTION_SNOOZE if os.environ.get("GITHUB_ACTION") else 0.1
 # some tests need a longer snooze time
-LONG_SNOOZE = 10.0 if os.environ.get("GITHUB_ACTION") else 3.0
+LONG_SNOOZE = GH_ACTION_SNOOZE if os.environ.get("GITHUB_ACTION") else 3.0
+# Finder comments need more time to be written to disk
+FINDER_COMMENT_SNOOZE = LONG_SNOOZE
 
 def snooze(seconds: float = SNOOZE_TIME) -> None:
     """Sleep for a bit to allow Finder to update metadata"""
