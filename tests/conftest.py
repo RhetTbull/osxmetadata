@@ -17,8 +17,8 @@ TEST_AUDIO = "tests/test_audio.m4a"
 SNOOZE_TIME = 0.5 if os.environ.get("GITHUB_ACTION") else 0.1
 # Finder comments need more time to be written to disk
 FINDER_COMMENT_SNOOZE = 2.0
-LONG_SNOOZE = 3.0  # some tests need a longer snooze time
-
+# some tests need a longer snooze time
+LONG_SNOOZE = 10.0 if os.environ.get("GITHUB_ACTION") else 3.0
 
 def snooze(seconds: float = SNOOZE_TIME) -> None:
     """Sleep for a bit to allow Finder to update metadata"""
