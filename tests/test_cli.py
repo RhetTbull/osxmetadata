@@ -297,6 +297,27 @@ def test_cli_remove(test_file):
     assert data["kMDItemAuthors"] == ["Jane Doe"]
 
 
+def test_cli_remove_tags_without_color(test_file):
+    """Test --remove tags without specifying color (#106)"""
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--set", "tags", ".Test,red", test_file.name])
+    snooze(LONG_SNOOZE)
+
+    md = OSXMetaData(test_file.name)
+    assert md.tags == [Tag(".Test", 6)]
+
+    result = runner.invoke(
+        cli,
+        ["--remove", "tags", ".Test", test_file.name],
+    )
+    assert result.exit_code == 0
+
+    snooze(LONG_SNOOZE)
+    md = OSXMetaData(test_file.name)
+    assert not md.tags
+
+
 def test_cli_mirror(test_file):
     """Test --mirror"""
 
