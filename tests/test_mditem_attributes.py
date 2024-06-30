@@ -173,3 +173,19 @@ def test_get_set_mditem_attribute_value(test_file):
     snooze()
     assert md.get_mditem_attribute_value("kMDItemComment") == "foo,bar"
     assert md.comment == "foo,bar"
+
+
+def test_attribute_get_set(test_file):
+    """Test direct access get/set attribute values"""
+
+    md = OSXMetaData(test_file.name)
+    assert not md.authors
+    md.authors = ["foo", "bar"]
+    snooze()
+    assert md.authors == ["foo", "bar"]
+    md.authors = ["bar"]
+    snooze()
+    assert md.authors == ["bar"]
+    md.set("authors", ["foo"])
+    snooze()
+    assert md.authors == ["foo"]

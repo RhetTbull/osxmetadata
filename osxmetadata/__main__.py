@@ -84,13 +84,15 @@ def get_attribute_type(attr: str) -> t.Optional[str]:
     return (
         "list"
         if attr in _TAGS_NAMES
-        else MDITEM_ATTRIBUTE_DATA[attr]["python_type"]
-        if attr in MDITEM_ATTRIBUTE_DATA
-        else "int"
-        if attr == _kFinderColor
-        else "bool"
-        if attr == _kFinderStationeryPad
-        else None
+        else (
+            MDITEM_ATTRIBUTE_DATA[attr]["python_type"]
+            if attr in MDITEM_ATTRIBUTE_DATA
+            else (
+                "int"
+                if attr == _kFinderColor
+                else "bool" if attr == _kFinderStationeryPad else None
+            )
+        )
     )
 
 
@@ -396,6 +398,7 @@ def md_remove_metadata_with_error(
             return f"remove is not a valid operation for single-value attribute {attr}"
 
         if attr in _TAGS_NAMES:
+            val = md_tag_value_from_file(md, val)
             val = tag_factory(val)
         elif attr in MDITEM_ATTRIBUTE_DATA or attr in MDITEM_ATTRIBUTE_SHORT_NAMES:
             val = str_to_mditem_type(attr, val)
@@ -411,6 +414,24 @@ def md_remove_metadata_with_error(
             md.set(attr, new_value)
         except KeyError as e:
             raise e
+
+
+def md_tag_value_from_file(md: OSXMetaData, value: str) -> str:
+    """Given a tag value, return the tag + color if tag value contains color.
+    If not, check if file has the same tag and if so, return the tag + color from the file
+
+    Returns the new tag value
+    """
+    values = value.split(",")
+    if len(values) > 2:
+        raise ValueError(f"More than one value found after comma: {value}")
+    if len(values) == 2:
+        return value
+    if file_tags := md.get(_kMDItemUserTags):
+        for tag in file_tags:
+            if tag.name.lower() == value.lower():
+                return f"{value},{tag.color}"
+    return value
 
 
 def md_mirror_metadata_with_error(
@@ -668,6 +689,18 @@ class MyClickCommand(click.Command):
             # add to list
             attr_tuples.append((short_name, attr_help))
 
+        # add findercolor which isn't a standard kMDx item
+        attr_tuples.append(
+            (
+                "findercolor",
+                "findercolor; Finder color tag value. "
+                + "The value can be either a number or the name of the color as follows: "
+                + f"{', '.join([f'{colorid}: {color}' for color, colorid in _COLORNAMES_LOWER.items() if colorid != FINDER_COLOR_NONE])}; "
+                + "integer or string.",
+            )
+        )
+        attr_tuples = sorted(attr_tuples)
+
         formatter.write("\n\n")
         formatter.write_text(
             "Valid attributes for ATTRIBUTE: "
@@ -704,12 +737,7 @@ class MyClickCommand(click.Command):
             + f"{', '.join([color for color, colorid in _COLORNAMES_LOWER.items() if colorid != FINDER_COLOR_NONE])}. "
             + "If color is not specified but a tag of the same name has already been assigned a color "
             + "in the Finder, the same color will automatically be assigned. "
-        )
-        formatter.write("\n")
-        formatter.write_text(
-            "com.apple.FinderInfo (finderinfo) value is a key:value dictionary. "
-            + "To set finderinfo, pass value in format key1:value1,key2:value2,etc. "
-            + "For example: 'osxmetadata --set finderinfo color:2 file.ext'."
+            + "See also findercolor."
         )
         formatter.write("\n")
 
@@ -1086,7 +1114,8 @@ def process_single_file(
 ):
     """process a single file to apply the options
     options processed in this order: wipe, copyfrom, clear, set, append, remove, mirror, get, list
-    Note: expects all attributes passed in parameters to be validated as valid attributes"""
+    Note: expects all attributes passed in parameters to be validated as valid attributes
+    """
 
     md = OSXMetaData(fpath)
 

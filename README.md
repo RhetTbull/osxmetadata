@@ -51,7 +51,7 @@ Once you've installed osxmetadata with pip, to upgrade to the latest version:
 OSXMetaData uses setuptools, thus simply run:
 
     git clone https://github.com/RhetTbull/osxmetadata.git
-    cd osxmetadata 
+    cd osxmetadata
     pip install poetry
     poetry install
 
@@ -137,9 +137,14 @@ True
 
 The class attributes are handled dynamically which, unfortunately, means that IDEs like PyCharm and Visual Studio Code cannot provide tab-completion for them.
 
+> [!NOTE]
+> When writing or updating metadata with OSXMetaData, the OS will take some time to update the metadata on disk; in my testing, this can be as short as 100ms or as long as 3s. This means that if you read the metadata immediately after writing it, you may not see the updated metadata. If your use case requires the use of immediate read after write, you may need to implement a delay in your code to allow the OS time to update the metadata on disk. This appears to be an OS limitation and not something that can be controlled by osxmetadata.
+
+```pycon
+
 ## Finder Tags
 
-Unlike other attributes, which are mapped to native Python types appropriate for the source Objective C type, Finder tags (`_kMDItemUserTags` or `tags`) have two components: a name (str) and a color ID (unsigned int in range 0 to 7) representing a color tag in the Finder.  Reading tags returns a list of `Tag` namedtuples and setting tags requires a list of `Tag` namedtuples.  
+Unlike other attributes, which are mapped to native Python types appropriate for the source Objective C type, Finder tags (`_kMDItemUserTags` or `tags`) have two components: a name (str) and a color ID (unsigned int in range 0 to 7) representing a color tag in the Finder.  Reading tags returns a list of `Tag` namedtuples and setting tags requires a list of `Tag` namedtuples.
 
 ```pycon
 >>> from osxmetadata import *
@@ -149,7 +154,7 @@ Unlike other attributes, which are mapped to native Python types appropriate for
 [Tag(name='Test', color=0), Tag(name='ToDo', color=6)]
 >>> md.get("_kMDItemUserTags")
 [Tag(name='Test', color=0), Tag(name='ToDo', color=6)]
->>> 
+>>>
 ```
 
 Tag names (but not colors) can also be accessed through the [NSURLTagNamesKey](https://developer.apple.com/documentation/foundation/nsurltagnameskey) resource key and the label color ID is accessible through `NSURLLabelNumberKey`; the localized label color name is accessible through `NSURLLocalizedLabelKey` though these latter two resource keys only return a single color whereas a file may have more than one color tag. For most purposes, I recommend using the `tags` attribute as it is more convenient and provides access to both the name and color ID of the tag.
@@ -224,7 +229,7 @@ Metadata attributes which return date/times such as `kMDItemDueDate` or `kMDItem
 >>> md.kMDItemDueDate
 datetime.datetime(2022, 10, 1, 0, 0)
 >>> md.kMDItemDownloadedDate = datetime.datetime(2022, 10, 1, tzinfo=datetime.timezone.utc)
->>> 
+>>>
 ```
 
 ## Extended Attributes

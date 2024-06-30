@@ -17,4 +17,4 @@ scratch/
 venv/
 .python-version
 .coverage
-working/
+pyrightconfig.json

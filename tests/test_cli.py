@@ -2,6 +2,7 @@
 
 import datetime
 import glob
+import json
 import os
 import pathlib
 
@@ -13,7 +14,7 @@ from osxmetadata import __version__
 from osxmetadata.__main__ import BACKUP_FILENAME, cli
 from osxmetadata.backup import load_backup_file
 
-from .conftest import FINDER_COMMENT_SNOOZE, snooze
+from .conftest import FINDER_COMMENT_SNOOZE, LONG_SNOOZE, snooze
 
 
 def parse_cli_output(output):
@@ -264,8 +265,13 @@ def test_cli_remove(test_file):
     md = OSXMetaData(test_file.name)
     md.authors = ["John Doe", "Jane Doe"]
     md.tags = [Tag("test", 0)]
+    snooze()
 
     runner = CliRunner()
+    result = runner.invoke(cli, ["--list", "--json", test_file.name])
+    data = json.loads(result.output)
+    assert sorted(data["kMDItemAuthors"]) == ["Jane Doe", "John Doe"]
+
     result = runner.invoke(
         cli,
         [
@@ -275,14 +281,40 @@ def test_cli_remove(test_file):
             "--remove",
             "tags",
             "test,0",
+            "--verbose",
             test_file.name,
         ],
     )
-    snooze()
     assert result.exit_code == 0
+    assert "Removing John Doe from authors" in result.output
+    # for some reason this test fails without an additional delay
+    # for the removed metadata to be updated on disk
+    # without the additional delay, reading the metadata reads the previous value
+    snooze(LONG_SNOOZE)
+
+    result = runner.invoke(cli, ["--list", "--json", test_file.name])
+    data = json.loads(result.output)
+    assert data["kMDItemAuthors"] == ["Jane Doe"]
+
+
+def test_cli_remove_tags_without_color(test_file):
+    """Test --remove tags without specifying color (#106)"""
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--set", "tags", ".Test,red", test_file.name])
+    snooze(LONG_SNOOZE)
 
     md = OSXMetaData(test_file.name)
-    assert md.authors == ["Jane Doe"]
+    assert md.tags == [Tag(".Test", 6)]
+
+    result = runner.invoke(
+        cli,
+        ["--remove", "tags", ".Test", test_file.name],
+    )
+    assert result.exit_code == 0
+
+    snooze(LONG_SNOOZE)
+    md = OSXMetaData(test_file.name)
     assert not md.tags
 
 
@@ -495,7 +527,7 @@ def test_cli_backup_restore(test_dir):
 
     # wipe the data
     result = runner.invoke(cli, ["--wipe", test_file.as_posix()])
-    snooze()
+    snooze(LONG_SNOOZE)
     md = OSXMetaData(test_file)
     assert not md.tags
     assert not md.authors
@@ -503,6 +535,7 @@ def test_cli_backup_restore(test_dir):
 
     # restore the data
     result = runner.invoke(cli, ["--restore", test_file.as_posix()])
+    snooze(LONG_SNOOZE)
     assert result.exit_code == 0
     assert md.tags == [Tag("test", 0)]
     assert md.authors == ["John Doe", "Jane Doe"]
@@ -556,6 +589,7 @@ def test_cli_order(test_dir):
     md.wherefroms = ["http://www.apple.com"]
     md.downloadeddate = [datetime.datetime(2019, 1, 1, 0, 0, 0)]
     md.findercomment = "Hello World"
+    snooze(LONG_SNOOZE)
 
     runner = CliRunner()
 
@@ -564,7 +598,7 @@ def test_cli_order(test_dir):
 
     # wipe the data
     runner.invoke(cli, ["--wipe", test_file.as_posix()])
-    snooze()
+    snooze(LONG_SNOOZE)
 
     # restore the data and check order of operations
     result = runner.invoke(
@@ -602,7 +636,7 @@ def test_cli_order(test_dir):
     output = parse_cli_output(result.output)
     assert output["comment"] == "Hello World"
 
-    snooze()
+    snooze(LONG_SNOOZE)
     md = OSXMetaData(test_file)
     assert md.authors == ["John Smith", "Jane Smith"]
     assert md.findercomment == "Hello World"
