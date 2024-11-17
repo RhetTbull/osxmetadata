@@ -1,5 +1,8 @@
 """Task list for doit, used to build the project; run with `doit` or `doit list` to see commands"""
 
+# TODO: this doesn't work with uv publish because the exe file ends up in the dist directory
+# Remove the exe file from the dist directory before running uv publish
+
 import osxmetadata
 
 
