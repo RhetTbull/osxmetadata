@@ -5,24 +5,24 @@ import osxmetadata
 
 def task_update_readme():
     """Update README with CLI output"""
-    return {"actions": ["poetry run cog -r README.md"]}
+    return {"actions": ["cog -r README.md"]}
 
 
 # def task_test():
 #     """Run tests"""
-#     return {"actions": ["poetry run pytest --doctest-glob=README.md tests/"]}
+#     return {"actions": ["pytest --doctest-glob=README.md tests/"]}
 
 
 def task_docs():
     """Build docs"""
-    return {"actions": ["poetry run mkdocs build"]}
+    return {"actions": ["mkdocs build"]}
 
 
 def task_gh_docs():
     """Build docs and push to gh-pages"""
     return {
         "actions": [
-            "poetry run mkdocs gh-deploy --force",
+            "mkdocs gh-deploy --force",
         ]
     }
 
