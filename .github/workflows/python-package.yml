@@ -32,7 +32,7 @@ jobs:
         version: "latest"
     - name: Install dependencies
       run: |
-        uv sync --python ${{ matrix.python-version }} --all-extras pyproject.toml
+        uv sync --python ${{ matrix.python-version }} --all-extras
     - name: Test with pytest
       run: |
         uv run pytest --doctest-glob=README.md tests/
