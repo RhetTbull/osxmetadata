@@ -20,3 +20,4 @@ venv/
 pyrightconfig.json
 site/
 working/
+.envrc
