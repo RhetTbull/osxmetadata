@@ -340,5 +340,11 @@
         "description": "Url of the item.",
         "type": "CFString",
         "version": "macOS 10.5+"
+    },
+    {
+        "name": "kMDItemIsScreenCapture",
+        "description": "Boolean indicating if this file is a screenshot.",
+        "type": "CFBoolean",
+        "version": "macOS 10.5+"
     }
 ]
