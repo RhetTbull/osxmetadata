@@ -2,8 +2,10 @@
 
 import datetime
 import os
+import pathlib
 import time
 import typing as t
+import uuid
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
@@ -15,11 +17,12 @@ TEST_AUDIO = "tests/test_audio.m4a"
 # how long to wait for metadata to be written to disk
 # if running in GitHub Actions, wait longer
 GH_ACTION_SNOOZE = 10.0
-SNOOZE_TIME = GH_ACTION_SNOOZE if os.environ.get("GITHUB_ACTION") else 0.1
+SNOOZE_TIME = GH_ACTION_SNOOZE if os.environ.get("GITHUB_ACTION") else 3.0
 # some tests need a longer snooze time
-LONG_SNOOZE = GH_ACTION_SNOOZE if os.environ.get("GITHUB_ACTION") else 3.0
+LONG_SNOOZE = GH_ACTION_SNOOZE if os.environ.get("GITHUB_ACTION") else 5.0
 # Finder comments need more time to be written to disk
 FINDER_COMMENT_SNOOZE = LONG_SNOOZE
+
 
 def snooze(seconds: float = SNOOZE_TIME) -> None:
     """Sleep for a bit to allow Finder to update metadata"""
@@ -45,16 +48,24 @@ def test_audio():
 def test_file():
     """Create a temporary test file"""
     # can't use tmp_path fixture because the tmpfs filesystem doesn't support xattrs
-    with NamedTemporaryFile(dir=os.getcwd(), prefix="tmp_") as test_file:
-        yield test_file
+    # TemporaryFile doesn't always work for metadata writing so create one manually
+    tmp_file_name = os.path.join(os.getcwd(), f"tmp_{uuid.uuid4().hex}.txt")
+    with open(tmp_file_name, "w") as test_file:
+        test_file.write("Hello World")
+    yield pathlib.Path(tmp_file_name)
+    os.remove(tmp_file_name)
 
 
 @pytest.fixture(scope="function")
 def test_file2():
     """Create a temporary test file"""
     # can't use tmp_path fixture because the tmpfs filesystem doesn't support xattrs
-    with NamedTemporaryFile(dir=os.getcwd(), prefix="tmp_") as test_file:
-        yield test_file
+    # TemporaryFile doesn't always work for metadata writing so create one manually
+    tmp_file_name = os.path.join(os.getcwd(), f"tmp_{uuid.uuid4().hex}.txt")
+    with open(tmp_file_name, "w") as test_file:
+        test_file.write("Hello World")
+    yield pathlib.Path(tmp_file_name)
+    os.remove(tmp_file_name)
 
 
 @pytest.fixture(scope="function")

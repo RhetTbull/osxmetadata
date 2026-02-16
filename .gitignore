@@ -7,6 +7,7 @@ t.*
 *.code-workspace
 osxmetadata.egg-info/
 .pytest_cache/
+.pytest_tmp/
 .test_env/
 .vscode
 __pycache__*

@@ -123,12 +123,12 @@ def test_mditem_attributes_set_none(attribute_name, test_file):
     md = OSXMetaData(test_file.name)
     md.set(attribute_name, test_value)
     snooze()
-    if attribute_name == "kMDItemFinderComment":
+    if attribute_name in ("kMDItemFinderComment", "kMDItemContentCreationDate"):
         snooze(FINDER_COMMENT_SNOOZE)  # Finder needs a moment to update the comment
     assert md.get(attribute_name)
     md.set(attribute_name, None)
     snooze()
-    if attribute_name == "kMDItemFinderComment":
+    if attribute_name in ("kMDItemFinderComment", "kMDItemContentCreationDate"):
         snooze(FINDER_COMMENT_SNOOZE)
     assert not md.get(attribute_name)
 
