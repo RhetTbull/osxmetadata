@@ -1,6 +1,6 @@
 [project]
 name = "osxmetadata"
-version = "1.4.0"
+version = "1.4.1"
 description = "Read and write meta data, such as tags/keywords, Finder comments, etc. on MacOS files"
 readme = "README.md"
 requires-python = ">=3.10"
