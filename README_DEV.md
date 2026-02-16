@@ -20,7 +20,7 @@ To bump the minor version, run `bumpversion minor --verbose --dry-run` to see wh
 - Install [uv](https://github.com/astral-sh/uv): `curl -LsSf https://astral.sh/uv/install.sh | sh`
 - Create the virtual environment: `uv venv` or `uv venv --python 3.13` to specify a specific version
 - Activate the virtual environment: `source .venv/bin/activate`
-- Install package dependencies: `uv pip install -r pyproject.toml --extra dev`
+- Install package dependencies: `uv pip install -r pyproject.toml --extra dev` or `uv sync --extra dev`
 
 ## Testing
 
